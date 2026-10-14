@@ -77,16 +77,16 @@
 
   // ------------------------------------------------------------ 로드
   async function load() {
-    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog] = await Promise.all([
+    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision] = await Promise.all([
       getJSON("data/meta.json"), getJSON("data/status.json"), getJSON("data/guidance.json"),
       getJSON("data/reports.json"), getJSON("data/minutes.json"), getJSON("data/news.json"),
       getJSON("data/backtest.json"), getText("data/history.csv"),
-      getJSON("data/events.json"), getJSON("data/qual.json"), getJSON("data/prob_log.json"),
+      getJSON("data/events.json"), getJSON("data/qual.json"), getJSON("data/prob_log.json"), getJSON("data/decision.json"),
     ]);
     Object.assign(D, { meta: meta || {}, status: status || {}, guidance: guidance || { meetings: [], dotplots: [], speeches: [] },
       reports: reports || { reports: [], consensus: { by_meeting: {} } }, minutes: minutes || { meetings: [] },
       news: news || { items: [], chips: [] }, backtest, hist: hist ? parseCSV(hist) : [],
-      events: events || { upcoming: [], recent: [], all: [], indicators: {} }, qual, plog: plog || [] });
+      events: events || { upcoming: [], recent: [], all: [], indicators: {} }, qual, plog: plog || [], decision });
     D.snaps = {};
   }
   async function snapshot(date) {
@@ -852,6 +852,7 @@
           p(W && W.n ? `결과: 혼합 Brier ${W.mix.brier.toFixed(3)}, CD ${W.cd.brier.toFixed(3)}. 적중은 혼합 ${W.mix.hits}/${W.n}, CD ${W.cd.hits}/${W.n}, 항상 동결 ${W.always_hold.hits}/${W.n}. 표본이 작고 금리 변경 사례가 적어 어느 쪽 우위도 확정할 수 없다. 기본값은 CD 모형 추정치로 두고 실험값은 기록만 한다.` : "")),
         ...sub("평가에서 뺀 회의", excl.length ? h("ul", {}, ...excl.map((x) => li(x))) : p("없음")),
         ...sub(`회의별 예측 (${B.n || 0}회)`, B.n ? p(B.rule) : p(h("span", { class: "note" }, B.note || "백테스트 결과 없음")), rowsTable)),
+      ...decisionSection(sec, sub, p, li, table),
       ...sec("5. 기본값 교체 기준 (사전 고정)",
         h("ul", {},
           li("2026-10-22 회의부터 날짜별 확률 기록(data/prob_log.csv)의 회의 3영업일 전 값으로 순차 평가한다."),
@@ -873,6 +874,38 @@
       ...sec("수집 상태", h("ul", {}, ...Object.entries(D.status || {}).map(([k, v]) => li(`${k}: ${!v.ok ? "실패" : (v.message || "").startsWith("일부 실패") ? "일부 실패" : "정상"} · 마지막 시도 ${v.last_attempt || "–"} · 마지막 성공 ${v.last_success || "없음"} · ${v.message || ""}`)),
         Object.keys(D.status || {}).length ? "" : li("수집 기록 없음"))),
     );
+  }
+
+  // 결정 예측 모형(실험): 회의 1건 = 표본 1개, 순서형 로지스틱
+  function decisionSection(sec, sub, p, li, table) {
+    const X = D.decision;
+    if (!X || !X.models) return sec("4-1. 결정 예측 모형 (실험)", p(h("span", { class: "note" }, "아직 산출 전")));
+    const actK = { hike: "인상", hold: "동결", cut: "인하" };
+    const names = { m1: "M1 (변수 3개)", m2: "M2 (M1 + 직전 변경 방향)" };
+    const rows = [];
+    for (const [k, m] of Object.entries(X.models)) {
+      const s = m.walk_forward.summary.model, b = s.by_actual;
+      rows.push([names[k] || k, `${s.hits}/${m.walk_forward.n}`, s.brier.toFixed(4), `${b.hike.hits}/${b.hike.n}`, `${b.cut.hits}/${b.cut.n}`,
+        m.next ? `인상 ${pct(m.next.probs.hike)} · 동결 ${pct(m.next.probs.hold)} · 인하 ${pct(m.next.probs.cut)}` : "–"]);
+    }
+    const s0 = Object.values(X.models)[0].walk_forward;
+    for (const [lab, key] of [["과거 결정 빈도", "base_rate"], ["항상 동결", "always_hold"]]) {
+      const s = s0.summary[key], b = s.by_actual;
+      rows.push([lab, `${s.hits}/${s0.n}`, s.brier.toFixed(4), `${b.hike.hits}/${b.hike.n}`, `${b.cut.hits}/${b.cut.n}`, "–"]);
+    }
+    const xin = X.inputs_today || {};
+    return sec("4-1. 결정 예측 모형 (실험)",
+      p(`가격에서 확률을 역산하는 대신, 과거 금통위 결정과 당시 자료의 관계를 학습한다. 정례회의 ${X.n_meetings}회(${ymd(X.span[0])}~${ymd(X.span[1])}, `
+        + `동결 ${X.class_counts.hold}·인상 ${X.class_counts.hike}·인하 ${X.class_counts.cut})를 회의 1건 = 표본 1개로 쓴다.`),
+      h("ul", {},
+        li("모형: 순서형 로지스틱(인하 < 동결 < 인상), L2 규제 λ=" + X.lambda + ". 입력은 회의 3영업일 전에 알 수 있던 값만 쓴다(근원물가는 발표 시점 기준)."),
+        li("M1 변수: CD 91일 − 기준금리, CD 20영업일 변화, 근원물가(식료품·에너지 제외) − 물가목표. M2는 직전 기준금리 변경 방향을 더한다. 시험한 모형은 이 둘뿐이다."),
+        li(`순차 검증: 처음 ${X.start_n}회로 학습을 시작해, 회의마다 그 이전 회의로만 다시 학습하고 다음 회의를 예측했다.`),
+        li("채택 기준: '과거 결정 빈도'보다 Brier가 5% 이상 낮고 '항상 동결'보다도 낮을 것. 이 5% 기준은 첫 결과(2026-10-15)를 본 뒤 정했다. 앞으로 새 회의로 평가할 때는 이 기준을 바꾸지 않는다.")),
+      table(["모형", "적중", "Brier", "인상 포착", "인하 포착", `다음 회의 예측(실험)`], rows),
+      p(h("b", {}, "판정: "), X.verdict),
+      p(h("span", { class: "note" }, `오늘 입력: CD−기준금리 ${xin.spread_bp ?? "–"}bp · CD 20영업일 변화 ${xin.cd_chg_bp ?? "–"}bp · `
+        + `근원물가−목표 ${xin.core_gap ?? "–"}%p(${xin.cpi_month || "–"}분) · 직전 변경 ${xin.last_move === 1 ? "인상" : xin.last_move === -1 ? "인하" : "없음"}`)));
   }
 
   // ------------------------------------------------------------ 공통 렌더

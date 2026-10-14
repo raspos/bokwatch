@@ -19,6 +19,7 @@ STEPS = [
     ("연합뉴스 RSS", ["-m", "bokwatch.fetch_news"]),
     ("네이버 뉴스", ["-m", "bokwatch.fetch_naver"]),
     ("지표 일정·실제치", ["-m", "bokwatch.fetch_events"]),
+    ("결정 예측 모형(실험)", ["-m", "bokwatch.decision_model", "--fetch"]),
     ("빌드", ["build.py"]),
     ("AI 태깅·종합", ["-m", "bokwatch.ai_judge"]),
     ("빌드·확률 기록", ["build.py", "--log"]),

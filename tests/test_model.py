@@ -145,3 +145,17 @@ def test_cd_path_ranges_match_review_example():
     assert (o["min"], round(o["max"], 3)) == (0.0, 0.263) and (n["min"], round(n["max"], 3)) == (0.0, 0.455)
     assert (o["late"], round(n["late"], 3)) == (0.0, 0.455)          # 늦은 회의 배정(화면 기본값과 같음)
     assert (round(o["early"], 3), n["early"]) == (0.263, 0.0)        # 가까운 회의 배정
+
+
+def test_decision_model_point_in_time_and_ordering():
+    from bokwatch import decision_model as dm
+    core = {f"2025-{m:02d}": 100.0 for m in range(1, 13)} | {"2026-08": 103.0, "2026-09": 104.0, "2025-09": 100.0, "2025-08": 100.0}
+    # 10/5에는 9월 지수가 아직 발표 전이라 8월분, 10/6부터 9월분
+    assert dm.core_gap_on(core, date(2026, 10, 5))[1] == "2026-08"
+    assert dm.core_gap_on(core, date(2026, 10, 6))[1] == "2026-09"
+    # 순서형 로지스틱: 변수가 커질수록 인상 확률이 올라간다
+    rows = [{"spread_bp": v, "cd_chg_bp": v, "core_gap": v / 10, "actual": a}
+            for v, a in [(-30, "cut"), (-25, "cut"), (-5, "hold"), (0, "hold"), (5, "hold"), (2, "hold"), (25, "hike"), (30, "hike")]]
+    m = dm.fit(rows)
+    lo, hi = dm.predict(m, {"spread_bp": -30, "cd_chg_bp": -30, "core_gap": -3}), dm.predict(m, {"spread_bp": 30, "cd_chg_bp": 30, "core_gap": 3})
+    assert hi["hike"] > lo["hike"] and lo["cut"] > hi["cut"] and abs(sum(hi.values()) - 1) < 1e-3
