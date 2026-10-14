@@ -161,8 +161,8 @@
     const diverge = known.length >= 2 && known.some((x) => x !== known[0]);
     if (diverge) {
       sig.forEach((x, i) => { if (x != null && x !== majority(known)) tiles[i].classList.add("diverge"); });
-      const lbl = ["시장", "점도표", "전문가"].map((n, i) => sig[i] == null ? null : `${n} ${sig[i] ? "인상 쪽" : "동결 쪽"}`).filter(Boolean).join(" · ");
-      tiles.push(h("div", { class: "strip-note" }, `엇갈림 — ${lbl} (점도표는 6개월 뒤 전망, 시장·전문가는 다음 회의 기준)`));
+      const lbl = ["모형 추정", "점도표", "전문가"].map((n, i) => sig[i] == null ? null : `${n} ${sig[i] ? "인상 쪽" : "동결 쪽"}`).filter(Boolean).join(" · ");
+      tiles.push(h("div", { class: "strip-note" }, `엇갈림 — ${lbl} (점도표는 6개월 뒤 전망, 모형 추정·전문가는 다음 회의 기준)`));
     }
     const Q = D.qual && D.qual.synthesis;
     const pr = D.qual && D.qual.pressure;
@@ -613,8 +613,10 @@
   }
 
   async function renderConsensus() {
-    const snap = await snapshot(S.d);
+    const dv = await defaultView(await snapshot(S.d));
+    const snap = dv.view;
     const scen = snap && snap.scenarios[S.s];
+    const asof = dv.staleFrom ? ` · ${ymd(dv.staleFrom)} 기준` : "";
     const cons = D.reports.consensus;
     const cards = (D.meta.upcoming || []).slice(0, 2).map((m) => {
       const c = cons.by_meeting[m] || { counts: {}, n: 0 };
@@ -624,13 +626,13 @@
       const bar = h("div", { class: "cbar", role: "img", "aria-label": "전망 기관 수" },
         ...order.filter(([k]) => c.counts[k]).map(([k, col]) => h("span", { style: `flex:${c.counts[k]};background:${col}`, title: `${k} ${c.counts[k]}곳` }, `${k} ${c.counts[k]}`)),
         other > 0 ? h("span", { style: `flex:${other};background:var(--ink-3)` }, `기타 ${other}`) : "");
-      const mbar = mk ? h("div", { class: "cbar", role: "img", "aria-label": "시장 확률" },
+      const mbar = mk ? h("div", { class: "cbar", role: "img", "aria-label": "모형 추정 확률" },
         mk.p_hike > 0.005 ? h("span", { style: `flex:${mk.p_hike};background:var(--hike)` }, mk.p_hike > 0.12 ? `인상 ${pct(mk.p_hike, 0)}` : "") : "",
         mk.p_hold > 0.005 ? h("span", { style: `flex:${mk.p_hold};background:var(--hold)` }, mk.p_hold > 0.12 ? `동결 ${pct(mk.p_hold, 0)}` : "") : "",
-        mk.p_cut > 0.005 ? h("span", { style: `flex:${mk.p_cut};background:var(--cut)` }, "인하") : "") : h("div", { class: "note" }, "시장 확률 없음");
+        mk.p_cut > 0.005 ? h("span", { style: `flex:${mk.p_cut};background:var(--cut)` }, "인하") : "") : h("div", { class: "note" }, "모형 추정치 없음");
       return h("div", { class: "tile" }, h("div", { class: "k" }, `${ymd(m)} 회의`),
         h("div", { class: "s" }, `전문가 ${c.n}곳 — 인상 ${pct(c.hike_share, 0)}`), bar,
-        h("div", { class: "s" }, `시장 — 인상 ${mk ? pct(mk.p_hike) : "–"}`), mbar);
+        h("div", { class: "s" }, `모형 추정(CD) — 인상 ${mk ? pct(mk.p_hike) : "–"}${mk ? asof : ""}`), mbar);
     });
     const term = Object.entries(cons.terminal || {});
     cards.push(h("div", { class: "tile" }, h("div", { class: "k" }, "최종금리 전망 분포"),
