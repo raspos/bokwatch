@@ -14,6 +14,7 @@ import csv
 import os
 import re
 import sys
+import time
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -38,13 +39,22 @@ def ecos_get(cfg, service: str, params: list, key: str | None = None) -> list[di
     while True:
         url = "/".join([cfg["ecos"]["base_url"], service, key, "json", "kr",
                         str(start), str(start + page - 1)] + [str(p) for p in params])
-        try:
-            r = requests.get(url, timeout=30)
-            r.raise_for_status()
-            data = r.json()
-        except Exception as e:
-            # 키가 URL 경로에 들어가므로 오류 문구에서 지운다(status.json은 공개 사이트에 실린다)
-            raise EcosError(f"{type(e).__name__}: {str(e).replace(key, '***')}") from None
+        data = None
+        for attempt in range(4):
+            try:
+                r = requests.get(url, timeout=(20, 60))
+                r.raise_for_status()
+                data = r.json()
+                break
+            except (requests.ConnectionError, requests.Timeout) as e:
+                # 해외 서버(GitHub Actions)에서 ECOS 접속이 가끔 늦다 → 5·15·45초 뒤 다시 시도
+                if attempt < 3:
+                    time.sleep(5 * 3 ** attempt)
+                    continue
+                raise EcosError(f"{type(e).__name__}(4회 시도): {str(e).replace(key, '***')}") from None
+            except Exception as e:
+                # 키가 URL 경로에 들어가므로 오류 문구에서 지운다(status.json은 공개 사이트에 실린다)
+                raise EcosError(f"{type(e).__name__}: {str(e).replace(key, '***')}") from None
         if "RESULT" in data:
             code = data["RESULT"].get("CODE", "")
             if code == "INFO-200":   # 해당 데이터 없음

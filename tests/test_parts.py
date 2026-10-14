@@ -204,6 +204,7 @@ def test_ecos_error_hides_key(monkeypatch):
     def boom(url, timeout):
         raise requests.ConnectionError(f"failed: {url}")
     monkeypatch.setattr(fetch_rates.requests, "get", boom)
+    monkeypatch.setattr(fetch_rates.time, "sleep", lambda s: None)
     cfg = {"ecos": {"base_url": "https://ecos.bok.or.kr/api", "key_env": "X"}}
     with pytest.raises(fetch_rates.EcosError) as ei:
         fetch_rates.ecos_get(cfg, "StatisticItemList", ["817Y002"], key="SECRETKEY123")
@@ -267,3 +268,24 @@ def test_status_messages_redact_keys(monkeypatch):
            "Incorrect API key provided: sk-proj-****abcdEFGH1234; serviceKey=AbCdEf123456%3D%3D; id abcd1234xy")
     out = common.redact(msg)
     assert "abcd1234xy" not in out and "abcdEFGH1234" not in out and "AbCdEf123456" not in out
+
+
+def test_ecos_retries_timeouts_then_succeeds(monkeypatch):
+    import requests
+    from bokwatch import fetch_rates
+    calls = []
+
+    class R:
+        def raise_for_status(self): pass
+        def json(self): return {"StatisticSearch": {"row": [{"TIME": "20261013", "DATA_VALUE": "3.24"}]}}
+
+    def flaky(url, timeout):
+        calls.append(1)
+        if len(calls) < 3:
+            raise requests.ConnectTimeout("timeout")
+        return R()
+    monkeypatch.setattr(fetch_rates.requests, "get", flaky)
+    monkeypatch.setattr(fetch_rates.time, "sleep", lambda s: None)
+    cfg = {"ecos": {"base_url": "https://ecos.bok.or.kr/api", "key_env": "X"}}
+    rows = fetch_rates.ecos_get(cfg, "StatisticSearch", ["817Y002"], key="K")
+    assert len(calls) == 3 and rows[0]["DATA_VALUE"] == "3.24"
