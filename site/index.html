@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<title>중앙 BOK워치</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:,">
+</head>
+<body>
+<div id="banner" class="banner" hidden>사내 보고용 · 외부 공유 금지</div>
+<div id="alerts" class="alerts" aria-live="polite"></div>
+
+<header class="top">
+  <div class="brand">
+    <h1>중앙 BOK워치</h1>
+    <span class="en">JoongAng BOK Watch</span>
+  </div>
+  <div class="meta" id="meta"></div>
+  <div class="tools">
+    <label class="date-pick">기준일 <select id="snapDate" aria-label="스냅샷 날짜"></select></label>
+    <button id="copyLink" type="button">링크 복사</button>
+    <button id="themeBtn" type="button" aria-label="화면 테마 전환">테마</button>
+  </div>
+</header>
+
+<section class="strip" id="strip" aria-label="시장 vs 한은 vs 전문가"></section>
+
+<nav class="tabs" role="tablist" id="tabs">
+  <button role="tab" data-tab="market">시장 확률</button>
+  <button role="tab" data-tab="guidance">총재 가이던스</button>
+  <button role="tab" data-tab="minutes">의사록</button>
+  <button role="tab" data-tab="news">기사·보고서</button>
+  <button role="tab" data-tab="memo">보고 메모</button>
+  <button role="tab" data-tab="method">방법·검증</button>
+</nav>
+
+<main>
+  <section class="panel" id="tab-market" role="tabpanel">
+    <div class="row-head">
+      <h2>회의별 인상 확률</h2>
+      <div class="seg" id="spreadToggle" role="group" aria-label="정상 스프레드 가정">
+        <button data-s="-5">−5bp</button><button data-s="0">기본</button><button data-s="5">+5bp</button>
+      </div>
+    </div>
+    <div class="gauges" id="gauges"></div>
+    <h3>회의 뒤 목표금리 확률 <small>FedWatch 방식 · 최댓값 강조</small></h3>
+    <div class="tbl-wrap"><table class="grid" id="probTable"></table></div>
+    <h3>투입 금리</h3>
+    <div class="tbl-wrap"><table class="grid" id="inputTable"></table></div>
+    <h3 class="no-print">인상 확률 추이 <small>세로선: 금통위·의사록 공개·CPI</small></h3>
+    <div id="trend" class="chart"></div>
+    <p class="note" id="marketNote"></p>
+  </section>
+
+  <section class="panel" id="tab-guidance" role="tabpanel" hidden>
+    <div class="row-head">
+      <h2>점도표 <small>6개월 뒤 조건부 전망</small></h2>
+      <label class="no-print">공개분 <select id="dotSel"></select></label>
+    </div>
+    <div class="dots" id="dots"></div>
+    <p class="note" id="dotNote"></p>
+    <h2>회의별 결정·문구 변화</h2>
+    <div id="meetCards"></div>
+    <div class="row-head">
+      <h2>발언 타임라인 <small class="print-only-inline">최근 3건</small></h2>
+      <div class="filters">
+        <select id="spkSel" aria-label="발언자"><option value="">발언자 전체</option></select>
+        <select id="venSel" aria-label="장소"><option value="">장소 전체</option></select>
+      </div>
+    </div>
+    <ol class="timeline" id="timeline"></ol>
+    <h3 class="no-print">매파·비둘기 보조점수 <small>자동 산출 · 참고용</small></h3>
+    <div id="tone" class="chart small"></div>
+  </section>
+
+  <section class="panel" id="tab-minutes" role="tabpanel" hidden>
+    <h2>금통위 의사록·결정문</h2>
+    <div class="tbl-wrap"><table class="grid" id="minTable"></table></div>
+    <h3>최신 의사록 위원 견해 키워드 <small>자동 추출 · 참고용 · 반드시 원문 확인</small></h3>
+    <div id="views"></div>
+  </section>
+
+  <section class="panel" id="tab-news" role="tabpanel" hidden>
+    <div class="row-head">
+      <h2>'신현송' 기사 <small id="newsCount"></small></h2>
+    </div>
+    <div class="chips" id="chips"></div>
+    <ul class="news" id="newsList"></ul>
+    <h2>보고서 전망</h2>
+    <input id="repSearch" type="search" placeholder="기관·작성자·근거 검색" aria-label="보고서 검색">
+    <div class="tbl-wrap"><table class="grid sortable" id="repTable"></table></div>
+    <h3>컨센서스 vs 시장</h3>
+    <div id="consensus" class="cons"></div>
+    <h3>금투협 채권시장지표 설문</h3>
+    <div id="kofia"></div>
+  </section>
+
+  <section class="panel" id="tab-memo" role="tabpanel" hidden>
+    <div class="row-head"><h2>보고 메모 초안</h2><button id="copyMemo" type="button">복사</button></div>
+    <pre class="memo" id="memo"></pre>
+    <p class="note" id="memoNote"></p>
+  </section>
+
+  <section class="panel" id="tab-method" role="tabpanel" hidden>
+    <div id="method"></div>
+  </section>
+</main>
+
+<div id="printSummary" class="print-only"></div>
+<footer class="foot">중앙 BOK워치 · 사내 보고용 · 수치는 기준일·출처 표기 기준</footer>
+<div id="tip" class="tip" role="tooltip" hidden></div>
+<script src="vendor/d3.v7.9.0.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
