@@ -17,7 +17,7 @@ import requests
 from .common import KST, SITE_DATA, load_config, now_kst, record_status
 
 NEWS = SITE_DATA / "news.jsonl"
-UA = {"User-Agent": "Mozilla/5.0 (JoongAng BOK Watch RSS reader)"}
+UA = {"User-Agent": "Mozilla/5.0 (BOK Watch RSS reader)"}
 
 
 def _clean(s: str, n: int | None = None) -> str:

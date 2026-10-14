@@ -11,7 +11,8 @@ import json
 from datetime import timedelta
 
 from bokwatch import market
-from bokwatch.common import SITE_DATA, all_meetings, d, load_config, now_kst, read_json, write_json
+from bokwatch.common import DATA, SITE_DATA, all_meetings, d, load_config, now_kst, read_json, write_json
+from bokwatch.fetch_futures import by_date, load_futures
 from bokwatch.fetch_news import load_news
 from bokwatch.guidance import build_guidance
 from bokwatch.memo import build_memo
@@ -23,11 +24,12 @@ SNAP = SITE_DATA / "snapshots"
 def build_market(cfg, today):
     rows = market.all_rate_rows()
     spreads = market.estimate_spreads(rows, cfg)
-    dates = [x for x in market.data_dates(rows, cfg) if x <= today]
+    fut = by_date(load_futures())
+    dates = [x for x in market.data_dates(rows, cfg, fut) if x <= today]
     SNAP.mkdir(parents=True, exist_ok=True)
     hist, index = [], []
     for day in dates:
-        res = market.run_day(rows, cfg, day, spreads)
+        res = market.run_day(rows, cfg, day, spreads, fut_by_date=fut)
         if not res:
             continue
         res["spreads"] = spreads
@@ -43,8 +45,82 @@ def build_market(cfg, today):
         w = csv.DictWriter(f, ["date", "scenario", "meeting", "p_hike", "p_hold", "p_cut", "expected"])
         w.writeheader()
         w.writerows(hist)
-    write_json(SITE_DATA / "backtest.json", market.backtest(rows, cfg, spreads))
+    write_json(SITE_DATA / "backtest.json", market.backtest(rows, cfg, spreads, fut_by_date=fut))
     return index
+
+
+PROB_LOG = DATA / "prob_log.csv"
+LOG_FIELDS = ["date", "asof", "status", "meeting", "p_hike", "p_hold", "p_cut", "expected", "instrument", "spread_bp", "note"]
+
+
+QUAL_WEIGHTS = (0.1, 0.2)
+
+
+def qual_mix(cur, qual) -> dict | None:
+    """실험값 3: CD 모형 + AI 정성 확률(시장 확률을 보지 않고 낸 값) 가중평균. 다음 회의만."""
+    qp = (qual or {}).get("probs")
+    if not cur or not qp:
+        return None
+    cd = next((m for m in cur["scenarios"]["0"]["meetings"] if m["in_range"] and m["date"] == qp["meeting"]), None)
+    out = {"meeting": qp["meeting"], "qual": {k: qp[k] for k in ("p_hike", "p_hold", "p_cut")}, "reason": qp.get("reason", ""),
+           "generated": qp.get("generated")}
+    if cd:
+        for w in QUAL_WEIGHTS:
+            out[f"w{int(w * 100)}"] = {k: round((1 - w) * cd[k] + w * qp[k], 4) for k in ("p_hike", "p_hold", "p_cut")}
+    return out
+
+
+def experimental_note(cur, date_s: str) -> str:
+    """기록 비고: 실험값(KOFR 선물, CD·KOFR 혼합, AI 정성 확률·CD+정성) 인상확률."""
+    comp = (cur or {}).get("components") or {}
+    out = []
+    kf = next((m for m in (comp.get("kofr_futures") or {}).get("meetings", []) if m["date"] == date_s), None)
+    bl = next((m for m in (comp.get("blend_experimental") or {}).get("meetings", []) if m["date"] == date_s), None)
+    if kf:
+        out.append(f"KOFR선물(실험) {kf['p_hike'] * 100:.1f}%")
+    if bl:
+        out.append(f"혼합(실험) {bl['p_hike'] * 100:.1f}%")
+    qm = comp.get("qual_mix")
+    if qm and qm["meeting"] == date_s:
+        out.append(f"AI정성 {qm['qual']['p_hike'] * 100:.1f}%")
+        for w in QUAL_WEIGHTS:
+            k = f"w{int(w * 100)}"
+            if k in qm:
+                out.append(f"CD+정성{int(w * 100)}% {qm[k]['p_hike'] * 100:.1f}%")
+    return " · ".join(out)
+
+
+def update_prob_log(cur, today, stalled: str | None, write: bool) -> list[dict]:
+    """매일 화면에 낸 확률을 날짜별로 고정 저장한다(재계산으로 바뀌지 않는 기록).
+    write=True(일일 실행)일 때만 오늘 줄을 새로 쓰고, 같은 날 다시 돌리면 오늘 줄만 바꾼다."""
+    rows = []
+    if PROB_LOG.exists():
+        with open(PROB_LOG, encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+    if write:
+        day = today.isoformat()
+        rows = [r for r in rows if r["date"] != day]
+        if cur and not stalled:
+            used = next((i for i in cur["inputs"] if i["used"]), {})
+            for m in cur["scenarios"]["0"]["meetings"]:
+                if m["in_range"]:
+                    rows.append({"date": day, "asof": cur["asof"], "status": "산출", "meeting": m["date"],
+                                 "p_hike": m["p_hike"], "p_hold": m["p_hold"], "p_cut": m["p_cut"],
+                                 "expected": m["expected"], "instrument": used.get("label", ""),
+                                 "spread_bp": round(used.get("spread", 0) * 100, 1),
+                                 "note": experimental_note(cur, m["date"])})
+        else:
+            exp = " / ".join(f"{d(m['date']).month}/{d(m['date']).day} {experimental_note(cur, m['date'])}"
+                             for m in ((cur or {}).get("components", {}).get("kofr_futures") or {}).get("meetings", []))
+            rows.append({"date": day, "asof": cur["asof"] if cur else "", "status": "중단", "meeting": "",
+                         "p_hike": "", "p_hold": "", "p_cut": "", "expected": "", "instrument": "", "spread_bp": "",
+                         "note": (stalled or "시장금리 없음") + (f" | 실험값 {exp}" if exp else "")})
+        rows.sort(key=lambda r: (r["date"], r["meeting"]))
+        with open(PROB_LOG, "w", encoding="utf-8", newline="") as f:
+            w = csv.DictWriter(f, LOG_FIELDS)
+            w.writeheader()
+            w.writerows(rows)
+    return rows
 
 
 def snap(index, target):
@@ -56,6 +132,7 @@ def snap(index, target):
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", choices=["news"], default=None)
+    ap.add_argument("--log", action="store_true", help="오늘 확률을 data/prob_log.csv에 기록(일일 실행 전용)")
     a = ap.parse_args(argv)
     cfg = load_config()
     now = now_kst()
@@ -101,15 +178,32 @@ def main(argv=None):
             events["skeleton"] = True
             write_json(SITE_DATA / "events.json", events)
         qual = read_json(SITE_DATA / "qual.json", {}) or {}
+        if cur:  # 실험값 3을 오늘 스냅샷에 붙인다(화면·기록용)
+            cur.setdefault("components", {})["qual_mix"] = qual_mix(cur, qual)
+            write_json(SNAP / f"{cur['asof']}.json", cur)
         memo = build_memo(now, cur, prev, week, guidance, minutes, reports, events, qual)
+        # 시장금리는 들어왔는데 확률을 못 낸 날(투입 상품 만기가 확정 일정 밖) → 멈춤을 알린다
+        stalled = None
+        if cur and not cur.get("default_ok", True):
+            ok = [x for x in index if (read_json(SNAP / f"{x}.json", {}) or {}).get("default_ok", True)]
+            last_ok = d(ok[-1]) if ok else None
+            stalled = (f"{d(cur['asof']).month}/{d(cur['asof']).day} CD 91일 만기가 확정 일정({cfg['schedule_known_through']}) 밖이라 "
+                       "기본 추정치(CD 모형) 산출 중단"
+                       + (f". 마지막 산출 {last_ok.month}/{last_ok.day}" if last_ok else "")
+                       + ". 다음 해 금통위 일정 공지 후 재개. KOFR 선물 실험값은 계속 표시")
+            lines = memo["text"].split("\n")
+            lines.insert(2, f"- 산출 중단: {stalled}.")
+            memo["text"] = "\n".join(lines)
         write_json(SITE_DATA / "memo.json", memo)
+        write_json(SITE_DATA / "prob_log.json", update_prob_log(cur, today, stalled, a.log))
 
-        warnings = []
+        warnings = [stalled] if stalled else []
         for y, ds in cfg["meetings"].items():
             if not ds:
                 warnings.append(f"{y}년 금통위 일정 미입력")
         if cur:
-            warnings += cur.get("warnings", [])
+            # 산출 중단 문구를 이미 넣었으면 같은 뜻의 스냅샷 경고는 빼서 겹치지 않게 한다
+            warnings += [w for w in cur.get("warnings", []) if not (stalled and "확정 일정" in w)]
             if any("수기입력" in i["source"] or "수동" in i["source"] for i in cur["inputs"] if i["used"]):
                 warnings.append("시장금리 일부가 수기 입력값(ECOS 대조 필요)")
         meta.update({
@@ -122,7 +216,8 @@ def main(argv=None):
             "new_reports": reports["new"],
             "events": [e for e in events.get("all", []) if e["kind"] in cfg["events"]["chart_kinds"]],
             "next_event": next((e for e in events.get("upcoming", []) if e["kind"] not in ("bok", "minutes")
-                                and e.get("importance", 0) >= 3), None),
+                                and e.get("importance", 0) >= 3
+                                and f"{e['date']} {e.get('time') or '23:59'}" > now.strftime("%Y-%m-%d %H:%M")), None),
             "levels": cfg["model"]["levels"],
             "banner": cfg["site"]["show_internal_banner"],
             "sources": [
@@ -130,10 +225,10 @@ def main(argv=None):
                 {"name": "한국은행 홈페이지", "what": "통화정책방향 결정문, 금통위 의사록, 기자간담회", "url": "https://www.bok.or.kr/"},
                 {"name": "연합뉴스 RSS", "what": "제목·시각·링크·피드 요약", "url": "https://www.yna.co.kr/rss/index"},
                 {"name": "BLS·연준·FRED", "what": "미국 CPI·고용 일정, FOMC 일정, 미국 CPI 실제치", "url": "https://www.bls.gov/schedule/"},
-                {"name": "네이버 뉴스 검색 API", "what": "제목·검색 요약·링크(AI 정성 판단 입력)", "url": "https://developers.naver.com/docs/serviceapi/search/news/news.md"},
-                {"name": "Anthropic Claude API", "what": "기사 태깅·정성 종합 판단(자동, 참고용)", "url": None},
+                {"name": "네이버 뉴스 검색 API(NAVER API HUB)", "what": "제목·검색 요약·링크(AI 정성 판단 입력)", "url": "https://api.ncloud-docs.com/docs/naver-api-hub-search-news"},
+                {"name": "OpenAI API", "what": "기사 태깅·정성 종합 판단(자동, 참고용)", "url": None},
                 {"name": "data/reports.yaml", "what": "증권사·IB 전망(수기, 보도 인용)", "url": None},
-                {"name": "data/guidance.yaml", "what": "결정·표결·점도표·발언(수기, 보도 인용)", "url": None},
+                {"name": "data/guidance.yaml", "what": "결정·표결·점도표(한은 공보 대조), 발언(보도 인용)", "url": None},
             ],
         })
     meta["new_main_news"] = new_main

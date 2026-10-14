@@ -6,7 +6,7 @@ import pytest
 
 from bokwatch import ai_judge
 from bokwatch.common import KST
-from bokwatch.fetch_events import parse_bls_schedule, parse_fomc, parse_fred_csv, yoy_from_series
+from bokwatch.fetch_events import parse_bls_ics, parse_bls_schedule, parse_fomc, parse_fred_csv, yoy_from_series
 from bokwatch.fetch_naver import merge as nmerge, parse_items
 
 BLS = """<table class="release-list"><tr><th>Reference Month</th><th>Release Date</th><th>Release Time</th></tr>
@@ -38,7 +38,7 @@ def test_fomc_parse():
 def test_yoy():
     pts = parse_fred_csv("observation_date,CPIAUCNS\n2025-08-01,100.0\n2025-09-01,100.5\n2026-08-01,103.0\n2026-09-01,103.0\n")
     y = yoy_from_series(pts)
-    assert y["month"] == "2026-09" and y["yoy"] == pytest.approx(2.49, abs=0.01) and y["prev_yoy"] == 3.0
+    assert y["month"] == "2026-09" and y["yoy"] == 2.5 and y["prev_yoy"] == 3.0  # 2.4875… → 2.5
 
 
 NAVER = {"items": [
@@ -59,19 +59,21 @@ def test_naver_parse_and_dedupe():
 
 # ---------------------------------------------------------------- AI: 가짜 클라이언트
 class FakeClient:
+    """openai.OpenAI().chat.completions.create 흉내."""
     def __init__(self, replies):
         self.replies = list(replies)
         self.calls = []
-        self.beta = SimpleNamespace(messages=SimpleNamespace(create=self._create))
+        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self._create))
 
     def _create(self, **kw):
         self.calls.append(kw)
         r = self.replies.pop(0)
-        return SimpleNamespace(stop_reason=r.get("stop", "end_turn"), stop_details=None,
-                               content=[SimpleNamespace(type="text", text=json.dumps(r["json"], ensure_ascii=False))])
+        msg = SimpleNamespace(content=None if r.get("refusal") else json.dumps(r["json"], ensure_ascii=False),
+                              refusal=r.get("refusal"))
+        return SimpleNamespace(choices=[SimpleNamespace(message=msg, finish_reason=r.get("finish", "stop"))])
 
 
-CFG = {"model": "claude-opus-5-5", "classify_effort": "low", "synth_effort": "medium", "batch_size": 2,
+CFG = {"model": "test-model", "classify_effort": "low", "synth_effort": "medium", "batch_size": 2,
        "max_new_per_run": 10, "window_hours": 72, "factors": ["물가", "환율", "성장·경기", "기타"]}
 NOW = datetime(2026, 10, 14, 18, tzinfo=KST)
 ARTS = [{"id": f"a{i}", "title": f"t{i}", "summary": "", "press": "p", "link": f"L{i}",
@@ -89,9 +91,10 @@ def test_classify_batches_cache_and_request_shape():
     n, errs = ai_judge.classify(fc, CFG, ARTS, tags)
     assert n == 3 and errs == [] and "zzz" not in tags          # 입력에 없는 id는 버림
     kw = fc.calls[0]
-    assert kw["model"] == "claude-opus-5-5" and kw["fallbacks"] == "default"
-    assert kw["output_config"]["format"]["type"] == "json_schema" and kw["output_config"]["effort"] == "low"
-    assert "<articles>" in kw["messages"][0]["content"]
+    assert kw["model"] == "test-model" and kw["reasoning_effort"] == "low"
+    rf = kw["response_format"]
+    assert rf["type"] == "json_schema" and rf["json_schema"]["strict"] is True
+    assert kw["messages"][0]["role"] == "system" and "<articles>" in kw["messages"][1]["content"]
     # 캐시된 기사는 다시 부르지 않는다
     n2, _ = ai_judge.classify(FakeClient([]), CFG, ARTS, tags)
     assert n2 == 0
@@ -107,7 +110,13 @@ def test_synth_drops_unknown_ids_and_refusal(monkeypatch):
     res = ai_judge.synthesize(FakeClient([{"json": out}]), CFG, ARTS, tags, NOW - timedelta(hours=72))
     assert res["drivers"][0]["article_ids"] == ["a0"]
     with pytest.raises(ai_judge.AIError):
-        ai_judge.synthesize(FakeClient([{"json": {}, "stop": "refusal"}]), CFG, ARTS, tags, NOW - timedelta(hours=72))
+        ai_judge.synthesize(FakeClient([{"refusal": "거절"}]), CFG, ARTS, tags, NOW - timedelta(hours=72))
+    with pytest.raises(ai_judge.AIError):
+        ai_judge.synthesize(FakeClient([{"json": {}, "finish": "length"}]), CFG, ARTS, tags, NOW - timedelta(hours=72))
+    # effort 미지정(비추론 모델)이면 reasoning_effort를 보내지 않는다
+    fc = FakeClient([{"json": out}])
+    ai_judge.synthesize(fc, {**CFG, "synth_effort": None}, ARTS, tags, NOW - timedelta(hours=72))
+    assert "reasoning_effort" not in fc.calls[0]
 
 
 def test_memo_with_events_and_ai():
@@ -125,3 +134,72 @@ def test_memo_with_events_and_ai():
     assert m["lint"] == [], m["text"]
     assert "정성 판단(AI 자동 산출, 참고용)" in m["text"] and "10/15 21:30 미국 CPI" not in m["text"]
     assert "10월 15일 21:30 미국 CPI(9월분)" in m["text"] and "미국 CPI 8월 2.9%(전월 2.7%)" in m["text"]
+
+
+def test_yoy_single_rounding_real_values():
+    # FRED CPILFENS 2025-08 329.970 → 2026-08 338.041 = 2.44598% → BLS 공표 방식 2.4% (2.45 경유 2.5 아님)
+    pts = [("2025-08", 329.970), ("2026-08", 338.041)]
+    assert yoy_from_series(pts)["yoy"] == 2.4
+
+
+ICS = """BEGIN:VCALENDAR
+BEGIN:VEVENT
+UID:a
+DTSTART;TZID=US-Eastern:20261014T083000
+SUMMARY:Consumer Price Index
+END:VEVENT
+BEGIN:VEVENT
+UID:b
+DTSTART;TZID=US-Eastern:20261110T083000
+SUMMARY:Consumer Price Index
+END:VEVENT
+BEGIN:VEVENT
+UID:c
+DTSTART;TZID=US-Eastern:20261014T083000
+SUMMARY:Real Earnings
+END:VEVENT
+END:VCALENDAR
+"""
+
+
+def test_bls_ics_today_release_kst():
+    rows = parse_bls_ics(ICS, "Consumer Price Index")
+    assert [x["release"].strftime("%Y-%m-%d %H:%M") for x in rows] == ["2026-10-14 21:30", "2026-11-10 22:30"]
+
+
+def test_same_event_counted_once():
+    # 같은 발언을 다섯 매체가 보도(인상 압력)한 사건 1개 vs 인하 압력 단독 기사 1개
+    arts = [{"id": f"s{i}", "title": f"신현송 K자형 뚜렷 물가 낮춰야 {i}", "published": "2026-10-14T15:00+09:00"} for i in range(5)]
+    arts.append({"id": "d0", "title": "수출 둔화 우려 확대", "published": "2026-10-14T15:00+09:00"})
+    tags = {a["id"]: {"relevant": True, "factor": "한은 커뮤니케이션", "direction": "인상 압력", "strength": 2, "reason": "r"} for a in arts[:5]}
+    tags["d0"] = {"relevant": True, "factor": "성장·경기", "direction": "인하 압력", "strength": 2, "reason": "r"}
+    since = NOW - timedelta(hours=72)
+    per_article = ai_judge.pressure_index(arts, tags, since)          # 기사 단위: 5 대 1
+    groups = ai_judge.group_by_title(arts)
+    assert sorted(len(g["ids"]) for g in groups) == [1, 5]
+    per_event = ai_judge.pressure_index(arts, tags, since, groups)    # 사건 단위: 가중 2 대 1
+    assert per_article["index"] == pytest.approx(4 / 6, abs=1e-3)
+    assert per_event["n"] == 2 and per_event["n_articles"] == 6
+    assert per_event["index"] == pytest.approx((2 * 2 - 2 * 1) / (2 * 2 + 2 * 1), abs=1e-3)  # 보도 5건 → 가중 최대 2배
+
+
+def test_ai_catchall_and_topic_groups_are_split():
+    arts = [{"id": f"a{i}", "title": f"t{i}", "published": "2026-10-14T10:00+09:00"} for i in range(4)]
+
+    class C:
+        chat = None
+    fake = FakeClient([{"json": {"groups": [{"label": "개별 기타 기사", "ids": ["a0", "a1"]},
+                                            {"label": "총재 CNN 패널 10/14", "ids": ["a2", "a3"]}]}}])
+    groups, err = ai_judge.group_events(fake, CFG, arts)
+    assert err is None
+    assert sorted(len(g["ids"]) for g in groups) == [1, 1, 2]
+
+
+def test_bls_api_parse_skips_missing():
+    from bokwatch.fetch_events import parse_bls_api
+    j = {"status": "REQUEST_SUCCEEDED", "Results": {"series": [{"seriesID": "CUUR0000SA0", "data": [
+        {"year": "2026", "period": "M09", "value": "336.940"}, {"year": "2025", "period": "M10", "value": "-"},
+        {"year": "2025", "period": "M09", "value": "324.800"}, {"year": "2025", "period": "M13", "value": "1"}]}]}}
+    pts = parse_bls_api(j)["CUUR0000SA0"]
+    assert pts == [("2025-09", 324.8), ("2026-09", 336.94)]
+    assert yoy_from_series(pts)["yoy"] == 3.7

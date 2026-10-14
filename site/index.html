@@ -6,9 +6,9 @@
 <meta name="robots" content="noindex, nofollow, noarchive">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'">
-<title>중앙 BOK워치</title>
+<title>BOK워치</title>
 <link rel="stylesheet" href="style.css">
-<link rel="icon" href="data:,">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
 </head>
 <body>
 <div id="banner" class="banner" hidden>사내 보고용 · 외부 공유 금지</div>
@@ -16,8 +16,11 @@
 
 <header class="top">
   <div class="brand">
-    <h1>중앙 BOK워치</h1>
-    <span class="en">JoongAng BOK Watch</span>
+    <img class="logo" src="logo.svg" alt="" width="40" height="40">
+    <div class="brand-text">
+      <h1>BOK워치</h1>
+      <span class="en">BOK Watch</span>
+    </div>
   </div>
   <div class="meta" id="meta"></div>
   <div class="tools">
@@ -30,46 +33,45 @@
 <section class="strip" id="strip" aria-label="시장 vs 한은 vs 전문가"></section>
 
 <nav class="tabs" role="tablist" id="tabs">
-  <button role="tab" data-tab="market">시장 확률</button>
+  <button role="tab" data-tab="market">확률 추정</button>
   <button role="tab" data-tab="guidance">총재 가이던스</button>
   <button role="tab" data-tab="minutes">의사록</button>
   <button role="tab" data-tab="news">기사·보고서</button>
   <button role="tab" data-tab="qual">정성 판단(AI)</button>
-  <button role="tab" data-tab="memo">보고 메모</button>
   <button role="tab" data-tab="method">방법·검증</button>
 </nav>
 
 <main>
   <section class="panel" id="tab-market" role="tabpanel">
     <div class="row-head">
-      <h2>회의별 인상 확률</h2>
+      <h2>회의별 인상 확률 <small>모형 추정치 · CD 91일 기준</small></h2>
       <div class="seg" id="spreadToggle" role="group" aria-label="정상 스프레드 가정">
-        <button data-s="-5">−5bp</button><button data-s="0">기본</button><button data-s="5">+5bp</button>
+        <button data-s="-5" title="정상 스프레드를 5bp 작게 잡은 결과">−5bp</button><button data-s="0" title="추정한 정상 스프레드 그대로">기본</button><button data-s="5" title="정상 스프레드를 5bp 크게 잡은 결과">+5bp</button>
       </div>
     </div>
+    <p class="note stale-note" id="staleNote" hidden></p>
+    <p class="note spread-note" id="spreadNote"></p>
     <div class="gauges" id="gauges"></div>
     <h3>회의 뒤 목표금리 확률 <small>FedWatch 방식 · 최댓값 강조</small></h3>
     <div class="tbl-wrap"><table class="grid" id="probTable"></table></div>
+    <h3>날짜별 확률 기록 <small>매일 10시 갱신 때 화면에 낸 값 그대로 · 기본값 CD 모형, 비고에 실험값</small></h3>
+    <div class="tbl-wrap"><table class="grid" id="logTable"></table></div>
+    <p class="note" id="logNote"></p>
     <h3>투입 금리</h3>
     <div class="tbl-wrap"><table class="grid" id="inputTable"></table></div>
+    <h3>KOFR 3개월 선물 <small>실험값 · 한국거래소 정산가격 · 계산에 쓴 결제월</small></h3>
+    <div class="tbl-wrap"><table class="grid" id="futTable"></table></div>
+    <p class="note" id="futNote"></p>
     <h3>경제지표·이벤트 <small>다음 45일 · KST</small></h3>
     <div class="cons" id="indicators"></div>
     <div class="tbl-wrap" style="margin-top:10px"><table class="grid" id="eventTable"></table></div>
     <p class="note" id="eventNote"></p>
-    <h3 class="no-print">인상 확률 추이 <small>세로선: 금통위·의사록 공개·CPI</small></h3>
-    <div id="trend" class="chart"></div>
+    <h3 class="no-print">인상 확률 최근 흐름 <small>CD 모형 · 다가오는 회의만 · 과거 금리를 현재 가정으로 다시 계산</small></h3>
+    <div id="trend"></div>
     <p class="note" id="marketNote"></p>
   </section>
 
   <section class="panel" id="tab-guidance" role="tabpanel" hidden>
-    <div class="row-head">
-      <h2>점도표 <small>6개월 뒤 조건부 전망</small></h2>
-      <label class="no-print">공개분 <select id="dotSel"></select></label>
-    </div>
-    <div class="dots" id="dots"></div>
-    <p class="note" id="dotNote"></p>
-    <h2>회의별 결정·문구 변화</h2>
-    <div id="meetCards"></div>
     <div class="row-head">
       <h2>발언 타임라인 <small class="print-only-inline">최근 3건</small></h2>
       <div class="filters">
@@ -78,6 +80,14 @@
       </div>
     </div>
     <ol class="timeline" id="timeline"></ol>
+    <div class="row-head">
+      <h2>점도표 <small>6개월 뒤 조건부 전망</small></h2>
+      <label class="no-print">공개분 <select id="dotSel"></select></label>
+    </div>
+    <div class="dots" id="dots"></div>
+    <p class="note" id="dotNote"></p>
+    <h2>회의별 결정·문구 변화</h2>
+    <div id="meetCards"></div>
     <h3 class="no-print">매파·비둘기 보조점수 <small>자동 산출 · 참고용</small></h3>
     <div id="tone" class="chart small"></div>
   </section>
@@ -85,7 +95,7 @@
   <section class="panel" id="tab-minutes" role="tabpanel" hidden>
     <h2>금통위 의사록·결정문</h2>
     <div class="tbl-wrap"><table class="grid" id="minTable"></table></div>
-    <h3>최신 의사록 위원 견해 키워드 <small>자동 추출 · 참고용 · 반드시 원문 확인</small></h3>
+    <h3>최신 의사록 위원별 의견 <small>첫 문장 자동 판정</small></h3>
     <div id="views"></div>
   </section>
 
@@ -109,11 +119,6 @@
     <div id="qualBody"></div>
   </section>
 
-  <section class="panel" id="tab-memo" role="tabpanel" hidden>
-    <div class="row-head"><h2>보고 메모 초안</h2><button id="copyMemo" type="button">복사</button></div>
-    <pre class="memo" id="memo"></pre>
-    <p class="note" id="memoNote"></p>
-  </section>
 
   <section class="panel" id="tab-method" role="tabpanel" hidden>
     <div id="method"></div>
@@ -121,7 +126,7 @@
 </main>
 
 <div id="printSummary" class="print-only"></div>
-<footer class="foot">중앙 BOK워치 · 사내 보고용 · 수치는 기준일·출처 표기 기준</footer>
+<footer class="foot">BOK워치 · 수치는 기준일·출처 표기 기준</footer>
 <div id="tip" class="tip" role="tooltip" hidden></div>
 <script src="vendor/d3.v7.9.0.min.js"></script>
 <script src="app.js"></script>

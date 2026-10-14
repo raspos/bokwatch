@@ -38,9 +38,13 @@ def ecos_get(cfg, service: str, params: list, key: str | None = None) -> list[di
     while True:
         url = "/".join([cfg["ecos"]["base_url"], service, key, "json", "kr",
                         str(start), str(start + page - 1)] + [str(p) for p in params])
-        r = requests.get(url, timeout=30)
-        r.raise_for_status()
-        data = r.json()
+        try:
+            r = requests.get(url, timeout=30)
+            r.raise_for_status()
+            data = r.json()
+        except Exception as e:
+            # 키가 URL 경로에 들어가므로 오류 문구에서 지운다(status.json은 공개 사이트에 실린다)
+            raise EcosError(f"{type(e).__name__}: {str(e).replace(key, '***')}") from None
         if "RESULT" in data:
             code = data["RESULT"].get("CODE", "")
             if code == "INFO-200":   # 해당 데이터 없음
@@ -77,7 +81,7 @@ def write_item_codes(codes: dict, cfg_path: Path = DATA / "config.yaml") -> None
     for iid, (code, _name) in codes.items():
         text = re.sub(rf"(\{{id: {iid},.*?item_code: )([^}}]*)(\}})",
                       lambda m: f"{m.group(1)}\"{code}\"{m.group(3)}", text)
-    cfg_path.write_text(text, encoding="utf-8")
+    cfg_path.write_text(text, encoding="utf-8", newline="\n")
 
 
 def resolve(cfg) -> dict:
@@ -91,7 +95,7 @@ def resolve(cfg) -> dict:
         text = (DATA / "config.yaml").read_text(encoding="utf-8")
         text = re.sub(r"(base_rate: \{.*?item_code: )([^}]*)(\})",
                       lambda m: f"{m.group(1)}\"{codes_br['base'][0]}\"{m.group(3)}", text)
-        (DATA / "config.yaml").write_text(text, encoding="utf-8")
+        (DATA / "config.yaml").write_text(text, encoding="utf-8", newline="\n")
     write_item_codes(codes)
     return codes
 

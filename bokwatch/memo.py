@@ -1,6 +1,6 @@
 """보고 메모 초안 (중앙일보 경제부 내부 메모 형식).
 
-첫 줄 "HH시/E▶" 헤드라인, 다음 줄부터 '-' 문단 5~7개. 마크다운·번호목록 없음.
+첫 줄 헤드라인(시각·E▶ 머리표 없음), 다음 줄부터 '-' 문단 5~7개. 마크다운·번호목록 없음.
 """
 from __future__ import annotations
 
@@ -75,7 +75,7 @@ def build_memo(now: datetime, cur: dict | None, prev: dict | None, week: dict | 
             h += f", {mon(ms[1]['date'])}은 {pct(ms[1]['p_hike'])}"
     else:
         h = "시장금리 미수집, 한은·전문가 동향만 정리"
-    head = f"{now.hour:02d}시/E▶" + " ".join(flags + [f"중앙 BOK워치: {h}"])
+    head = " ".join(flags + [f"BOK워치: {h}"])
 
     # 1. 시장 확률
     if cur:
@@ -110,13 +110,20 @@ def build_memo(now: datetime, cur: dict | None, prev: dict | None, week: dict | 
             lines.append(f"- 24시간 내 새 한은 발언은 없다. 최근 발언은 {qs}.")
     if new_minutes:
         m = new_minutes[0]
-        v = m.get("views", {}).get("totals")
-        vs = f" 위원 단락 키워드는 인상 {v.get('인상', 0)}·동결 {v.get('동결', 0)}·인하 {v.get('인하', 0)}회(자동 추출, 참고용)." if v else ""
+        vw = m.get("views", {})
+        v = vw.get("totals")
+        vs = f" 위원별 의견은 인상 {v.get('인상', 0)}·동결 {v.get('동결', 0)}·인하 {v.get('인하', 0)}명(첫 문장 자동 판정)." if v else ""
+        if vw.get("dissent"):
+            vs += " 소수의견 " + ", ".join(f"{x['name']}({x.get('view') or '–'})" for x in vw["dissent"]) + "."
         lines.append(f"- {md(m['date'])} 회의 의사록이 공개됐다.{vs}")
     latest_m = next((m for m in guidance.get("meetings", []) if m.get("diff")), None)
     if latest_m and not new_minutes:
-        adds = [x["text"] for x in latest_m["diff"] if x["op"] == "add"]
-        dels = [x["text"] for x in latest_m["diff"] if x["op"] == "del"]
+        # 원문 전체가 들어오면 문장 대부분이 바뀐다. 포워드 가이던스('향후 통화정책') 문장을 우선 보고, 표결 문장은 뺀다.
+        def pick(op):
+            xs = [x["text"] for x in latest_m["diff"] if x["op"] == op and not re.search(r"금융통화위원 \d명", x["text"])]
+            fg = [x for x in xs if "향후 통화정책" in x]
+            return fg or xs
+        adds, dels = pick("add"), pick("del")
         if adds or dels:
             t = f"직전 통방문({md(latest_m['date'])})은"
             if adds:

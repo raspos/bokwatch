@@ -1,8 +1,1379 @@
 {
- "n": 0,
- "rule": "회의 3영업일 전 종가, 기본 스프레드",
- "hit_rate": null,
- "brier": null,
- "rows": [],
- "note": "과거 시장금리 이력이 없어 산출하지 못함 (ECOS --full 수집 후 자동 산출)"
+ "n": 45,
+ "rule": "회의 3영업일 전 종가, 기본 스프레드. 기본값 CD 91일 모형, 실험값 KOFR 선물·혼합(KOFR 50%)",
+ "excluded": [],
+ "hit_rate": 0.7333,
+ "brier": 0.4822,
+ "compare": {
+  "n": 36,
+  "first": "2022-04-14",
+  "excluded_before": [
+   "2021-02-25",
+   "2021-04-15",
+   "2021-05-27",
+   "2021-07-15",
+   "2021-08-26",
+   "2021-10-12",
+   "2021-11-25",
+   "2022-01-14",
+   "2022-02-24"
+  ],
+  "cd": {
+   "hit_rate": 0.75,
+   "brier": 0.4612
+  },
+  "kofr": {
+   "hit_rate": 0.5556,
+   "brier": 0.6627
+  },
+  "blend": {
+   "hit_rate": 0.6389,
+   "brier": 0.3493
+  },
+  "always_hold": {
+   "hit_rate": 0.6389,
+   "brier": 0.7222
+  },
+  "walk_forward": {
+   "start_after": 12,
+   "n": 24,
+   "mix": {
+    "hits": 14,
+    "brier": 0.4616
+   },
+   "cd": {
+    "hits": 18,
+    "brier": 0.4322
+   },
+   "always_hold": {
+    "hits": 18
+   },
+   "rows": [
+    {
+     "meeting": "2023-10-19",
+     "w": 0.7,
+     "hit": false,
+     "brier": 0.5124,
+     "cd_hit": true,
+     "cd_brier": 0.0178,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2023-11-30",
+     "w": 0.6,
+     "hit": true,
+     "brier": 0.1263,
+     "cd_hit": true,
+     "cd_brier": 0.1432,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2024-01-11",
+     "w": 0.6,
+     "hit": false,
+     "brier": 0.7237,
+     "cd_hit": true,
+     "cd_brier": 0.0001,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2024-02-22",
+     "w": 0.5,
+     "hit": true,
+     "brier": 0.2023,
+     "cd_hit": true,
+     "cd_brier": 0.0,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2024-04-12",
+     "w": 0.5,
+     "hit": true,
+     "brier": 0.0442,
+     "cd_hit": true,
+     "cd_brier": 0.0,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2024-05-23",
+     "w": 0.5,
+     "hit": false,
+     "brier": 0.5,
+     "cd_hit": true,
+     "cd_brier": 0.0,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2024-07-11",
+     "w": 0.4,
+     "hit": true,
+     "brier": 0.32,
+     "cd_hit": true,
+     "cd_brier": 0.0,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2024-08-22",
+     "w": 0.4,
+     "hit": false,
+     "brier": 0.9101,
+     "cd_hit": true,
+     "cd_brier": 0.4188,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2024-10-11",
+     "w": 0.3,
+     "hit": true,
+     "brier": 0.2902,
+     "cd_hit": false,
+     "cd_brier": 0.5923,
+     "actual": "cut"
+    },
+    {
+     "meeting": "2024-11-28",
+     "w": 0.3,
+     "hit": false,
+     "brier": 0.98,
+     "cd_hit": false,
+     "cd_brier": 2.0,
+     "actual": "cut"
+    },
+    {
+     "meeting": "2025-01-16",
+     "w": 0.4,
+     "hit": false,
+     "brier": 0.8393,
+     "cd_hit": true,
+     "cd_brier": 0.3411,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2025-02-25",
+     "w": 0.4,
+     "hit": true,
+     "brier": 0.3516,
+     "cd_hit": false,
+     "cd_brier": 0.9766,
+     "actual": "cut"
+    },
+    {
+     "meeting": "2025-04-17",
+     "w": 0.4,
+     "hit": false,
+     "brier": 1.0317,
+     "cd_hit": false,
+     "cd_brier": 0.9828,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2025-05-29",
+     "w": 0.4,
+     "hit": false,
+     "brier": 0.6983,
+     "cd_hit": false,
+     "cd_brier": 1.9397,
+     "actual": "cut"
+    },
+    {
+     "meeting": "2025-07-10",
+     "w": 0.5,
+     "hit": false,
+     "brier": 1.0462,
+     "cd_hit": true,
+     "cd_brier": 0.3987,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2025-08-28",
+     "w": 0.4,
+     "hit": true,
+     "brier": 0.4654,
+     "cd_hit": true,
+     "cd_brier": 0.2975,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2025-10-23",
+     "w": 0.4,
+     "hit": true,
+     "brier": 0.0632,
+     "cd_hit": true,
+     "cd_brier": 0.0,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2025-11-27",
+     "w": 0.4,
+     "hit": true,
+     "brier": 0.2701,
+     "cd_hit": true,
+     "cd_brier": 0.0,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2026-01-15",
+     "w": 0.4,
+     "hit": true,
+     "brier": 0.2678,
+     "cd_hit": true,
+     "cd_brier": 0.0,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2026-02-26",
+     "w": 0.4,
+     "hit": true,
+     "brier": 0.069,
+     "cd_hit": true,
+     "cd_brier": 0.0,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2026-04-10",
+     "w": 0.3,
+     "hit": true,
+     "brier": 0.1431,
+     "cd_hit": true,
+     "cd_brier": 0.0861,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2026-05-28",
+     "w": 0.3,
+     "hit": true,
+     "brier": 0.1994,
+     "cd_hit": true,
+     "cd_brier": 0.0887,
+     "actual": "hold"
+    },
+    {
+     "meeting": "2026-07-16",
+     "w": 0.3,
+     "hit": true,
+     "brier": 0.0442,
+     "cd_hit": true,
+     "cd_brier": 0.0902,
+     "actual": "hike"
+    },
+    {
+     "meeting": "2026-08-27",
+     "w": 0.3,
+     "hit": false,
+     "brier": 0.98,
+     "cd_hit": false,
+     "cd_brier": 2.0,
+     "actual": "hike"
+    }
+   ]
+  },
+  "by_outcome": {
+   "n_change": 13,
+   "n_hold": 23,
+   "cd": {
+    "change": 0.4118,
+    "hold": 0.8496
+   },
+   "kofr": {
+    "change": 1.0,
+    "hold": 0.3454
+   },
+   "blend": {
+    "change": 0.7059,
+    "hold": 0.5975
+   }
+  }
+ },
+ "rows": [
+  {
+   "meeting": "2021-02-25",
+   "obs_date": "2021-02-22",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형"
+  },
+  {
+   "meeting": "2021-04-15",
+   "obs_date": "2021-04-12",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형"
+  },
+  {
+   "meeting": "2021-05-27",
+   "obs_date": "2021-05-24",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형"
+  },
+  {
+   "meeting": "2021-07-15",
+   "obs_date": "2021-07-12",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형"
+  },
+  {
+   "meeting": "2021-08-26",
+   "obs_date": "2021-08-23",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hike",
+   "move_bp": 25,
+   "hit": false,
+   "brier": 2.0,
+   "source": "CD 91일 모형"
+  },
+  {
+   "meeting": "2021-10-12",
+   "obs_date": "2021-10-06",
+   "p_hike": 0.0382,
+   "p_hold": 0.9618,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0029,
+   "source": "CD 91일 모형"
+  },
+  {
+   "meeting": "2021-11-25",
+   "obs_date": "2021-11-22",
+   "p_hike": 0.26,
+   "p_hold": 0.74,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hike",
+   "move_bp": 25,
+   "hit": false,
+   "brier": 1.0952,
+   "source": "CD 91일 모형"
+  },
+  {
+   "meeting": "2022-01-14",
+   "obs_date": "2022-01-11",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hike",
+   "move_bp": 25,
+   "hit": false,
+   "brier": 2.0,
+   "source": "CD 91일 모형"
+  },
+  {
+   "meeting": "2022-02-24",
+   "obs_date": "2022-02-21",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형"
+  },
+  {
+   "meeting": "2022-04-14",
+   "obs_date": "2022-04-11",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hike",
+   "move_bp": 25,
+   "hit": false,
+   "brier": 2.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 1.0,
+    "p_hold": 0.0,
+    "p_cut": 0,
+    "hit": true,
+    "brier": 0.0
+   },
+   "blend": {
+    "p_hike": 0.5,
+    "p_hold": 0.5,
+    "p_cut": 0.0,
+    "hit": false,
+    "brier": 0.5
+   }
+  },
+  {
+   "meeting": "2022-05-26",
+   "obs_date": "2022-05-23",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hike",
+   "move_bp": 25,
+   "hit": false,
+   "brier": 2.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 1.0,
+    "p_hold": 0.0,
+    "p_cut": 0,
+    "hit": true,
+    "brier": 0.0
+   },
+   "blend": {
+    "p_hike": 0.5,
+    "p_hold": 0.5,
+    "p_cut": 0.0,
+    "hit": false,
+    "brier": 0.5
+   }
+  },
+  {
+   "meeting": "2022-07-13",
+   "obs_date": "2022-07-08",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hike",
+   "move_bp": 50,
+   "hit": false,
+   "brier": 2.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 1.0,
+    "p_hold": 0.0,
+    "p_cut": 0,
+    "hit": true,
+    "brier": 0.0
+   },
+   "blend": {
+    "p_hike": 0.5,
+    "p_hold": 0.5,
+    "p_cut": 0.0,
+    "hit": false,
+    "brier": 0.5
+   }
+  },
+  {
+   "meeting": "2022-08-25",
+   "obs_date": "2022-08-22",
+   "p_hike": 0.7942,
+   "p_hold": 0.2058,
+   "p_cut": 0,
+   "pred": "hike",
+   "actual": "hike",
+   "move_bp": 25,
+   "hit": true,
+   "brier": 0.0847,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 1.0,
+    "p_hold": 0.0,
+    "p_cut": 0,
+    "hit": true,
+    "brier": 0.0
+   },
+   "blend": {
+    "p_hike": 0.8971,
+    "p_hold": 0.1029,
+    "p_cut": 0.0,
+    "hit": true,
+    "brier": 0.0212
+   }
+  },
+  {
+   "meeting": "2022-10-12",
+   "obs_date": "2022-10-06",
+   "p_hike": 1.0,
+   "p_hold": 0.0,
+   "p_cut": 0,
+   "pred": "hike",
+   "actual": "hike",
+   "move_bp": 50,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 1.0,
+    "p_hold": 0.0,
+    "p_cut": 0,
+    "hit": true,
+    "brier": 0.0
+   },
+   "blend": {
+    "p_hike": 1.0,
+    "p_hold": 0.0,
+    "p_cut": 0.0,
+    "hit": true,
+    "brier": 0.0
+   }
+  },
+  {
+   "meeting": "2022-11-24",
+   "obs_date": "2022-11-21",
+   "p_hike": 1.0,
+   "p_hold": 0.0,
+   "p_cut": 0,
+   "pred": "hike",
+   "actual": "hike",
+   "move_bp": 25,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 1.0,
+    "p_hold": 0.0,
+    "p_cut": 0,
+    "hit": true,
+    "brier": 0.0
+   },
+   "blend": {
+    "p_hike": 1.0,
+    "p_hold": 0.0,
+    "p_cut": 0.0,
+    "hit": true,
+    "brier": 0.0
+   }
+  },
+  {
+   "meeting": "2023-01-13",
+   "obs_date": "2023-01-10",
+   "p_hike": 1.0,
+   "p_hold": 0.0,
+   "p_cut": 0,
+   "pred": "hike",
+   "actual": "hike",
+   "move_bp": 25,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 1.0,
+    "p_hold": 0.0,
+    "p_cut": 0,
+    "hit": true,
+    "brier": 0.0
+   },
+   "blend": {
+    "p_hike": 1.0,
+    "p_hold": 0.0,
+    "p_cut": 0.0,
+    "hit": true,
+    "brier": 0.0
+   }
+  },
+  {
+   "meeting": "2023-02-23",
+   "obs_date": "2023-02-20",
+   "p_hike": 0,
+   "p_hold": 0.7319,
+   "p_cut": 0.2681,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.1438,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0.547,
+    "p_hold": 0.453,
+    "p_cut": 0,
+    "hit": false,
+    "brier": 0.5984
+   },
+   "blend": {
+    "p_hike": 0.2735,
+    "p_hold": 0.5925,
+    "p_cut": 0.1341,
+    "hit": true,
+    "brier": 0.2588
+   }
+  },
+  {
+   "meeting": "2023-04-11",
+   "obs_date": "2023-04-06",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.1217,
+    "p_cut": 0.8783,
+    "hit": false,
+    "brier": 1.5428
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.5608,
+    "p_cut": 0.4391,
+    "hit": true,
+    "brier": 0.3857
+   }
+  },
+  {
+   "meeting": "2023-05-25",
+   "obs_date": "2023-05-22",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0.0689,
+    "p_hold": 0.9311,
+    "p_cut": 0,
+    "hit": true,
+    "brier": 0.0095
+   },
+   "blend": {
+    "p_hike": 0.0345,
+    "p_hold": 0.9656,
+    "p_cut": 0.0,
+    "hit": true,
+    "brier": 0.0024
+   }
+  },
+  {
+   "meeting": "2023-07-13",
+   "obs_date": "2023-07-10",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.9296,
+    "p_cut": 0.0704,
+    "hit": true,
+    "brier": 0.0099
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.9648,
+    "p_cut": 0.0352,
+    "hit": true,
+    "brier": 0.0025
+   }
+  },
+  {
+   "meeting": "2023-08-24",
+   "obs_date": "2023-08-21",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.468,
+    "p_cut": 0.532,
+    "hit": false,
+    "brier": 0.566
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.734,
+    "p_cut": 0.266,
+    "hit": true,
+    "brier": 0.1415
+   }
+  },
+  {
+   "meeting": "2023-10-19",
+   "obs_date": "2023-10-16",
+   "p_hike": 0.0943,
+   "p_hold": 0.9057,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0178,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.298,
+    "p_cut": 0.702,
+    "hit": false,
+    "brier": 0.9856
+   },
+   "blend": {
+    "p_hike": 0.0471,
+    "p_hold": 0.6018,
+    "p_cut": 0.351,
+    "hit": true,
+    "brier": 0.284
+   }
+  },
+  {
+   "meeting": "2023-11-30",
+   "obs_date": "2023-11-27",
+   "p_hike": 0.2676,
+   "p_hold": 0.7324,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.1432,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0.2404,
+    "p_hold": 0.7596,
+    "p_cut": 0,
+    "hit": true,
+    "brier": 0.1156
+   },
+   "blend": {
+    "p_hike": 0.254,
+    "p_hold": 0.746,
+    "p_cut": 0.0,
+    "hit": true,
+    "brier": 0.129
+   }
+  },
+  {
+   "meeting": "2024-01-11",
+   "obs_date": "2024-01-08",
+   "p_hike": 0.0076,
+   "p_hold": 0.9924,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0001,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.0,
+    "p_cut": 1.0,
+    "hit": false,
+    "brier": 2.0
+   },
+   "blend": {
+    "p_hike": 0.0038,
+    "p_hold": 0.4962,
+    "p_cut": 0.5,
+    "hit": false,
+    "brier": 0.5038
+   }
+  },
+  {
+   "meeting": "2024-02-22",
+   "obs_date": "2024-02-19",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.3639,
+    "p_cut": 0.6361,
+    "hit": false,
+    "brier": 0.8092
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.682,
+    "p_cut": 0.318,
+    "hit": true,
+    "brier": 0.2022
+   }
+  },
+  {
+   "meeting": "2024-04-12",
+   "obs_date": "2024-04-08",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.7028,
+    "p_cut": 0.2972,
+    "hit": true,
+    "brier": 0.1767
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.8514,
+    "p_cut": 0.1486,
+    "hit": true,
+    "brier": 0.0442
+   }
+  },
+  {
+   "meeting": "2024-05-23",
+   "obs_date": "2024-05-20",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.0,
+    "p_cut": 1.0,
+    "hit": false,
+    "brier": 2.0
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.5,
+    "p_cut": 0.5,
+    "hit": false,
+    "brier": 0.5
+   }
+  },
+  {
+   "meeting": "2024-07-11",
+   "obs_date": "2024-07-08",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.0,
+    "p_cut": 1.0,
+    "hit": false,
+    "brier": 2.0
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.5,
+    "p_cut": 0.5,
+    "hit": false,
+    "brier": 0.5
+   }
+  },
+  {
+   "meeting": "2024-08-22",
+   "obs_date": "2024-08-19",
+   "p_hike": 0,
+   "p_hold": 0.5424,
+   "p_cut": 0.4576,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.4188,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.0,
+    "p_cut": 1.0,
+    "hit": false,
+    "brier": 2.0
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.2712,
+    "p_cut": 0.7288,
+    "hit": false,
+    "brier": 1.0623
+   }
+  },
+  {
+   "meeting": "2024-10-11",
+   "obs_date": "2024-10-07",
+   "p_hike": 0,
+   "p_hold": 0.5442,
+   "p_cut": 0.4558,
+   "pred": "hold",
+   "actual": "cut",
+   "move_bp": -25,
+   "hit": false,
+   "brier": 0.5923,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.0,
+    "p_cut": 1.0,
+    "hit": true,
+    "brier": 0.0
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.2721,
+    "p_cut": 0.7279,
+    "hit": true,
+    "brier": 0.1481
+   }
+  },
+  {
+   "meeting": "2024-11-28",
+   "obs_date": "2024-11-25",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "cut",
+   "move_bp": -25,
+   "hit": false,
+   "brier": 2.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.0,
+    "p_cut": 1.0,
+    "hit": true,
+    "brier": 0.0
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.5,
+    "p_cut": 0.5,
+    "hit": false,
+    "brier": 0.5
+   }
+  },
+  {
+   "meeting": "2025-01-16",
+   "obs_date": "2025-01-13",
+   "p_hike": 0,
+   "p_hold": 0.587,
+   "p_cut": 0.413,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.3411,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.0,
+    "p_cut": 1.0,
+    "hit": false,
+    "brier": 2.0
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.2935,
+    "p_cut": 0.7065,
+    "hit": false,
+    "brier": 0.9983
+   }
+  },
+  {
+   "meeting": "2025-02-25",
+   "obs_date": "2025-02-20",
+   "p_hike": 0,
+   "p_hold": 0.6988,
+   "p_cut": 0.3012,
+   "pred": "hold",
+   "actual": "cut",
+   "move_bp": -25,
+   "hit": false,
+   "brier": 0.9766,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.0,
+    "p_cut": 1.0,
+    "hit": true,
+    "brier": 0.0
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.3494,
+    "p_cut": 0.6506,
+    "hit": true,
+    "brier": 0.2442
+   }
+  },
+  {
+   "meeting": "2025-04-17",
+   "obs_date": "2025-04-14",
+   "p_hike": 0,
+   "p_hold": 0.299,
+   "p_cut": 0.701,
+   "pred": "cut",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": false,
+   "brier": 0.9828,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.2559,
+    "p_cut": 0.7441,
+    "hit": false,
+    "brier": 1.1074
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.2774,
+    "p_cut": 0.7226,
+    "hit": false,
+    "brier": 1.0443
+   }
+  },
+  {
+   "meeting": "2025-05-29",
+   "obs_date": "2025-05-26",
+   "p_hike": 0,
+   "p_hold": 0.9848,
+   "p_cut": 0.0152,
+   "pred": "hold",
+   "actual": "cut",
+   "move_bp": -25,
+   "hit": false,
+   "brier": 1.9397,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.0,
+    "p_cut": 1.0,
+    "hit": true,
+    "brier": 0.0
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.4924,
+    "p_cut": 0.5076,
+    "hit": true,
+    "brier": 0.4849
+   }
+  },
+  {
+   "meeting": "2025-07-10",
+   "obs_date": "2025-07-07",
+   "p_hike": 0,
+   "p_hold": 0.5535,
+   "p_cut": 0.4465,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.3987,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.0,
+    "p_cut": 1.0,
+    "hit": false,
+    "brier": 2.0
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.2767,
+    "p_cut": 0.7232,
+    "hit": false,
+    "brier": 1.0462
+   }
+  },
+  {
+   "meeting": "2025-08-28",
+   "obs_date": "2025-08-25",
+   "p_hike": 0,
+   "p_hold": 0.6143,
+   "p_cut": 0.3857,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.2975,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.3726,
+    "p_cut": 0.6274,
+    "hit": false,
+    "brier": 0.7873
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.4934,
+    "p_cut": 0.5065,
+    "hit": false,
+    "brier": 0.5132
+   }
+  },
+  {
+   "meeting": "2025-10-23",
+   "obs_date": "2025-10-20",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.5555,
+    "p_cut": 0.4445,
+    "hit": true,
+    "brier": 0.3952
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.7777,
+    "p_cut": 0.2223,
+    "hit": true,
+    "brier": 0.0988
+   }
+  },
+  {
+   "meeting": "2025-11-27",
+   "obs_date": "2025-11-24",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.0812,
+    "p_cut": 0.9188,
+    "hit": false,
+    "brier": 1.6884
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.5406,
+    "p_cut": 0.4594,
+    "hit": true,
+    "brier": 0.4221
+   }
+  },
+  {
+   "meeting": "2026-01-15",
+   "obs_date": "2026-01-12",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.0852,
+    "p_cut": 0.9148,
+    "hit": false,
+    "brier": 1.6737
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.5426,
+    "p_cut": 0.4574,
+    "hit": true,
+    "brier": 0.4184
+   }
+  },
+  {
+   "meeting": "2026-02-26",
+   "obs_date": "2026-02-23",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0,
+    "p_hold": 0.5355,
+    "p_cut": 0.4645,
+    "hit": true,
+    "brier": 0.4315
+   },
+   "blend": {
+    "p_hike": 0.0,
+    "p_hold": 0.7677,
+    "p_cut": 0.2323,
+    "hit": true,
+    "brier": 0.1079
+   }
+  },
+  {
+   "meeting": "2026-04-10",
+   "obs_date": "2026-04-07",
+   "p_hike": 0.2075,
+   "p_hold": 0.7925,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0861,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0.4074,
+    "p_hold": 0.5926,
+    "p_cut": 0,
+    "hit": true,
+    "brier": 0.3319
+   },
+   "blend": {
+    "p_hike": 0.3075,
+    "p_hold": 0.6925,
+    "p_cut": 0.0,
+    "hit": true,
+    "brier": 0.1891
+   }
+  },
+  {
+   "meeting": "2026-05-28",
+   "obs_date": "2026-05-22",
+   "p_hike": 0.2106,
+   "p_hold": 0.7894,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0887,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 0.5612,
+    "p_hold": 0.4388,
+    "p_cut": 0,
+    "hit": false,
+    "brier": 0.6299
+   },
+   "blend": {
+    "p_hike": 0.3859,
+    "p_hold": 0.6141,
+    "p_cut": 0.0,
+    "hit": true,
+    "brier": 0.2978
+   }
+  },
+  {
+   "meeting": "2026-07-16",
+   "obs_date": "2026-07-13",
+   "p_hike": 0.7876,
+   "p_hold": 0.2124,
+   "p_cut": 0,
+   "pred": "hike",
+   "actual": "hike",
+   "move_bp": 25,
+   "hit": true,
+   "brier": 0.0902,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 1.0,
+    "p_hold": 0.0,
+    "p_cut": 0,
+    "hit": true,
+    "brier": 0.0
+   },
+   "blend": {
+    "p_hike": 0.8938,
+    "p_hold": 0.1062,
+    "p_cut": 0.0,
+    "hit": true,
+    "brier": 0.0226
+   }
+  },
+  {
+   "meeting": "2026-08-27",
+   "obs_date": "2026-08-24",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hike",
+   "move_bp": 25,
+   "hit": false,
+   "brier": 2.0,
+   "source": "CD 91일 모형",
+   "kofr": {
+    "p_hike": 1.0,
+    "p_hold": 0.0,
+    "p_cut": 0,
+    "hit": true,
+    "brier": 0.0
+   },
+   "blend": {
+    "p_hike": 0.5,
+    "p_hold": 0.5,
+    "p_cut": 0.0,
+    "hit": false,
+    "brier": 0.5
+   }
+  }
+ ],
+ "note": null
 }

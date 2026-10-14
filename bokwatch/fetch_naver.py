@@ -1,6 +1,6 @@
 """네이버 뉴스 검색 API 수집 → site/data/naver.jsonl (AI 정성 판단 입력)
 
-화면 크롤링 대신 공식 검색 API(openapi.naver.com/v1/search/news.json)를 쓴다.
+화면 크롤링 대신 공식 검색 API(NAVER API HUB: naverapihub.apigw.ntruss.com/search/v1/news)를 쓴다.
 저장은 API가 주는 제목·요약(description)·링크·시각까지만. 본문은 받지 않는다.
 """
 from __future__ import annotations
@@ -101,7 +101,7 @@ def main(argv=None) -> int:
     for q in cfg["queries"]:
         try:
             r = requests.get(cfg["endpoint"], params={"query": q, "display": cfg["display"], "sort": "date"},
-                             headers={"X-Naver-Client-Id": cid, "X-Naver-Client-Secret": sec}, timeout=20)
+                             headers={"X-NCP-APIGW-API-KEY-ID": cid, "X-NCP-APIGW-API-KEY": sec}, timeout=20)
             r.raise_for_status()
             got += parse_items(r.json(), q)
         except Exception as e:

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -11,6 +12,26 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 SITE_DATA = ROOT / "site" / "data"
 KST = timezone(timedelta(hours=9))
+
+
+def load_dotenv(path: Path) -> None:
+    """KEY=VALUE 형식 .env를 읽어 환경변수에 넣는다. 이미 있는 환경변수(Actions Secrets 등)는 덮어쓰지 않는다."""
+    if not path.is_file():
+        return
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.removeprefix("export ").split("=", 1)
+        k, v = k.strip(), v.strip()
+        if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+            v = v[1:-1]
+        if k and v and not os.environ.get(k):
+            os.environ[k] = v
+
+
+# 키 파일: BOKWATCH_ENV_FILE(OneDrive 밖 경로 권장)이 있으면 그것, 없으면 저장소의 .env
+load_dotenv(Path(os.environ.get("BOKWATCH_ENV_FILE") or ROOT / ".env"))
 
 
 def now_kst() -> datetime:

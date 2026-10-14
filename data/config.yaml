@@ -1,11 +1,11 @@
-# 중앙 BOK워치 설정
-# 표기 '확인 필요'는 빌드 환경(네트워크 차단)에서 원문 대조를 못 한 값이다.
+# BOK워치 설정
+# 표기 '확인 필요'는 원문 대조를 못 한 값이다. 2026-10-14 PC에서 한은 홈페이지와 대조한 항목은 주석에 출처를 적었다.
 
 site:
-  title: 중앙 BOK워치
-  title_en: JoongAng BOK Watch
-  # 접근 제한(Cloudflare Access 등)이 없는 배포면 true → 상단 '사내 보고용' 띠
-  show_internal_banner: true
+  title: BOK워치
+  title_en: BOK Watch
+  # true면 상단에 "사내 보고용 · 외부 공유 금지" 띠. 2026-10-14 공개 배포(링크 아는 누구나 열람)로 결정해 끔
+  show_internal_banner: false
   timezone: Asia/Seoul
 
 # ---------------------------------------------------------------- 금통위 일정
@@ -15,13 +15,16 @@ meetings:
   # 2027년은 한은 공지 확인 후 입력. 비어 있으면 화면에 경고 배지.
   "2027": []
 # 일정이 확정 입력된 마지막 날. 결제일+만기가 이 날을 넘는 상품은 확률 계산에 넣지 않는다.
-# 2027년 첫 회의는 예년(1월 11~16일)처럼 1월 14일 이후라고 가정한 값 — 한은 공지로 확인 후 고친다.
+# 2027년 첫 회의는 예년(1월 11~16일)처럼 1월 14일 이후라고 가정한 값. 2026-10-14 한은 연도별 회의 표의 2027년은 비어 있음(미공지) — 공지 후 고친다.
 schedule_known_through: "2027-01-13"
 
-# 점도표(6개월 뒤 조건부 전망)를 공개하는 회의 월. 2026년 5월 도입 보도 기준(확인 필요)
+# 점도표(6개월 뒤 조건부 금리전망)를 공개하는 회의 월. 한은 공보 2026-08-14호 별첨 "제시주기는 경제전망 발표시(2, 5, 8, 11월, 연 4회)"로 확인
 dotplot_months: [2, 5, 8, 11]
 
-# 과거 회의·결정 (백테스트용). 2021~2025는 공개 기록 기억값 — 확인 필요
+# 과거 회의·결정 (백테스트용).
+# 2026-10-14 한은 홈페이지와 대조 완료(2021-01~2026-08 전 회의):
+#   회의일: '통화정책방향 결정회의 일정 및 자료'(menuNo=200755) 연도별 표
+#   금리: '한국은행 기준금리 추이'(menuNo=200643) 변경일·변경 후 금리. 변경 없는 회의는 직전 금리 유지
 past_decisions:
   - {date: "2021-01-15", rate: 0.50}
   - {date: "2021-02-25", rate: 0.50}
@@ -63,7 +66,9 @@ past_decisions:
   - {date: "2025-08-28", rate: 2.50}
   - {date: "2025-10-23", rate: 2.50}
   - {date: "2025-11-27", rate: 2.50}
-  # 2026년 1·2·4월 회의일은 미입력(확인 필요). 5월 이후는 guidance.yaml 기준
+  - {date: "2026-01-15", rate: 2.50}
+  - {date: "2026-02-26", rate: 2.50}
+  - {date: "2026-04-10", rate: 2.50}
   - {date: "2026-05-28", rate: 2.50}
   - {date: "2026-07-16", rate: 2.75}
   - {date: "2026-08-27", rate: 3.00}
@@ -72,19 +77,21 @@ past_decisions:
 ecos:
   base_url: https://ecos.bok.or.kr/api
   key_env: ECOS_API_KEY
-  base_rate: {stat: 722Y001, cycle: D, item_name: 한국은행 기준금리, item_code: null}
+  base_rate: {stat: 722Y001, cycle: D, item_name: 한국은행 기준금리, item_code: "0101000"}
   market:
     stat: 817Y002
     cycle: D
     # item_code는 `python -m bokwatch.fetch_rates --resolve`가 StatisticItemList로 채운다.
     # 이름(match) 기준으로 찾으며, 직접 적은 코드는 쓰지 않는다.
     items:
-      - {id: cd91,   label: CD 91일,      match: "CD(91일)",          tenor_days: 91,  item_code: null}
-      - {id: msb91,  label: 통안증권 91일, match: "통안증권(91일)",    tenor_days: 91,  item_code: null}
-      - {id: msb1y,  label: 통안증권 1년,  match: "통안증권(1년)",     tenor_days: 365, item_code: null}
-      - {id: msb2y,  label: 통안증권 2년,  match: "통안증권(2년)",     tenor_days: 730, item_code: null}
-      - {id: ktb1y,  label: 국고채 1년,    match: "국고채(1년)",       tenor_days: 365, item_code: null}
-      - {id: ktb3y,  label: 국고채 3년,    match: "국고채(3년)",       tenor_days: 1095, item_code: null}
+      - {id: cd91,   label: CD 91일,      match: "CD(91일)",          tenor_days: 91,  item_code: "010502000"}
+      - {id: msb91,  label: 통안증권 91일, match: "통안증권(91일)",    tenor_days: 91,  item_code: "010400000"}
+      - {id: msb1y,  label: 통안증권 1년,  match: "통안증권(1년)",     tenor_days: 365, item_code: "010400001"}
+      - {id: msb2y,  label: 통안증권 2년,  match: "통안증권(2년)",     tenor_days: 730, item_code: "010400002"}
+      - {id: ktb1y,  label: 국고채 1년,    match: "국고채(1년)",       tenor_days: 365, item_code: "010190000"}
+      - {id: ktb3y,  label: 국고채 3년,    match: "국고채(3년)",       tenor_days: 1095, item_code: "010200000"}
+      # KOFR 익일물 실제치: KOFR 선물 기준기간 중 지난 날 계산과 KOFR−기준금리 차이 추정에 쓴다(확률 직접 투입 아님)
+      - {id: kofr,   label: KOFR 익일물,   match: "KOFR(공시RFR)",     tenor_days: 1,   item_code: "010901000"}
   # KOFR OIS (있으면 우선). ECOS에 없으면 data/manual/ois_YYYY-MM-DD.csv
   ois:
     stat: null
@@ -106,11 +113,22 @@ model:
   spread_override: {}     # 예) {cd91: 0.10}  (%p) — 있으면 추정값 대신 사용
   spread_fallback: {cd91: 0.10, msb91: 0.0, ois3m: 0.0, ois6m: 0.0, ois9m: 0.0, ois1y: 0.0}
   sensitivity_bp: [-5, 0, 5]
+  # 기본값은 CD 91일 모형 추정치(2026-10-14 결정 B+C). KOFR 선물 모형과 CD·KOFR 혼합은 '실험값'으로 따로 표시·기록한다.
+  # 근거(2022.4~2026.8 회의 36회): CD 27/36·Brier 0.461, KOFR 선물 20/36·0.663, 반반 혼합 23/36·0.349, 항상 동결 23/36·0.722.
+  #   처음 집계한 혼합 29/36은 동률(인상 50%·동결 50%)을 인상 예측으로 친 채점 오류였다(동률은 적중 아님으로 수정).
+  #   과거 회의로만 비율을 정해 다음 회의를 맞히는 순차 검증(24회)에서 혼합 14/24·Brier 0.462, CD 18/24·0.432 — 혼합 우위 근거 없음.
+  # 채택 기준(사전 고정): 2026-10-22 회의부터 날짜별 기록(prob_log.csv)의 회의 3영업일 전 값으로 순차 평가해,
+  #   금통위 8회 동안 혼합(실험)의 평균 Brier가 CD보다 낮고 '항상 동결'보다도 낮을 때 기본값 교체를 검토한다.
+  blend: {experimental_kofr_weight: 0.5}
+  futures:
+    spread_lookback_days: 60     # KOFR − 기준금리 정상 차이: 기준일 앞 60일 중앙값
+    spread_fallback: 0.04        # 관측이 10일 미만일 때(%p)
+    max_stale_days: 5            # 선물 가격이 이보다 오래되면 쓰지 않는다
   levels: [2.75, 3.00, 3.25, 3.50, 3.75]
 
 # ---------------------------------------------------------------- 연합뉴스 RSS
 news:
-  # 연합뉴스 RSS 안내: https://www.yna.co.kr/rss/index (빌드 환경에서 접속 불가 — 주소 확인 필요)
+  # 연합뉴스 RSS 안내: https://www.yna.co.kr/rss/index. 2026-10-14 PC에서 두 피드 모두 200·각 120건 확인
   feeds:
     - {name: 연합뉴스 전체, url: "https://www.yna.co.kr/rss/news.xml"}
     - {name: 연합뉴스 경제, url: "https://www.yna.co.kr/rss/economy.xml"}
@@ -120,21 +138,23 @@ news:
 
 # ---------------------------------------------------------------- 한국은행 홈페이지
 bok:
-  # 게시판 주소는 빌드 환경에서 접속 불가로 확인하지 못함 — 첫 Actions 실행 로그로 확인 필요
-  boards:
-    minutes:
-      label: 금융통화위원회 의사록
-      url: "https://www.bok.or.kr/portal/bbs/B0000245/list.do?menuNo=200761"
-    statement:
-      label: 통화정책방향
-      url: "https://www.bok.or.kr/portal/bbs/B0000169/list.do?menuNo=200059"
-    press:
-      label: 총재 기자간담회
-      url: "https://www.bok.or.kr/portal/bbs/B0000170/list.do?menuNo=200061"
+  # 2026-10-14 PC에서 접속 확인.
+  # 1) 통화정책방향 결정회의 일정 및 자료(연도별): 회의일·결정문·기자간담회·의사록 PDF가 한 표에 있다.
+  meetings_page:
+    label: 통화정책방향 결정회의 일정 및 자료
+    url: "https://www.bok.or.kr/portal/singl/crncyPolicyDrcMtg/listYear.do?mtgSe=A&menuNo=200755&pYear={year}"
+  # 2) 금융통화위원회 의사록 목록(게시일). 목록 본문은 AJAX(listCont.do)로 온다. depth 값이 없으면 전체 뉴스가 섞인다.
+  minutes_list:
+    label: 금융통화위원회 의사록
+    url: "https://www.bok.or.kr/portal/singl/newsData/listCont.do?pageIndex=1&targetDepth=4&menuNo=200789&syncMenuChekKey=1&depth2=200038&depth3=201154&depth4=200789&depth=201150"
   base: "https://www.bok.or.kr"
-  # 의사록 공개: 회의 뒤 약 2주 뒤 화요일 (공지와 다르면 minutes_release_override 우선)
-  minutes_release_offset_days: 12   # 회의일+12일 이후 첫 화요일
+  # 의사록 공개: 회의일+14일 이후 첫 화요일.
+  # 실측(한은 의사록 목록 게시일): 2025-10-23·11-27, 2026-01-15·02-26·04-10·05-28·07-16·08-27 회의 8건 모두 회의 18~19일 뒤 화요일.
+  # 한은 공지와 다르면 minutes_release_override 우선.
+  minutes_release_offset_days: 14
   minutes_release_override: {}
+  # 의사록 PDF 키워드 분석은 최근 회의 몇 건까지만(첫 실행 때 과거 PDF를 모두 받지 않도록)
+  views_max_meetings: 2
 
 # ---------------------------------------------------------------- 매파·비둘기 사전 (보조점수, 참고용)
 tone:
@@ -169,10 +189,15 @@ tone:
 events:
   bls_cpi_url: "https://www.bls.gov/schedule/news_release/cpi.htm"
   bls_jobs_url: "https://www.bls.gov/schedule/news_release/empsit.htm"
+  # 일정표 페이지는 당일·지난 발표를 뺀다 → BLS 캘린더로 보강(2026-10-14 확인: 9월분 CPI 10/14 08:30 ET가 일정표에 없고 ics에만 있음)
+  bls_ics_url: "https://www.bls.gov/schedule/news_release/bls.ics"
   fomc_url: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+  # 한국 CPI(2020=100, 월). 근원은 한은 통방문 정의(식료품 및 에너지 제외).
+  # 2026-10-14 ECOS 확인: 901Y009 '총지수'(0), 901Y010 '식료품 및 에너지제외 지수 3)'(DB). '농산물및석유류제외'는 901Y010(QB)에만 있다.
   kr_cpi_ecos:
-    stat: 901Y009            # 소비자물가지수(2020=100), 월
-    items: {headline: 총지수, core: 농산물및석유류제외지수}
+    items:
+      headline: {stat: 901Y009, match: 총지수}
+      core: {stat: 901Y010, match: 식료품및에너지제외}
   lookahead_days: 45
   lookback_days: 30
   # 추이 차트 세로선에 표시할 종류
@@ -180,19 +205,23 @@ events:
 
 # ---------------------------------------------------------------- 네이버 뉴스 (검색 API, fetch_naver.py)
 naver:
-  # https://developers.naver.com 애플리케이션 등록 → 검색 API. Secrets: NAVER_CLIENT_ID / NAVER_CLIENT_SECRET
-  endpoint: "https://openapi.naver.com/v1/search/news.json"
-  queries: [신현송, 한은 기준금리, 금통위 금리, 한국은행 금리인상, 한은 총재, 원달러 환율 한은, 가계부채 금리, 소비자물가 한은, 국고채 금리, 연준 금리]
+  # NAVER API HUB(네이버클라우드). 2026-06-25 개발자센터에서 이관, 기존 방식은 2027-06-30 종료.
+  # 키: console.ncloud.com → Services → Application Service → NAVER API HUB → Application 등록(검색 API 선택)의 Client ID·Secret.
+  # Secrets/.env: NAVER_CLIENT_ID / NAVER_CLIENT_SECRET. 계정 IAM 키(ncp_iam_)는 쓰지 않는다.
+  endpoint: "https://naverapihub.apigw.ntruss.com/search/v1/news"
+  queries: [신현송, 한은 기준금리, 금통위 금리, 한국은행 금리인상, 한은 총재, 원달러 환율 한은, 가계부채 금리, 소비자물가 한은, 국고채 금리, 연준 금리, 미국 CPI, 미국 소비자물가]
   display: 100
   keep_days: 30
 
 # ---------------------------------------------------------------- AI 정성 판단 (ai_judge.py)
 ai:
-  # Secrets: ANTHROPIC_API_KEY. 없으면 이 단계는 건너뛰고 직전 판단을 유지한다.
-  model: claude-opus-5-5
+  # OpenAI API(Chat Completions 구조화 출력). Secrets/.env: OPENAI_API_KEY. 키나 모델이 없으면 건너뛰고 직전 판단을 유지한다.
+  # gpt-5.5 날짜 고정판(2026-10-14 결정). 별칭(gpt-5.5) 대신 고정판을 써서 같은 입력에 같은 모델이 돌게 한다.
+  model: gpt-5.5-2026-04-23
+  # reasoning_effort: 추론 모델일 때만 보낸다. 비추론 모델이면 null.
   classify_effort: low       # 기사 태깅
   synth_effort: medium       # 종합 판단
   batch_size: 40
-  max_new_per_run: 200       # 실행당 태깅 상한(비용 상한)
+  max_new_per_run: 800       # 실행당 태깅 상한(비용 상한). 하루 1회 실행이라 하루치 기사(약 600건)를 한 번에 태깅
   window_hours: 72           # 종합 판단에 쓰는 기사 범위
-  factors: [물가, 환율, 부동산·가계부채, 성장·경기, 미 연준·글로벌 금리, 금융안정·시장, 한은 커뮤니케이션, 정부·정치, 기타]
+  factors: [물가, 환율, 부동산·가계부채, 성장·경기, 미 연준·글로벌 금리, 금융안정·시장, 한은 커뮤니케이션, 시장·기관 전망, 정부·정치, 기타]

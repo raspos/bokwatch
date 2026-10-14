@@ -22,10 +22,11 @@ def test_dotplot_may():
     assert s["median"] == 3.00 and s["at"] == 2 and s["above"] == 19
 
 
-# 4. 의사록 공개 예정일 (규칙: 회의+12일 이후 첫 화요일)
+# 4. 의사록 공개 예정일 (규칙: 회의+14일 이후 첫 화요일. 2025-10~2026-08 실측 8건)
 def test_minutes_release_rule():
-    assert minutes_release_date(date(2026, 8, 27)) == date(2026, 9, 8)
-    assert minutes_release_date(date(2026, 10, 22)) == date(2026, 11, 3)
+    assert minutes_release_date(date(2026, 8, 27)) == date(2026, 9, 15)  # 실제 게시 9/15
+    assert minutes_release_date(date(2026, 4, 10)) == date(2026, 4, 28)  # 금요일 회의, 실제 게시 4/28
+    assert minutes_release_date(date(2026, 10, 22)) == date(2026, 11, 10)
     # 한은 공지가 있으면 공지 우선
     assert minutes_release_date(date(2026, 8, 27), 12, {"2026-08-27": "2026-09-09"}) == date(2026, 9, 9)
 
@@ -98,7 +99,162 @@ def test_tone_no_double_count():
 
 
 def test_memo_lint():
-    ok = "18시/E▶x\n- a\n- b\n- c\n- d\n- 91.5%"
+    ok = "BOK워치: x\n- a\n- b\n- c\n- d\n- 91.5%"
     assert lint(ok) == []
     assert any("이는" in p for p in lint(ok + "\n- 이는 문제"))
     assert any("문단 수" in p for p in lint("h\n- a"))
+
+
+# ---------------------------------------------------------------- 한은 홈페이지(2026-10-14 실제 구조)
+from pathlib import Path
+
+from bokwatch.fetch_bok import decision_summary, parse_meeting_year
+
+FIX = Path(__file__).parent / "fixtures"
+
+
+def test_parse_meeting_year_real_table():
+    html = (FIX / "bok_meetings_2026.html").read_text(encoding="utf-8")
+    got = parse_meeting_year(html, 2026, "https://www.bok.or.kr")
+    assert set(got) == {"2026-08-27", "2026-10-22"}
+    aug = got["2026-08-27"]["docs"]
+    assert set(aug) == {"statement", "press", "minutes"}
+    # 첨부는 PDF 먼저 (화면은 attachments[0]을 PDF로 연다)
+    assert aug["minutes"]["attachments"][0]["name"] == "2026년도 제16차 금통위 의사록.pdf"
+    assert aug["minutes"]["attachments"][0]["url"].startswith("https://www.bok.or.kr/portal/cmmn/file/fileDown.do")
+    assert aug["statement"]["posted"] == "2026-08-27" and aug["minutes"]["posted"] is None
+    assert "/view.do?" in aug["press"]["url"]
+    assert got["2026-10-22"]["docs"] == {}  # 미래 회의: 자료 없음
+
+
+def test_minutes_list_non_policy_meeting_not_linked():
+    # 정책회의가 아닌 금통위(2026-07-23) 의사록이 7/16 정책회의에 붙으면 안 된다
+    ms = [date(2026, 7, 16), date(2026, 8, 27)]
+    t = "금융통화위원회 의사록(2026년 제14차)(2026.7.23)"
+    assert meeting_for_post("minutes", t, date(2026, 8, 11), ms) is None
+    t = "금융통화위원회 의사록(2026년 제13차)(2026.7.16)"
+    assert meeting_for_post("minutes", t, date(2026, 8, 4), ms) == date(2026, 7, 16)
+
+
+# 2026-08-27 의사록 원문 형식(PDF 추출 텍스트의 줄바꿈 공백 포함)
+MIN_TEXT = """6. 회의경과
+가. 의결안건
+(3) 위원 토의내용
+일부 위원은 향후 전망과 관련하여 반도체 경기와 중동상황에 대한 비관 시
+나리오를 점검할 필요가 있다는 견해를 밝혔음.
+(4) 한국은행 기준금리 결정에 관한 위원별 의견 개진
+다수의 위원들은 국내외 금융·경제 상황을 종합적으로 고려할 때 기준금리를 인상하는 것이 바람
+직하다는 견해를 나타낸 반면 일부 위원은 동결할 것을 주장하였음.
+일부 위원은 금번 회의에서 현재 2.75%인 기준금리를 3.00%로 인상하는 것이
+적절하다는 의견을 나타내었음.
+세계 경제는 완만한 성장세를 이어갈 것으로 전망됩니다.
+한편, 일부 위원은 금번 회의에서 현재 2.75%인 기준금리를 3.00%로 인상하
+는 것이 적절하다는 의견을 나타내었음.
+물가 상승압력이 이어지고 있습니다.
+또 다른 일부 위원은 금번 회의에서 기준금리를 동결하여 2.75% 수준을 유지
+하는 것이 적절하다는 의견을 표명하였음.
+성장 측면의 불확실성이 큽니다.
+(5) 토의결론
+위와 같은 위원별 의견 개진 내용을 종합, 위원들은 다수결로 한국은행 기준
+금리를 2.75%에서 3.00%로 0.25%p 인상하기로 결정하였음.
+(6) 심의결과
+(다만, 황건일 위원은 한국은행 기준금리를 0.25%p 인상하는 것에 대해 명백히
+반대의사를 표시하고 현 수준에서 동결할 것을 주장하였음.)
+"""
+
+
+def test_minutes_member_section_real_format():
+    paras = member_paragraphs(MIN_TEXT)
+    assert len(paras) == 3  # '(3) 위원 토의내용'의 경제동향 발언과 '다수의 위원들은' 요약은 제외
+    v = classify_views(paras, load_config()["tone"]["minutes_views"])
+    assert [p["lean"] for p in v["paragraphs"]] == ["인상", "인상", "동결"]
+    assert v["totals"] == {"인상": 2, "동결": 1, "인하": 0}
+
+
+def test_decision_summary_dissent_names():
+    s = decision_summary(MIN_TEXT)
+    assert s == {"result": "다수결", "dissent": [{"name": "황건일", "view": "동결"}]}
+    two = "(5) 토의결론 위원들은 다수결로 결정하였음. (다만, 주상영 위원과 신성환 위원은 한국은행 기준금리를 0.25%포인트 인상하 는 것에 대해 명백히 반대의사를 표시하고 현 수준에서 유지할 것을 주장하였음.)"
+    assert [x["name"] for x in decision_summary(two)["dissent"]] == ["주상영", "신성환"]
+
+
+def test_load_dotenv_does_not_override(monkeypatch):
+    import os
+    from bokwatch.common import load_dotenv
+    f = FIX / "_dotenv_test.env"  # 시스템 임시 폴더 권한 문제를 피해 테스트 폴더에 만든다
+    f.write_text('# 주석\nBW_A=abc\nexport BW_B="x y"\nBW_C=\nBW_D=from_file\n', encoding="utf-8")
+    try:
+        for k in ("BW_A", "BW_B", "BW_C"):
+            monkeypatch.delenv(k, raising=False)
+        monkeypatch.setenv("BW_D", "from_env")
+        load_dotenv(f)
+        assert os.environ["BW_A"] == "abc" and os.environ["BW_B"] == "x y"
+        assert "BW_C" not in os.environ and os.environ["BW_D"] == "from_env"
+    finally:
+        f.unlink()
+        for k in ("BW_A", "BW_B"):
+            os.environ.pop(k, None)
+
+
+def test_ecos_error_hides_key(monkeypatch):
+    import pytest
+    import requests
+    from bokwatch import fetch_rates
+
+    def boom(url, timeout):
+        raise requests.ConnectionError(f"failed: {url}")
+    monkeypatch.setattr(fetch_rates.requests, "get", boom)
+    cfg = {"ecos": {"base_url": "https://ecos.bok.or.kr/api", "key_env": "X"}}
+    with pytest.raises(fetch_rates.EcosError) as ei:
+        fetch_rates.ecos_get(cfg, "StatisticItemList", ["817Y002"], key="SECRETKEY123")
+    assert "SECRETKEY123" not in str(ei.value) and "***" in str(ei.value)
+
+
+def test_prob_log_fixed_daily_record(monkeypatch):
+    import build
+    f = FIX / "_prob_log_test.csv"
+    monkeypatch.setattr(build, "PROB_LOG", f)
+    cur = {"asof": "2026-10-13", "inputs": [{"used": True, "label": "CD 91일", "spread": 0.18}],
+           "scenarios": {"0": {"meetings": [
+               {"date": "2026-10-22", "in_range": True, "p_hike": 0.0, "p_hold": 1.0, "p_cut": 0.0, "expected": 3.0},
+               {"date": "2026-11-26", "in_range": True, "p_hike": 0.455, "p_hold": 0.545, "p_cut": 0.0, "expected": 3.114}]}}}
+    try:
+        rows = build.update_prob_log(cur, date(2026, 10, 14), None, write=True)
+        assert [(r["date"], r["meeting"], float(r["p_hike"])) for r in rows] == [
+            ("2026-10-14", "2026-10-22", 0.0), ("2026-10-14", "2026-11-26", 0.455)]
+        # 같은 날 다시 돌리면 그날 줄만 바뀐다. 중단이면 수치 없이 사유만 남긴다
+        rows = build.update_prob_log(cur, date(2026, 10, 14), "만기가 확정 일정 밖", write=True)
+        assert len(rows) == 1 and rows[0]["status"] == "중단" and rows[0]["p_hike"] == ""
+        # 다음 날 기록이 앞날 기록을 지우지 않는다. write=False면 읽기만
+        build.update_prob_log(cur, date(2026, 10, 15), None, write=True)
+        rows = build.update_prob_log(None, date(2026, 10, 16), None, write=False)
+        assert sorted({r["date"] for r in rows}) == ["2026-10-14", "2026-10-15"]
+    finally:
+        f.unlink(missing_ok=True)
+
+
+def test_krx_futures_parse_real_rows():
+    from bokwatch.fetch_futures import parse_items
+    # 2026-10-13 KRX Open API fut_bydd_trd 응답 일부(필드 그대로)
+    items = [
+        {"BAS_DD": "20261013", "PROD_NM": "3개월무위험금리 선물", "ISU_CD": "A696B000", "ISU_NM": "3개월무위험금리 F 202611",
+         "TDD_CLSPRC": "", "SETL_PRC": "96.88", "ACC_TRDVOL": "0", "ACC_OPNINT_QTY": "90"},
+        {"BAS_DD": "20261013", "PROD_NM": "3개월무위험금리 선물", "ISU_CD": "A6971000", "ISU_NM": "3개월무위험금리 F 202701",
+         "TDD_CLSPRC": "96.815", "SETL_PRC": "96.815", "ACC_TRDVOL": "10", "ACC_OPNINT_QTY": "70"},
+        {"BAS_DD": "20261013", "PROD_NM": "3개월무위험금리 선물", "ISU_CD": "D696A6BS", "ISU_NM": "3개월무위험금리 SP 2610-2611",
+         "TDD_CLSPRC": "", "SETL_PRC": "", "ACC_TRDVOL": "0", "ACC_OPNINT_QTY": ""},
+        {"BAS_DD": "20261013", "PROD_NM": "3년국채 선물", "ISU_CD": "A1661000", "ISU_NM": "3년국채 F 202612",
+         "TDD_CLSPRC": "105.1", "SETL_PRC": "105.1", "ACC_TRDVOL": "100", "ACC_OPNINT_QTY": "1"},
+    ]
+    rows = parse_items(items, "2026-10-13")
+    assert [(r["month"], r["settle"], r["volume"], r["oi"]) for r in rows] == [("2026-11", 96.88, 0, 90), ("2027-01", 96.815, 10, 70)]
+
+
+def test_qual_mix_weights():
+    import build
+    cur = {"scenarios": {"0": {"meetings": [{"date": "2026-11-26", "in_range": True, "p_hike": 0.4, "p_hold": 0.6, "p_cut": 0.0}]}}}
+    qual = {"probs": {"meeting": "2026-11-26", "p_hike": 0.8, "p_hold": 0.2, "p_cut": 0.0, "reason": "r"}}
+    q = build.qual_mix(cur, qual)
+    assert q["w10"]["p_hike"] == 0.44 and q["w20"]["p_hike"] == 0.48
+    # CD 값이 없는 회의면 정성 확률만 남기고 혼합은 내지 않는다
+    assert "w10" not in build.qual_mix({"scenarios": {"0": {"meetings": []}}}, qual)

@@ -81,3 +81,54 @@ def test_bootstrap_two_tenors():
     assert r.meetings[0].p_hike == pytest.approx(1)
     assert r.meetings[1].p_hike == pytest.approx(0, abs=1e-9)
     assert r.method == "bootstrap"
+
+
+# ---------------------------------------------------------------- KOFR 3개월 선물 (FedWatch 방식)
+def test_kofr_futures_recovers_known_path():
+    from datetime import timedelta
+    from bokwatch import futures_model as fm
+    assert fm.third_wednesday(2026, 11) == date(2026, 11, 18)
+    assert fm.ref_window("2026-11") == (date(2026, 8, 19), date(2026, 11, 18))
+    asof, r0, s = date(2026, 10, 13), 3.00, 0.04
+    oct_, nov = date(2026, 10, 22), date(2026, 11, 26)
+    E1, E2 = 3.10, 3.25          # 10월 뒤 기대 3.10%(인상확률 40%), 11월 뒤 3.25%(Δ 15bp → 60%)
+
+    def path(d):
+        return E2 if d >= nov else E1 if d >= oct_ else r0
+    # 지난 KOFR 공시: 8/27 전 2.75%, 이후 3.00% (+정상 차이), 주말은 공시 없음
+    fix, d = {}, date(2026, 6, 1)
+    while d <= asof:
+        if d.weekday() < 5:
+            fix[d.isoformat()] = (3.00 if d >= date(2026, 8, 27) else 2.75) + s
+        d += timedelta(days=1)
+    cs = [fm.Contract(m, fm.price_for_path(m, path, fix, asof, s)) for m in ("2026-10", "2026-11", "2026-12", "2027-01")]
+    out = fm.solve(asof, r0, cs, fix, [oct_, nov], s, known_through=date(2027, 1, 13))
+    got = {m["date"]: m for m in out["meetings"]}
+    assert abs(got["2026-10-22"]["p_hike"] - 0.40) < 0.01
+    assert abs(got["2026-11-26"]["p_hike"] - 0.60) < 0.01
+    assert abs(got["2026-11-26"]["expected"] - 3.25) < 0.003
+    # 1월물(기준기간 10/21~2027-01-19)은 확정 일정 밖이라 쓰지 않는다
+    assert [x["month"] for x in out["skipped"] if "확정 일정" in x["why"]] == ["2027-01"]
+
+
+def test_blend_meetings_weights_and_fallback():
+    from bokwatch.market import blend_meetings
+
+    def mt(dt, h, hold, exp):
+        return {"date": dt, "expected": exp, "delta_bp": 0.0, "p_hike": h, "p_hold": hold, "p_cut": 0.0,
+                "moves": {"0": hold, "25": h}, "levels": {"3.00": hold, "3.25": h}, "method": "x", "in_range": True}
+    cd = [mt("2026-10-22", 0.0, 1.0, 3.00), mt("2026-11-26", 0.455, 0.545, 3.114)]
+    kf = [mt("2026-10-22", 1.0, 0.0, 3.25)]
+    out = {m["date"]: m for m in blend_meetings(cd, kf, 0.5)}
+    assert out["2026-10-22"]["p_hike"] == 0.5 and out["2026-10-22"]["expected"] == 3.125
+    assert out["2026-10-22"]["source"] == "CD·KOFR 선물 혼합"
+    # 한쪽만 있는 회의는 그쪽 값을 그대로 쓰고 출처를 밝힌다
+    assert out["2026-11-26"]["p_hike"] == 0.455 and out["2026-11-26"]["source"] == "CD 91일만"
+    assert blend_meetings(None, kf, 0.5)[0]["source"] == "KOFR 선물만"
+
+
+def test_backtest_tie_is_not_a_hit():
+    from bokwatch.market import _score
+    pred, br = _score({"hike": 0.5, "hold": 0.5, "cut": 0.0}, "hike")
+    assert pred == "tie" and br == 0.5
+    assert _score({"hike": 0.6, "hold": 0.4, "cut": 0.0}, "hike")[0] == "hike"

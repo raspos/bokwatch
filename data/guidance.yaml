@@ -1,29 +1,32 @@
 # 총재·금통위 가이던스 (수기 입력 + fetch_bok 자동 보완)
-# verify: true  → 언론 보도 인용 초기값. 원문 대조 필요.
+# verify: true  → 원문 대조를 마치지 못한 값이 남아 있음.
+# 2026-10-14: 회의별 표결·점도표·통방문은 한은 공보(국문보도자료)·의사록과 대조했다. 발언(speeches)은 미대조.
 
 meetings:
   - date: "2026-05-28"
     rate: 2.50
     decision: 동결
-    vote: {for: 5, dissent: [{name: 유상대 부총재, view: "0.25%p 인상"}, {name: 장용성 위원, view: "0.25%p 인상"}]}
-    statement_file: null       # data/statements/2026-05-28.txt 원문 확보 시 지정
-    press_quotes:
+    # 표결·통방문·점도표: 한은 공보 2026-05-23호·의사록(2026년 제10차) 대조 완료(2026-10-14)
+    vote: {for: 5, dissent: [{name: 장용성 위원, view: "0.25%p 인상"}, {name: 유상대 위원(부총재), view: "0.25%p 인상"}]}
+    statement_file: data/statements/2026-05-28.txt
+    press_quotes:   # 간담회 질의응답 발언으로 보임. 모두발언 PDF에는 없음 → 원문 대조 필요
       - {speaker: 신현송 총재, text: "향후 적절한 시점에 기준금리를 인상할 필요가 있다는 게 내부 판단"}
     forward_guidance: null     # {hike: n, hold: n, cut: n} 3개월 조건부 — 미입력
     dotplot: {2.50: 2, 2.75: 7, 3.00: 10, 3.25: 2}
-    verify: true
-    source: 언론 보도 인용
+    verify: true    # 간담회 인용 1건만 미확인
+    source: 한은 공보·의사록(표결·점도표·통방문), 언론 보도(간담회 인용)
 
   - date: "2026-07-16"
     rate: 2.75
     decision: 인상
-    vote: null
+    # 한은 공보 2026-07-14호: "금융통화위원 7명 모두 찬성". 의사록(2026년 제13차) 토의결론 만장일치
+    vote: {for: 7, dissent: []}
     statement_file: data/statements/2026-07-16.txt
     press_quotes: []
     forward_guidance: null
     dotplot: null
-    verify: true
-    source: 언론 보도 인용
+    verify: false
+    source: 한은 공보 2026-07-14호
 
   - date: "2026-08-27"
     rate: 3.00
@@ -34,8 +37,9 @@ meetings:
     forward_guidance: null
     dotplot: {3.00: 5, 3.25: 10, 3.50: 6}
     outlook: {gdp_2026: 3.3, gdp_2027: 2.9}
-    verify: true
-    source: 언론 보도 인용
+    # 표결·점도표·성장률 전망·통방문: 한은 공보 2026-08-14호 대조 완료(2026-10-14)
+    verify: false
+    source: 한은 공보 2026-08-14호
 
 # 발언 타임라인. tone: hawk | neutral | dove (수기 태그)
 speeches:
@@ -53,6 +57,24 @@ speeches:
      quote: "7·8월 연속 인상, 환율 안정에 큰 역할", link: null, verify: true}
   - {date: "2026-10-12", venue: 국회, speaker: 신현송 총재, tone: hawk,
      quote: "물가 상당 기간 2% 상회", link: null, verify: true}
-  - {date: "2026-10-13", venue: 강연, speaker: 신현송 총재, tone: dove,
-     quote: "한국 경제 하방 위험, 대규모 AI 투자 지속성에 달려", link: null, verify: true,
-     note: 보도 제목 기준}
+  # 2026-10-13(현지) IMF·WBG 연차총회 '거버너 토크' 대담(방콕). 직접 인용은 보도 기준, 원문(영상·대본) 대조 필요
+  - {date: "2026-10-13", venue: IMF 대담(방콕), speaker: 신현송 총재, tone: hawk,
+     quote: "물가상승률이 목표 수준(2.0%)으로 수렴한다는 확신이 들 때까지 긴축적인 통화정책 기조를 유지하겠다",
+     link: "https://view.asiae.co.kr/article/2026101408594384076", verify: true}
+  - {date: "2026-10-13", venue: IMF 대담(방콕), speaker: 신현송 총재, tone: neutral,
+     quote: "원화가 추가로 절상될 여지가 있으며, 일정 부분 더 절상되는 것도 바람직하다",
+     link: "https://www.edaily.co.kr/News/Read?newsId=04388646645612920&mediaCodeNo=257", verify: true}
+  # 2026-10-14(현지) IMF 연차총회 연계 CNN '글로벌 퍼스펙티브스' 패널토론(방콕)
+  # (이전 '10-13 강연' 항목은 이 패널토론 발언이라 날짜·장소를 바로잡음)
+  - {date: "2026-10-14", venue: CNN 패널토론(방콕), speaker: 신현송 총재, tone: dove,
+     quote: "관건은 대규모 인공지능(AI) 투자 붐(열풍)이 얼마나 오래 이어지느냐",
+     link: "https://biz.heraldcorp.com/article/10902483", verify: true, note: 한국 경제 하방 위험에 대한 답}
+  - {date: "2026-10-14", venue: CNN 패널토론(방콕), speaker: 신현송 총재, tone: neutral,
+     quote: "한국은 상당히 뚜렷한 'K자형 경제 양극화'를 겪고 있다",
+     link: "https://biz.chosun.com/policy/policy_sub/2026/10/14/VHQ6C5ZI25DGHPDCSFCLYF46KQ/", verify: true}
+  - {date: "2026-10-14", venue: CNN 패널토론(방콕), speaker: 신현송 총재, tone: hawk,
+     quote: "중앙은행 입장에서 가장 중요한 점은 인플레이션이 저소득층에 가장 큰 피해를 준다는 사실을 명심하는 것",
+     link: "https://www.newsis.com/view/NISX20261014_0003825701", verify: true}
+  - {date: "2026-10-14", venue: CNN 패널토론(방콕), speaker: 신현송 총재, tone: hawk,
+     quote: "통화정책을 적절히 운용해 상승 압박이 높아지는 물가를 안정시키는 것이 중요하다",
+     link: "https://www.fnnews.com/news/202610141454582359", verify: true}
