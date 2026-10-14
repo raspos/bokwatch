@@ -53,6 +53,30 @@ python build.py
 python -m http.server 8000 -d site          # http://localhost:8000
 ```
 
+## PC에서 함께 작업하기
+
+저장소가 기준점이다. PC, 클라우드 세션, 자동 갱신 봇이 모두 같은 GitHub 저장소를 주고받는다.
+
+### 처음 한 번
+```bash
+git clone https://github.com/<계정>/joongang-bokwatch.git
+cd joongang-bokwatch
+python -m venv .venv
+# Windows: .venv\Scripts\activate   /  macOS·Linux: source .venv/bin/activate
+pip install -r requirements.txt pytest
+python -m pytest -q
+python build.py && python -m http.server 8000 -d site   # http://localhost:8000
+```
+API 키는 PC의 환경변수로만 둔다(`ECOS_API_KEY` 등). 저장소에 넣지 않는다.
+
+### 충돌을 피하는 규칙
+- **봇 영역**(사람이 고치지 않는다): `site/data/**`, `data/rates.csv`, `data/ai_tags.jsonl`, `data/qual_history.csv`. 30분마다 봇이 main에 커밋한다.
+- **사람 영역**: `data/*.yaml`(전망·발언·일정·설정), `data/statements/`, `data/manual/`, 코드(`bokwatch/`, `site/*.js|css|html`).
+- 작업 전에 항상 `git pull --rebase`를 한다. 커밋할 때는 사람 영역 파일만 `git add` 한다(`git add -A` 금지). 봇 영역이 충돌하면 원격 것을 택한다: `git checkout --theirs site/data && git add site/data`.
+- **데이터만 고칠 때**(보고서 전망, 발언, 일정): main에 바로 커밋·푸시해도 된다. 다음 봇 실행 때 화면에 반영된다. 바로 반영하려면 Actions에서 `daily`를 수동 실행한다.
+- **코드를 고칠 때**: 브랜치(`git switch -c 이름/작업`)에서 작업하고 PR로 합친다. `test.yml`이 테스트를 돌린다.
+- 사람 여럿이 같은 YAML을 동시에 고치면 충돌이 난다. 고치기 전에 팀 채널에 파일 이름을 알린다.
+
 ## 자동 갱신 (GitHub Actions, KST 기준. cron은 UTC로 적음)
 
 | 워크플로 | 시각 | 하는 일 |
