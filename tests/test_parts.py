@@ -258,3 +258,12 @@ def test_qual_mix_weights():
     assert q["w10"]["p_hike"] == 0.44 and q["w20"]["p_hike"] == 0.48
     # CD 값이 없는 회의면 정성 확률만 남기고 혼합은 내지 않는다
     assert "w10" not in build.qual_mix({"scenarios": {"0": {"meetings": []}}}, qual)
+
+
+def test_status_messages_redact_keys(monkeypatch):
+    from bokwatch import common
+    monkeypatch.setenv("NAVER_CLIENT_ID", "abcd1234xy")
+    msg = ("'신현송': ValueError: Invalid header value b'abcd1234xy\n'; "
+           "Incorrect API key provided: sk-proj-****abcdEFGH1234; serviceKey=AbCdEf123456%3D%3D; id abcd1234xy")
+    out = common.redact(msg)
+    assert "abcd1234xy" not in out and "abcdEFGH1234" not in out and "AbCdEf123456" not in out

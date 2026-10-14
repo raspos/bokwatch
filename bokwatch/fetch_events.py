@@ -275,7 +275,8 @@ def main(argv=None) -> int:
     ec = cfg["events"]
     prev = read_json(EVENTS_JSON, {}) or {}
     prev_all = prev.get("all", [])
-    scraped, errors = {}, []
+    scraped, errors, soft = {}, [], []
+    today_s = now_kst().date().isoformat()
 
     def keep(kind):  # 실패 시 직전 값
         return [e for e in prev_all if e.get("kind") == kind and e.get("source", "").startswith(("BLS", "Fed"))]
@@ -287,7 +288,9 @@ def main(argv=None) -> int:
             r.raise_for_status()
             ics = r.text
         except Exception as e:
-            errors.append(f"BLS 캘린더: {type(e).__name__}: {e}")
+            # BLS는 데이터센터 IP(GitHub Actions 등)를 403으로 막는다. 직전 일정이 있으면 실패로 띄우지 않는다.
+            (soft if any(x["date"] >= today_s for k in ("cpi", "jobs") for x in keep(k)) else errors).append(
+                f"BLS 캘린더: {type(e).__name__}")
     for key, url, label, kind, summary in [("us_cpi", ec["bls_cpi_url"], "미국 CPI", "cpi", "Consumer Price Index"),
                                            ("us_jobs", ec["bls_jobs_url"], "미국 고용보고서", "jobs", "Employment Situation")]:
         imp = 3 if kind == "cpi" else 2
@@ -300,8 +303,10 @@ def main(argv=None) -> int:
             scraped[key] = [ev(x["release"], f"{label}({int(x['ref_month'][5:])}월분)", "US", kind,
                                imp, "BLS", ref_month=x["ref_month"]) for x in rows]
         except Exception as e:
-            errors.append(f"{label} 일정: {type(e).__name__}: {e}")
             scraped[key] = [x for x in keep(kind) if x["country"] == "US"]
+            future = [x for x in scraped[key] if x["date"] >= today_s]
+            (soft if future else errors).append(f"{label} 일정: {type(e).__name__}"
+                                               + (f" → 직전 일정 유지(다음 {future[0]['date']})" if future else ""))
         if ics:  # 일정표에 없는 날(당일·지난 발표)만 보강. 기준월은 붙이지 않는다.
             have = {x["date"] for x in scraped[key]}
             scraped[key] += [ev(x["release"], f"{label} 발표", "US", kind, imp, "BLS 캘린더")
@@ -350,7 +355,7 @@ def main(argv=None) -> int:
     attach_consensus(indicators)
     minutes = read_json(SITE_DATA / "minutes.json", {}) or {}
     write_json(EVENTS_JSON, build_events(cfg, scraped, indicators, minutes, now_kst().date()))
-    record_status("events", not errors, "; ".join(errors) or "정상")
+    record_status("events", not errors, "; ".join(errors + soft) or "정상")
     if errors:
         print("일부 실패:", errors, file=sys.stderr)
     return 0

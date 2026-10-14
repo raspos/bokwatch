@@ -33,6 +33,26 @@ def load_dotenv(path: Path) -> None:
 # 키 파일: BOKWATCH_ENV_FILE(OneDrive 밖 경로 권장)이 있으면 그것, 없으면 저장소의 .env
 load_dotenv(Path(os.environ.get("BOKWATCH_ENV_FILE") or ROOT / ".env"))
 
+# API 키 환경변수. GitHub Secrets에 붙여넣을 때 섞인 앞뒤 공백·줄바꿈을 지운다(헤더 오류·인증 실패 방지).
+KEY_ENVS = ("ECOS_API_KEY", "KRX_API_KEY", "NAVER_CLIENT_ID", "NAVER_CLIENT_SECRET", "OPENAI_API_KEY",
+            "CLOUDFLARE_API_TOKEN", "DATA_GO_KR_KEY")
+for _k in KEY_ENVS:
+    if os.environ.get(_k) and os.environ[_k] != os.environ[_k].strip():
+        os.environ[_k] = os.environ[_k].strip()
+
+
+def redact(text: str) -> str:
+    """상태 문구는 공개 사이트에 실린다. 키 값과 키처럼 생긴 문자열(sk-…, Bearer …)을 가린다."""
+    import re
+    for k in KEY_ENVS:
+        v = os.environ.get(k, "")
+        if len(v) >= 6:
+            text = text.replace(v, "***")
+    text = re.sub(r"sk-[A-Za-z0-9_\-*]{6,}", "sk-***", text)
+    text = re.sub(r"(Bearer|AUTH_KEY|serviceKey=)\s*[A-Za-z0-9%._\-]{8,}", r"\1 ***", text)
+    text = re.sub(r"Invalid header value b'[^']*'", "Invalid header value(키 값 형식 오류)", text)
+    return text
+
 
 def now_kst() -> datetime:
     return datetime.now(KST)
@@ -74,7 +94,7 @@ def record_status(source: str, ok: bool, message: str = "") -> None:
     t = now_kst().isoformat(timespec="minutes")
     cur["last_attempt"] = t
     cur["ok"] = ok
-    cur["message"] = message[:300]
+    cur["message"] = redact(message)[:300]
     if ok:
         cur["last_success"] = t
     st[source] = cur

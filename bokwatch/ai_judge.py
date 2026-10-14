@@ -17,7 +17,7 @@ import re as _re
 import sys
 from datetime import datetime, timedelta
 
-from .common import DATA, SITE_DATA, load_config, now_kst, read_json, record_status, write_json
+from .common import DATA, SITE_DATA, load_config, now_kst, read_json, record_status, redact, write_json
 
 TAGS = DATA / "ai_tags.jsonl"
 QUAL = SITE_DATA / "qual.json"
@@ -451,7 +451,7 @@ def build_qual(articles, tags, cfg_ai, synthesis, errors, now, groups=None, prob
                           for g in (groups or []) if g.get("n_reports")], key=lambda g: -g["n_reports"])[:40],
         "counts": {"total": len(articles), "tagged": sum(1 for a in articles if a["id"] in tags),
                    "relevant": sum(1 for a in articles if tags.get(a["id"], {}).get("relevant"))},
-        "errors": errors,
+        "errors": [redact(e)[:300] for e in errors],
     }
 
 
