@@ -34,6 +34,7 @@
   <button role="tab" data-tab="guidance">총재 가이던스</button>
   <button role="tab" data-tab="minutes">의사록</button>
   <button role="tab" data-tab="news">기사·보고서</button>
+  <button role="tab" data-tab="qual">정성 판단(AI)</button>
   <button role="tab" data-tab="memo">보고 메모</button>
   <button role="tab" data-tab="method">방법·검증</button>
 </nav>
@@ -51,6 +52,10 @@
     <div class="tbl-wrap"><table class="grid" id="probTable"></table></div>
     <h3>투입 금리</h3>
     <div class="tbl-wrap"><table class="grid" id="inputTable"></table></div>
+    <h3>경제지표·이벤트 <small>다음 45일 · KST</small></h3>
+    <div class="cons" id="indicators"></div>
+    <div class="tbl-wrap" style="margin-top:10px"><table class="grid" id="eventTable"></table></div>
+    <p class="note" id="eventNote"></p>
     <h3 class="no-print">인상 확률 추이 <small>세로선: 금통위·의사록 공개·CPI</small></h3>
     <div id="trend" class="chart"></div>
     <p class="note" id="marketNote"></p>
@@ -97,6 +102,11 @@
     <div id="consensus" class="cons"></div>
     <h3>금투협 채권시장지표 설문</h3>
     <div id="kofia"></div>
+  </section>
+
+  <section class="panel" id="tab-qual" role="tabpanel" hidden>
+    <h2>정성 판단 <small>뉴스 기반 · AI 자동 · 참고용</small></h2>
+    <div id="qualBody"></div>
   </section>
 
   <section class="panel" id="tab-memo" role="tabpanel" hidden>

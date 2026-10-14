@@ -18,6 +18,9 @@ jobs:
     env:
       TZ: Asia/Seoul
       ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+      NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+      NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -25,7 +28,13 @@ jobs:
       - run: pip install -r requirements.txt
       - name: 시장금리(ECOS) — 실패해도 직전 데이터로 빌드
         run: python -m bokwatch.fetch_rates || true
+      - name: 경제지표 일정·실제치
+        run: python -m bokwatch.fetch_events || true
       - name: 빌드
+        run: python build.py
+      - name: AI 정성 종합 판단 (하루 1회) — 실패해도 직전 판단 유지
+        run: python -m bokwatch.ai_judge || true
+      - name: 재빌드(메모에 정성 판단 반영)
         run: python build.py
       - name: 커밋
         run: |

@@ -20,6 +20,9 @@ jobs:
     env:
       TZ: Asia/Seoul
       ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+      NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+      NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,6 +30,10 @@ jobs:
       - run: pip install -r requirements.txt
       - name: RSS — 실패해도 직전 데이터 유지
         run: python -m bokwatch.fetch_news || true
+      - name: 네이버 뉴스 검색 API
+        run: python -m bokwatch.fetch_naver || true
+      - name: AI 기사 태깅·압력지수 (새 기사만)
+        run: python -m bokwatch.ai_judge --no-synth || true
       - name: 빌드(기사만)
         run: python build.py --only news
       - name: 커밋

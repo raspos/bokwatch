@@ -5,8 +5,8 @@
   // ------------------------------------------------------------ 유틸
   const $ = (s, el = document) => el.querySelector(s);
   const D = {};                 // 로드된 데이터
-  const S = { tab: "market", d: null, s: "0", chip: "", spk: "", ven: "", dot: "", q: "", sort: "" };
-  const TABS = ["market", "guidance", "minutes", "news", "memo", "method"];
+  const S = { tab: "market", d: null, s: "0", chip: "", spk: "", ven: "", dot: "", q: "", sort: "", qf: "", qd: "" };
+  const TABS = ["market", "guidance", "minutes", "news", "qual", "memo", "method"];
 
   function h(tag, attrs, ...kids) {
     const el = document.createElement(tag);
@@ -77,14 +77,16 @@
 
   // ------------------------------------------------------------ 로드
   async function load() {
-    const [meta, status, guidance, reports, minutes, news, memo, backtest, hist] = await Promise.all([
+    const [meta, status, guidance, reports, minutes, news, memo, backtest, hist, events, qual] = await Promise.all([
       getJSON("data/meta.json"), getJSON("data/status.json"), getJSON("data/guidance.json"),
       getJSON("data/reports.json"), getJSON("data/minutes.json"), getJSON("data/news.json"),
       getJSON("data/memo.json"), getJSON("data/backtest.json"), getText("data/history.csv"),
+      getJSON("data/events.json"), getJSON("data/qual.json"),
     ]);
     Object.assign(D, { meta: meta || {}, status: status || {}, guidance: guidance || { meetings: [], dotplots: [], speeches: [] },
       reports: reports || { reports: [], consensus: { by_meeting: {} } }, minutes: minutes || { meetings: [] },
-      news: news || { items: [], chips: [] }, memo, backtest, hist: hist ? parseCSV(hist) : [] });
+      news: news || { items: [], chips: [] }, memo, backtest, hist: hist ? parseCSV(hist) : [],
+      events: events || { upcoming: [], recent: [], all: [], indicators: {} }, qual });
     D.snaps = {};
   }
   async function snapshot(date) {
@@ -106,6 +108,10 @@
       h("span", {}, "기준금리 ", h("b", {}, snap ? fx(snap.r0) + "%" : (m.r0 != null ? fx(m.r0) + "%" : "–"))),
       next ? h("span", {}, "다음 금통위 ", h("b", {}, md(next)), " ", h("span", { class: "dday" }, `D-${days(today, next)}`)) : h("span", { class: "badge warn" }, "다음 금통위 일정 미입력"),
     ];
+    if (m.next_event) {
+      const e = m.next_event;
+      kids.push(h("span", {}, "다음 주요 지표 ", h("b", {}, `${md(e.date)}${e.time ? " " + e.time : ""} ${e.label}`)));
+    }
     if ((m.new_minutes || []).length) kids.push(h("span", { class: "badge new" }, "새 의사록"));
     if ((m.new_reports || []).length) kids.push(h("span", { class: "badge new", title: m.new_reports.join(", ") }, `새 보고서 ${m.new_reports.length}`));
     const lastVisit = store("bokwatch.lastVisit");
@@ -116,7 +122,7 @@
     $("#meta").replaceChildren(...kids);
 
     const al = [];
-    const names = { ecos: "ECOS 시장금리", news: "연합뉴스 RSS", bok: "한은 홈페이지" };
+    const names = { ecos: "ECOS 시장금리", news: "연합뉴스 RSS", bok: "한은 홈페이지", events: "경제지표 일정", naver: "네이버 뉴스 API", ai: "AI 정성 판단" };
     for (const [k, v] of Object.entries(D.status || {})) {
       if (v && v.ok === false) al.push(h("div", { class: "alert bad" },
         `갱신 실패 — ${names[k] || k}: ${v.message || "원인 미상"} · 마지막 성공 ${v.last_success ? v.last_success.replace("T", " ") : "없음"}`));
@@ -158,8 +164,15 @@
       const lbl = ["시장", "점도표", "전문가"].map((n, i) => sig[i] == null ? null : `${n} ${sig[i] ? "인상 쪽" : "동결 쪽"}`).filter(Boolean).join(" · ");
       tiles.push(h("div", { class: "strip-note" }, `엇갈림 — ${lbl} (점도표는 6개월 뒤 전망, 시장·전문가는 다음 회의 기준)`));
     }
+    const Q = D.qual && D.qual.synthesis;
+    const pr = D.qual && D.qual.pressure;
+    tiles.splice(3, 0, h("div", { class: "tile ref" }, h("div", { class: "k" }, "참고 · AI 정성 판단(뉴스)"),
+      h("div", { class: "v" }, Q ? LEAN[Q.lean] : "–"),
+      h("div", { class: "s" }, Q ? Q.headline : "네이버 뉴스·Claude API 연결 후 표시",
+        pr && pr.index != null ? ` · 압력지수 ${pr.index >= 0 ? "+" : ""}${pr.index.toFixed(2)}` : "")));
     $("#strip").replaceChildren(...tiles);
   }
+  const LEAN = { "-2": "강한 인하 압력", "-1": "인하 압력", "0": "중립", "1": "인상 압력", "2": "강한 인상 압력" };
   const majority = (arr) => arr.filter(Boolean).length * 2 >= arr.length;
   function secondCons(m2) {
     if (!m2) return "";
@@ -248,6 +261,28 @@
       `계산 방식: ${scen.method.replace("min_hike", "최소 인상 경로").replace("bootstrap", "부트스트래핑").replace("lsq", "비음수 최소제곱")}.`, out.length ? `만기 밖이라 계산하지 않은 회의: ${out.join(", ")}.` : "",
       ...(snap.warnings || [])].filter(Boolean).join(" ");
     renderTrend();
+    renderEvents();
+  }
+
+  function renderEvents() {
+    const E = D.events;
+    const flag = { US: "미국", KR: "한국" };
+    const ind = Object.values(E.indicators || {});
+    const tiles = ind.length ? ind.map((x) => h("div", { class: "tile" }, h("div", { class: "k" }, `${x.label} · ${x.month} 전년동월비`),
+      h("div", { class: "v" }, fx(x.yoy, 1) + "%"),
+      h("div", { class: "s" }, (x.prev_yoy != null ? `전월 ${fx(x.prev_yoy, 1)}%` : "") + (x.core_yoy != null ? ` · 근원 ${fx(x.core_yoy, 1)}%` : "")),
+      h("div", { class: "note" }, x.source))) : [h("p", { class: "note" }, "지표 실제치 수집 전 (FRED·ECOS)")];
+    $("#indicators").replaceChildren(...tiles);
+    const imp = (n) => "●".repeat(n) + "○".repeat(3 - n);
+    const row = (e) => h("tr", { class: e.status === "오늘" ? "today" : null },
+      h("td", {}, ymd(e.date)), h("td", {}, e.time || "–"), h("td", {}, flag[e.country] || e.country),
+      h("td", { class: "l" }, e.link ? ext(e.link, e.label) : e.label, e.verify ? h("span", { class: "badge verify" }, "확인 필요") : ""),
+      h("td", { title: "중요도" }, imp(e.importance || 1)), h("td", { class: "l" }, e.source));
+    const head = h("thead", {}, h("tr", {}, ...["날짜", "시각(KST)", "국가", "이벤트", "중요도", "출처"].map((t, i) => h("th", { class: i === 3 || i === 5 ? "l" : null }, t))));
+    const up = (E.upcoming || []).filter((e) => !(e.kind === "bok" && e.date === (D.meta.upcoming || [])[0] && false));
+    $("#eventTable").replaceChildren(head, h("tbody", {}, up.length ? up.map(row) : [h("tr", {}, h("td", { colspan: 6 }, "예정 이벤트 없음"))]));
+    $("#eventNote").textContent = (E.skeleton ? "경제지표 일정 수집 전 — 금통위·의사록·수기 입력(data/events.yaml)만 표시. " : "") +
+      "미국 일정은 BLS·연준 발표 시각(미 동부)을 KST로 바꾼 값. 한국 CPI 등 국내 지표 일정은 data/events.yaml 수기 입력.";
   }
 
   function renderTrend() {
@@ -274,7 +309,8 @@
     const marks = [];
     for (const d of [...(D.meta.upcoming || []), ...D.guidance.meetings.map((g) => g.date)]) marks.push({ d, t: "금통위" });
     for (const mm of D.minutes.meetings || []) if (mm.minutes_expected) marks.push({ d: mm.minutes_expected, t: "의사록" });
-    for (const e of D.meta.events || []) marks.push({ d: e.date, t: e.label });
+    const short = { cpi: (e) => (e.country === "US" ? "美" : "韓") + "CPI", fomc: () => "FOMC", jobs: () => "美고용" };
+    for (const e of D.meta.events || []) if (short[e.kind]) marks.push({ d: e.date, t: short[e.kind](e) });
     for (const mk of marks) {
       const dx = new Date(mk.d);
       if (dx < x.domain()[0] || dx > x.domain()[1]) continue;
@@ -528,6 +564,82 @@
     $("#consensus").replaceChildren(...cards);
   }
 
+  // ------------------------------------------------------------ 탭 정성 판단(AI)
+  function renderQual() {
+    const el = $("#qualBody");
+    const Q = D.qual;
+    if (!Q) {
+      el.replaceChildren(h("div", { class: "empty" }, "AI 정성 판단 데이터가 없습니다. GitHub Secrets에 NAVER_CLIENT_ID·NAVER_CLIENT_SECRET·ANTHROPIC_API_KEY를 넣으면 news.yml 실행 때 생성됩니다."));
+      return;
+    }
+    const S_ = Q.synthesis, P = Q.pressure || {};
+    const dirCls = { "인상 압력": "hawk", "인하 압력": "dove", "중립": "neutral" };
+    const byId = Object.fromEntries((Q.articles || []).map((a) => [a.id, a]));
+    const kids = [h("p", { class: "note warnline" }, `AI 자동 판단 · 참고용 — ${Q.model} · 기사 제목·검색 요약만 입력 · 근거 기사 원문을 반드시 확인`)];
+    if (S_) {
+      const scale = h("div", { class: "lean", role: "img", "aria-label": `정성 판단 ${LEAN[S_.lean]}` },
+        ...[-2, -1, 0, 1, 2].map((v) => h("span", { class: "lean-cell" + (v === S_.lean ? " on" : "") + (v > 0 ? " up" : v < 0 ? " down" : "") }, LEAN[v])));
+      kids.push(h("div", { class: "qcard" },
+        h("div", { class: "k" }, `종합 판단 · ${S_.confidence ? "확신도 " + S_.confidence : ""} · ${(Q.synthesis_updated || "").replace("T", " ")}`),
+        scale, h("h3", { class: "qhead" }, S_.headline), h("p", {}, S_.summary),
+        S_.market_gap ? h("p", { class: "gap" }, "시장과 차이: " + S_.market_gap) : "",
+        h("h4", {}, "주요 요인"),
+        h("ul", { class: "drivers" }, ...(S_.drivers || []).map((d) => h("li", {},
+          h("span", { class: `tag ${dirCls[d.direction]}` }, d.direction), " ", h("b", {}, d.factor), " — ", d.point, " ",
+          ...d.article_ids.filter((i) => byId[i]).map((i, k) => h("span", {}, k ? ", " : "[", ext(byId[i].link, byId[i].press || "기사"), k === d.article_ids.filter((j) => byId[j]).length - 1 ? "]" : ""))))),
+        (S_.counterpoints || []).length ? [h("h4", {}, "반대 근거"), h("ul", {}, ...S_.counterpoints.map((c) => h("li", {}, c)))] : "",
+        (S_.watch || []).length ? [h("h4", {}, "관전 포인트"), h("ul", {}, ...S_.watch.map((c) => h("li", {}, c)))] : ""));
+    } else kids.push(h("p", { class: "note" }, "종합 판단 없음 (하루 1회 daily.yml에서 생성)"));
+
+    // 압력지수 + 요인
+    kids.push(h("h3", {}, `뉴스 태그 압력지수 `, h("small", {}, `최근 ${Q.window_hours}시간 관련 기사 ${P.n || 0}건 · +1 인상 압력 ~ −1 인하 압력 · 태그 단순 합산`)));
+    kids.push(h("div", { class: "qgrid" }, h("div", { class: "tile" }, h("div", { class: "k" }, "현재"), h("div", { class: "v" }, P.index == null ? "–" : (P.index >= 0 ? "+" : "") + P.index.toFixed(2)),
+      h("div", { class: "s" }, `태깅 ${Q.counts.tagged}/${Q.counts.total}건 · 관련 ${Q.counts.relevant}건`)), h("div", { id: "qualTrend", class: "chart" })));
+    kids.push(h("h3", {}, "요인별 기사 수 ", h("small", {}, "주황=인상 압력, 파랑=인하 압력, 기사 수 기준")), factorBars(P.factors || []));
+
+    // 기사 목록
+    const facs = [...new Set((Q.articles || []).map((a) => a.factor))];
+    const sel = h("select", { "aria-label": "요인", onchange: (e) => setS({ qf: e.target.value }) }, h("option", { value: "" }, "요인 전체"), ...facs.map((f) => h("option", { value: f, selected: S.qf === f }, f)));
+    const dsel = h("select", { "aria-label": "방향", onchange: (e) => setS({ qd: e.target.value }) }, h("option", { value: "" }, "방향 전체"), ...Object.keys(dirCls).map((f) => h("option", { value: f, selected: S.qd === f }, f)));
+    kids.push(h("div", { class: "row-head" }, h("h3", {}, "태깅된 기사 ", h("small", {}, "최근 7일 · 관련 기사만")), h("div", { class: "filters" }, sel, dsel)));
+    const arts = (Q.articles || []).filter((a) => (!S.qf || a.factor === S.qf) && (!S.qd || a.direction === S.qd)).slice(0, 100);
+    kids.push(h("ul", { class: "news" }, ...(arts.length ? arts.map((a) => h("li", {},
+      h("div", { class: "m" }, `${a.published.slice(5, 16).replace("T", " ")} · ${a.press}${a.dup_press && a.dup_press.length ? ` 외 ${a.dup_press.length}곳` : ""} · ${a.origin === "yna" ? "연합 RSS" : "네이버"}`),
+      h("div", { class: "t" }, ext(a.link, a.title)),
+      h("div", { class: "sum" }, h("span", { class: `tag ${dirCls[a.direction]}` }, `${a.direction} ${"▮".repeat(a.strength)}`), " ", h("b", {}, a.factor), " · ", a.reason))) : [h("li", { class: "empty" }, "해당 기사 없음")])));
+    if ((Q.errors || []).length) kids.push(h("p", { class: "note" }, "마지막 실행 오류: " + Q.errors.join("; ")));
+    el.replaceChildren(...kids.flat());
+    qualTrend();
+  }
+
+  function factorBars(fs) {
+    if (!fs.length) return h("p", { class: "note" }, "관련 기사 없음");
+    const mx = Math.max(1, ...fs.map((f) => Math.max(f.up, f.down)));
+    return h("div", { class: "fbars" }, ...fs.map((f) => h("div", { class: "frow" },
+      h("div", { class: "fside l" }, h("span", { class: "fv" }, f.down || ""), h("span", { class: "fbar down", style: `width:${f.down / mx * 100}%` })),
+      h("div", { class: "fname" }, f.factor),
+      h("div", { class: "fside" }, h("span", { class: "fbar up", style: `width:${f.up / mx * 100}%` }), h("span", { class: "fv" }, f.up || "")))));
+  }
+
+  function qualTrend() {
+    const el = $("#qualTrend");
+    if (!el) return;
+    const pts = (D.qual.history || []).map((r) => ({ d: new Date(r.date), v: r.index, n: r.n }));
+    if (pts.length < 2) { el.replaceChildren(h("div", { class: "empty" }, `이력 ${pts.length}일 — 매일 누적`)); return; }
+    const W = Math.max(280, el.clientWidth - 16), H = 150, m = { t: 10, r: 10, b: 22, l: 34 };
+    const x = d3.scaleTime().domain(d3.extent(pts, (p) => p.d)).range([m.l, W - m.r]);
+    const y = d3.scaleLinear().domain([-1, 1]).range([H - m.b, m.t]);
+    const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img").attr("aria-label", "압력지수 추이");
+    svg.append("g").attr("class", "axis").attr("transform", `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%m/%d")));
+    svg.append("g").attr("class", "axis").attr("transform", `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(4)).call((g) => g.select(".domain").remove());
+    svg.append("line").attr("x1", m.l).attr("x2", W - m.r).attr("y1", y(0)).attr("y2", y(0)).attr("stroke", "var(--ink-3)");
+    svg.append("path").datum(pts).attr("fill", "none").attr("stroke", "var(--ink-2)").attr("stroke-width", 2).attr("d", d3.line().x((p) => x(p.d)).y((p) => y(p.v)));
+    svg.selectAll(null).data(pts).join("circle").attr("cx", (p) => x(p.d)).attr("cy", (p) => y(p.v)).attr("r", 4)
+      .attr("fill", (p) => p.v >= 0 ? "var(--hike)" : "var(--cut)").attr("stroke", "var(--surface)").attr("stroke-width", 2)
+      .on("pointermove", (ev, p) => showTip(ev, [`${d3.timeFormat("%Y.%m.%d")(p.d)} ${p.v >= 0 ? "+" : ""}${p.v.toFixed(2)}`, `관련 기사 ${p.n}건`])).on("pointerleave", hideTip);
+    el.replaceChildren(svg.node());
+  }
+
   // ------------------------------------------------------------ 탭 5·6
   function renderMemo() {
     const m = D.memo;
@@ -560,7 +672,13 @@
           h("li", {}, "CD 금리에는 은행 자금사정과 신용 프리미엄이 섞인다. OIS 데이터가 있을 때 가장 정확하다."),
           h("li", {}, "결과는 정상 스프레드 가정에 매우 민감하다. 10월 회의는 ±5bp에 0~60%를 오간다."),
           h("li", {}, "보도 인용 초기값(전망·발언·점도표·통방문 문구)은 원문 대조가 필요하다."),
-          h("li", {}, "매파·비둘기 점수와 의사록 키워드 분류는 사전 기반 자동 산출로 참고용이다."))),
+          h("li", {}, "매파·비둘기 점수와 의사록 키워드 분류는 사전 기반 자동 산출로 참고용이다."),
+          h("li", {}, "AI 정성 판단은 기사 제목·검색 요약만 보고 내린 자동 판단이다. 오분류·과대해석이 있을 수 있으니 근거 기사 원문을 확인한다. 기사 텍스트는 분류 대상 데이터로만 모델에 넘기고, 모델이 인용한 기사 id 중 실제 없는 것은 버린다."))),
+      ...sec("AI 정성 판단 방식",
+        h("ul", {},
+          h("li", {}, "네이버 뉴스 검색 API(config.naver.queries)와 연합뉴스 RSS에서 모은 기사를 Claude가 하나씩 태깅: 관련성, 요인, 방향(인상 압력/중립/인하 압력), 강도 1~3, 근거 한 줄."),
+          h("li", {}, "압력지수 = Σ(방향×강도×중복보도 가중) ÷ Σ(강도×가중). 최근 72시간, 관련 기사만. 태그를 단순 합산해 재현 가능."),
+          h("li", {}, "종합 판단은 하루 1회: 최근 기사 태그 + 시장 확률·점도표·한은 발언·지표를 함께 넣고, 다음 금통위 기준 방향(−2~+2)과 근거·반대 근거·관전 포인트를 받는다."))),
       ...sec("백테스트 (2021~2026, 회의 3영업일 전)", ...bt),
       ...sec("데이터 출처", h("ul", {}, ...(D.meta.sources || []).map((s) => h("li", {}, s.url ? ext(s.url, s.name) : s.name, ` — ${s.what}`)))),
       ...sec("수집 상태", h("ul", {}, ...Object.entries(D.status || {}).map(([k, v]) => h("li", {}, `${k}: ${v.ok ? "정상" : "실패"} · 마지막 시도 ${v.last_attempt || "–"} · 마지막 성공 ${v.last_success || "없음"} · ${v.message || ""}`)),
@@ -583,6 +701,7 @@
     renderGuidance();
     renderMinutes();
     renderNews();
+    renderQual();
     renderMemo();
     renderMethod();
     writeHash();
@@ -613,7 +732,7 @@
       document.documentElement.dataset.theme = nxt; store("bokwatch.theme", nxt);
     });
     addEventListener("hashchange", () => { readHash(); renderAll(); });
-    let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { renderTrend(); renderTone(); }, 150); });
+    let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { renderTrend(); renderTone(); qualTrend(); }, 150); });
     addEventListener("beforeprint", () => { $("#tab-market").hidden = false; $("#tab-guidance").hidden = false; renderTrend(); });
     addEventListener("afterprint", renderTabs);
     addEventListener("pagehide", () => store("bokwatch.lastVisit", new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 16)));

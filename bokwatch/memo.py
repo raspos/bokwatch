@@ -55,7 +55,9 @@ def headline_flags(cur, prev, minutes_new: bool, gov_count: int) -> list[str]:
 
 
 def build_memo(now: datetime, cur: dict | None, prev: dict | None, week: dict | None,
-               guidance: dict, minutes: dict, reports: dict) -> dict:
+               guidance: dict, minutes: dict, reports: dict, events: dict | None = None,
+               qual: dict | None = None) -> dict:
+    events, qual = events or {}, qual or {}
     lines: list[str] = []
     today = now.date()
     ms = _meet(cur)[:2]
@@ -116,7 +118,7 @@ def build_memo(now: datetime, cur: dict | None, prev: dict | None, week: dict | 
         adds = [x["text"] for x in latest_m["diff"] if x["op"] == "add"]
         dels = [x["text"] for x in latest_m["diff"] if x["op"] == "del"]
         if adds or dels:
-            t = f"- 직전 통방문({md(latest_m['date'])})은"
+            t = f"직전 통방문({md(latest_m['date'])})은"
             if adds:
                 t += f" \"{adds[-1].rstrip('.')}\" 문구를 넣고"
             if dels:
@@ -125,7 +127,10 @@ def build_memo(now: datetime, cur: dict | None, prev: dict | None, week: dict | 
                 t += " 다른 문구는 그대로 뒀다."
             if latest_m.get("statement_provisional"):
                 t += " 보도 기준이고 원문 대조 전이다."
-            lines.append(t)
+            if lines and lines[-1].startswith("- ") and ("발언" in lines[-1]):
+                lines[-1] += " " + t
+            else:
+                lines.append("- " + t)
 
     # 3. 점도표
     dps = guidance.get("dotplots", [])
@@ -167,12 +172,26 @@ def build_memo(now: datetime, cur: dict | None, prev: dict | None, week: dict | 
         if lo and hi:
             a = ms[0]
             l, h = _find(cur, a["date"], "-5"), _find(cur, a["date"], "5")
-            t = f"- 민감도: 정상 스프레드를 5bp 낮추면 {mon(a['date'])} 인상확률 {pct(l['p_hike'])}, 5bp 높이면 {pct(h['p_hike'])}."
+            t = f" 민감도: 정상 스프레드를 5bp 낮추면 {mon(a['date'])} 인상확률 {pct(l['p_hike'])}, 5bp 높이면 {pct(h['p_hike'])}."
             if len(ms) > 1:
                 l2, h2 = _find(cur, ms[1]["date"], "-5"), _find(cur, ms[1]["date"], "5")
                 t += f" {mon(ms[1]['date'])}은 {pct(l2['p_hike'])}~{pct(h2['p_hike'])}."
             t += " 스프레드 가정에 따라 결과가 크게 갈리는 것으로 풀이된다." if abs(l["p_hike"] - h["p_hike"]) > 0.3 else ""
-            lines.append(t)
+            lines[0] += t
+
+    # 5. AI 정성 판단 (참고용)
+    syn = qual.get("synthesis")
+    if syn:
+        pr = (qual.get("pressure") or {})
+        t = f"- 정성 판단(AI 자동 산출, 참고용): {syn['headline'].rstrip('.')}. {syn['summary'].strip()}"
+        if pr.get("index") is not None:
+            t += f" 뉴스 태그 압력지수 {pr['index']:+.2f}(최근 {qual.get('window_hours', 72)}시간 관련 기사 {pr['n']}건, +는 인상 압력)."
+        if syn.get("market_gap"):
+            t += " " + syn["market_gap"].strip()
+        su = qual.get("synthesis_updated")
+        if su and su[:10] != now.date().isoformat():
+            t += f" ({md(su[:10])} 판단)"
+        lines.append(t)
 
     # 6. 리스크·관전 포인트
     nxt = ms[0]["date"] if ms else None
@@ -186,7 +205,21 @@ def build_memo(now: datetime, cur: dict | None, prev: dict | None, week: dict | 
         pts.append(f"{md(p['date'])} 회의 의사록 공개({md(p['minutes_expected'])} 예정)")
     if guidance.get("next_dotplot"):
         pts.append(f"{md(guidance['next_dotplot'])} 점도표 중간값")
-    t += " " + ", ".join(pts) + "." if pts else " 다음 금통위 일정 미입력."
+    wk = (today + timedelta(days=7)).isoformat()
+    for e in (events.get("upcoming") or []):
+        if e["kind"] not in ("bok", "minutes") and e.get("importance", 0) >= 2 and e["date"] <= wk:
+            pts.append(f"{md(e['date'])}{' ' + e['time'] if e.get('time') else ''} {e['label']}")
+    t += " " + ", ".join(pts[:6]) + "." if pts else " 다음 금통위 일정 미입력."
+    ind = []
+    for k in ("kr_cpi", "us_cpi"):
+        x = (events.get("indicators") or {}).get(k)
+        if x and x.get("yoy") is not None:
+            s_ = f"{x['label']} {int(x['month'][5:])}월 {x['yoy']:.1f}%"
+            if x.get("prev_yoy") is not None:
+                s_ += f"(전월 {x['prev_yoy']:.1f}%)"
+            ind.append(s_)
+    if ind:
+        t += " 직전 물가: " + ", ".join(ind) + "."
     t += " CD 금리에는 은행 자금사정이 섞여 확률이 과장될 수 있다."
     lines.append(t)
 

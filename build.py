@@ -94,7 +94,14 @@ def main(argv=None):
             week = snap(index, cd - timedelta(days=7))
             if week and prev and week["asof"] == prev["asof"] and (cd - d(week["asof"])).days < 5:
                 week = None
-        memo = build_memo(now, cur, prev, week, guidance, minutes, reports)
+        events = read_json(SITE_DATA / "events.json")
+        if not events or events.get("skeleton"):  # 이벤트 수집 전: 금통위·의사록·수기 일정만
+            from bokwatch.fetch_events import build_events
+            events = build_events(cfg, {}, {}, minutes, today)
+            events["skeleton"] = True
+            write_json(SITE_DATA / "events.json", events)
+        qual = read_json(SITE_DATA / "qual.json", {}) or {}
+        memo = build_memo(now, cur, prev, week, guidance, minutes, reports, events, qual)
         write_json(SITE_DATA / "memo.json", memo)
 
         warnings = []
@@ -113,13 +120,18 @@ def main(argv=None):
             "warnings": warnings,
             "new_minutes": [m["date"] for m in minutes.get("meetings", []) if "minutes" in (m.get("new") or [])],
             "new_reports": reports["new"],
-            "events": cfg.get("events", []),
+            "events": [e for e in events.get("all", []) if e["kind"] in cfg["events"]["chart_kinds"]],
+            "next_event": next((e for e in events.get("upcoming", []) if e["kind"] not in ("bok", "minutes")
+                                and e.get("importance", 0) >= 3), None),
             "levels": cfg["model"]["levels"],
             "banner": cfg["site"]["show_internal_banner"],
             "sources": [
                 {"name": "한국은행 ECOS Open API", "what": "기준금리(722Y001), 시장금리(817Y002)", "url": "https://ecos.bok.or.kr/"},
                 {"name": "한국은행 홈페이지", "what": "통화정책방향 결정문, 금통위 의사록, 기자간담회", "url": "https://www.bok.or.kr/"},
                 {"name": "연합뉴스 RSS", "what": "제목·시각·링크·피드 요약", "url": "https://www.yna.co.kr/rss/index"},
+                {"name": "BLS·연준·FRED", "what": "미국 CPI·고용 일정, FOMC 일정, 미국 CPI 실제치", "url": "https://www.bls.gov/schedule/"},
+                {"name": "네이버 뉴스 검색 API", "what": "제목·검색 요약·링크(AI 정성 판단 입력)", "url": "https://developers.naver.com/docs/serviceapi/search/news/news.md"},
+                {"name": "Anthropic Claude API", "what": "기사 태깅·정성 종합 판단(자동, 참고용)", "url": None},
                 {"name": "data/reports.yaml", "what": "증권사·IB 전망(수기, 보도 인용)", "url": None},
                 {"name": "data/guidance.yaml", "what": "결정·표결·점도표·발언(수기, 보도 인용)", "url": None},
             ],
