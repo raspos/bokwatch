@@ -62,6 +62,26 @@ def estimate_spreads(rows, cfg) -> dict:
     return out
 
 
+def pit_spread(rows, iid: str, day: date, lookback_days: int = 730, settle_days: int = 120):
+    """당시(day 전날까지) 알 수 있던 자료만으로 정상 스프레드를 추정한다(백테스트용, 미래정보 제거).
+    기준금리가 직전 settle_days일 동안 바뀌지 않은 날만 골라 (y − 기준금리) 중앙값을 낸다. 관측 20일 미만이면 None."""
+    base, ser = series(rows, "base"), series(rows, iid)
+    changes = sorted(d(k) for k, (a, b) in zip(sorted(base)[1:], zip([base[x] for x in sorted(base)][:-1],
+                                                                       [base[x] for x in sorted(base)][1:])) if a != b)
+    lo, obs = day - timedelta(days=lookback_days), []
+    for k, y in ser.items():
+        dk = d(k)
+        if not (lo <= dk < day):
+            continue
+        last = max((c for c in changes if c <= dk), default=None)
+        if last is not None and (dk - last).days < settle_days:
+            continue
+        r0, _ = value_on(base, dk, 40)
+        if r0 is not None:
+            obs.append(y - r0)
+    return round(statistics.median(obs), 4) if len(obs) >= 20 else None
+
+
 def meetings_after(cfg, day: date) -> list[date]:
     ms = {d(x) for ys in cfg["meetings"].values() for x in (ys or [])}
     ms |= {d(x["date"]) for x in cfg.get("past_decisions", [])}
@@ -172,6 +192,18 @@ def run_day(rows, cfg, day: date, spreads: dict, shifts=(-5, 0, 5), fut_by_date=
     if insts:
         sens = model.sensitivity(day, r0, insts, ms, cfg["model"]["method"], shifts)
         cd = {str(k): model.result_to_dict(v) for k, v in sens.items()}
+        # 같은 금리와 양립하는 회의별 확률 범위(동결·한 방향 25bp만 허용). 기본 표시값은 '늦은 회의 배정' 경로다.
+        base_inst = insts[0]
+        for k in cd:
+            shifted = model.Instrument(base_inst.name, base_inst.rate, base_inst.tenor_days,
+                                       round(base_inst.spread + int(k) / 100.0, 6), base_inst.source)
+            pr = model.path_ranges(day, r0, shifted, ms)
+            cd[k]["path_range"] = pr
+            for m in cd[k]["meetings"]:
+                rg = pr["meetings"].get(m["date"])
+                if rg and m["in_range"]:
+                    m["range"] = {"direction": pr["direction"], **{x: rg[x] for x in ("min", "max", "early", "late")},
+                                  "feasible": pr["feasible"]}
     kf = None
     if fut_by_date:
         fut_day, cs = futures_on(fut_by_date, day, cfg["model"].get("futures", {}).get("max_stale_days", 5))
@@ -255,17 +287,31 @@ def backtest(rows, cfg, spreads, start_year=2021, n_before=3, fut_by_date=None) 
     avail = data_dates(rows, cfg)
     decisions = sorted(cfg.get("past_decisions", []), key=lambda x: x["date"])
     out, prev_rate, excluded = [], None, []
+    prior_outcomes = []  # 백테스트 시작 전 결정(빈도 기준용)
     for x in decisions:
         md = d(x["date"])
         actual_prev = prev_rate
         prev_rate = float(x["rate"])
+        if actual_prev is not None and md.year < start_year:
+            mv = round((float(x["rate"]) - actual_prev) * 100)
+            prior_outcomes.append("hike" if mv > 0 else "cut" if mv < 0 else "hold")
         if md.year < start_year or actual_prev is None:
             continue
         obs = business_days_before(md, n_before, avail)
         if obs is None or (md - obs).days > 10:
             excluded.append({"meeting": md.isoformat(), "why": "회의 직전 시장금리 없음"})
             continue
-        res = run_day(rows, cfg, obs, spreads, shifts=(0,), fut_by_date=fut_by_date)
+        sp_obs = dict(spreads)
+        sp_how = "현재 추정치 그대로"
+        for iid in cfg["model"]["use"]:
+            v = pit_spread(rows, iid, obs)
+            if v is None:
+                v = float(cfg["model"].get("spread_fallback", {}).get(iid, 0.10))
+                sp_how = "당시 자료 부족 → 기본 가정"
+            else:
+                sp_how = "당시까지 자료"
+            sp_obs[iid] = {"value": v, "how": sp_how}
+        res = run_day(rows, cfg, obs, sp_obs, shifts=(0,), fut_by_date=fut_by_date)
         if not res:
             excluded.append({"meeting": md.isoformat(), "why": "산출 불가"})
             continue
@@ -279,7 +325,13 @@ def backtest(rows, cfg, spreads, start_year=2021, n_before=3, fut_by_date=None) 
         pred, brier = _score(p, actual)
         row = {"meeting": md.isoformat(), "obs_date": obs.isoformat(), **{f"p_{k}": v for k, v in p.items()},
                "pred": pred, "actual": actual, "move_bp": move, "hit": pred == actual,
-               "brier": round(brier, 4), "source": m.get("source", "")}
+               "brier": round(brier, 4), "source": m.get("source", ""),
+               "spread_bp": round(sp_obs[cfg["model"]["use"][0]]["value"] * 100, 1), "spread_how": sp_how}
+        # 비교 기준: 그 회의 이전 결정들의 빈도(라플라스 보정)
+        prior = [z["actual"] for z in out] + list(prior_outcomes)
+        freq = {k: (prior.count(k) + 1) / (len(prior) + 3) for k in ("hike", "hold", "cut")}
+        bpred, bbr = _score(freq, actual)
+        row["base_rate"] = {**{f"p_{k}": round(v, 4) for k, v in freq.items()}, "hit": bpred == actual, "brier": round(bbr, 4)}
         comp = res.get("components", {})
         for name, c in (("kofr", comp.get("kofr_futures")), ("blend", comp.get("blend_experimental"))):
             cm = next((z for z in (c or {}).get("meetings", []) if z["date"] == md.isoformat() and z["in_range"]), None)
@@ -298,6 +350,7 @@ def backtest(rows, cfg, spreads, start_year=2021, n_before=3, fut_by_date=None) 
         hold = {"hike": 0.0, "hold": 1.0, "cut": 0.0}
         getters = (("cd", lambda r: (r["hit"], r["brier"])), ("kofr", lambda r: (r["kofr"]["hit"], r["kofr"]["brier"])),
                    ("blend", lambda r: (r["blend"]["hit"], r["blend"]["brier"])),
+                   ("base_rate", lambda r: (r["base_rate"]["hit"], r["base_rate"]["brier"])),
                    ("always_hold", lambda r: (r["actual"] == "hold", _score(hold, r["actual"])[1])))
         for name, get in getters:
             vals = [get(r) for r in both]
@@ -309,6 +362,10 @@ def backtest(rows, cfg, spreads, start_year=2021, n_before=3, fut_by_date=None) 
             return round(statistics.mean(get(r)[f"p_{r['actual']}"] for r in rs), 4) if rs else None
         chg = [r for r in both if r["actual"] != "hold"]
         hold_rs = [r for r in both if r["actual"] == "hold"]
+        compare["hits_by_actual"] = {
+            act: {"n": sum(r["actual"] == act for r in both),
+                  **{name: sum(get(r)[0] for r in both if r["actual"] == act) for name, get in getters}}
+            for act in ("hold", "hike", "cut")}
         compare["by_outcome"] = {
             "n_change": len(chg), "n_hold": len(hold_rs),
             "cd": {"change": avg_actual(chg, lambda r: r), "hold": avg_actual(hold_rs, lambda r: r)},

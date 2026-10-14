@@ -132,3 +132,16 @@ def test_backtest_tie_is_not_a_hit():
     pred, br = _score({"hike": 0.5, "hold": 0.5, "cut": 0.0}, "hike")
     assert pred == "tie" and br == 0.5
     assert _score({"hike": 0.6, "hold": 0.4, "cut": 0.0}, "hike")[0] == "hike"
+
+
+def test_cd_path_ranges_match_review_example():
+    from bokwatch import model
+    # 리뷰 검산: CD 3.24, r0 3.00, 스프레드 18bp → 83·p10 + 48·p11 = 21.84
+    r = model.path_ranges(date(2026, 10, 13), 3.00, model.Instrument("cd91", 3.24, 91, 0.18),
+                          [date(2026, 10, 22), date(2026, 11, 26)])
+    o, n = r["meetings"]["2026-10-22"], r["meetings"]["2026-11-26"]
+    assert r["direction"] == "hike" and abs(r["L"] - 21.84) < 1e-6 and r["feasible"]
+    assert (o["exposure_days"], n["exposure_days"]) == (83, 48)
+    assert (o["min"], round(o["max"], 3)) == (0.0, 0.263) and (n["min"], round(n["max"], 3)) == (0.0, 0.455)
+    assert (o["late"], round(n["late"], 3)) == (0.0, 0.455)          # 늦은 회의 배정(화면 기본값과 같음)
+    assert (round(o["early"], 3), n["early"]) == (0.263, 0.0)        # 가까운 회의 배정

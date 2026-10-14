@@ -355,7 +355,8 @@ def main(argv=None) -> int:
     attach_consensus(indicators)
     minutes = read_json(SITE_DATA / "minutes.json", {}) or {}
     write_json(EVENTS_JSON, build_events(cfg, scraped, indicators, minutes, now_kst().date()))
-    record_status("events", not errors, "; ".join(errors + soft) or "정상")
+    record_status("events", not errors, "; ".join(errors) if errors else
+                  ("일부 실패·기존 일정 사용 — " + "; ".join(soft)) if soft else "정상")
     if errors:
         print("일부 실패:", errors, file=sys.stderr)
     return 0

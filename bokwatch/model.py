@@ -1,4 +1,4 @@
-"""금통위 회의별 금리 확률 계산 (FedWatch 방식 한국판). 순수 함수만 둔다.
+"""금통위 회의별 금리 확률 계산 (단기금리 역산 + 25bp 격자 변환). 순수 함수만 둔다.
 
 기호
   r0   현재 기준금리(%)
@@ -99,7 +99,7 @@ def move_distribution(delta: float, step: float = STEP) -> dict:
 
 def level_distribution(expected: float, r0: float, step: float = STEP) -> dict:
     """회의 뒤 목표금리 분포. 트리의 경로를 금리 수준별로 합산하면
-    기대값 E_k를 갖는 최소분산 분포(인접 두 격자점)가 된다(FedWatch 수준 방식)."""
+    기대값 E_k를 갖는 최소분산 분포(인접 두 격자점)가 된다. 회의별 독립 확률나무보다 분포가 좁다."""
     x = (expected - r0) / step
     lo = math.floor(x + EPS)
     frac = x - lo
@@ -273,6 +273,42 @@ def normal_spread(spreads_bp: list[float]) -> float:
     if not vals:
         raise ValueError("정상 스프레드 추정용 관측치 없음")
     return statistics.median(vals) / 100.0
+
+
+def path_ranges(asof: date, r0: float, inst: "Instrument", meetings: list[date], step: float = STEP) -> dict:
+    """한 상품(예: CD 91일)과 양립하는 회의별 확률의 가능 범위.
+
+    가정: 각 회의에서 '동결' 또는 '한 방향 25bp 이동'만 가능(방향은 금리가 가리키는 쪽 하나).
+    T·(y − s − r0) = step · Σ a_k·p_k,  a_k = 회의 k부터 만기까지 일수(exposure_days), 0 ≤ p_k ≤ 1.
+    회의 j의 p_j 범위: [max(0, (L − Σ_{i≠j} a_i)/a_j), min(1, L/a_j)],  L = T·(y−s−r0)/step.
+    'early'는 가까운 회의부터 채운 경로, 'late'는 늦은 회의부터 채운 경로.
+    L이 가능한 최대(Σ a_k)를 넘으면 가정(회의당 25bp)으로 설명할 수 없다는 뜻으로 feasible=False."""
+    start = settlement_start(asof)
+    ms = [m for m in sorted(meetings) if m > asof]
+    a = exposure_days(start, inst.tenor_days, ms)
+    idx = [k for k, x in enumerate(a) if x > 0]
+    L = inst.tenor_days * (inst.adj_rate - r0) / step
+    direction = "hike" if L >= 0 else "cut"
+    L = abs(L)
+    tot = sum(a[k] for k in idx)
+    out = {"direction": direction, "L": round(L, 4), "feasible": L <= tot + EPS, "meetings": {}}
+
+    def fill(order):
+        left, ps = L, {}
+        for k in order:
+            v = min(1.0, left / a[k]) if left > 0 else 0.0
+            ps[k] = v
+            left -= v * a[k]
+        return ps
+    early, late = fill(idx), fill(list(reversed(idx)))
+    for k in idx:
+        others = tot - a[k]
+        out["meetings"][ms[k].isoformat()] = {
+            "exposure_days": a[k],
+            "min": round(max(0.0, min(1.0, (L - others) / a[k])), 4),
+            "max": round(min(1.0, L / a[k]), 4),
+            "early": round(early[k], 4), "late": round(late[k], 4)}
+    return out
 
 
 def sensitivity(asof, r0, instruments, meetings, method="auto", shifts_bp=(-5, 0, 5)):

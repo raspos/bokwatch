@@ -2,8 +2,8 @@
  "n": 45,
  "rule": "회의 3영업일 전 종가, 기본 스프레드. 기본값 CD 91일 모형, 실험값 KOFR 선물·혼합(KOFR 50%)",
  "excluded": [],
- "hit_rate": 0.7333,
- "brier": 0.4822,
+ "hit_rate": 0.6222,
+ "brier": 0.5715,
  "compare": {
   "n": 36,
   "first": "2022-04-14",
@@ -19,16 +19,20 @@
    "2022-02-24"
   ],
   "cd": {
-   "hit_rate": 0.75,
-   "brier": 0.4612
+   "hit_rate": 0.5833,
+   "brier": 0.6031
   },
   "kofr": {
    "hit_rate": 0.5556,
    "brier": 0.6627
   },
   "blend": {
-   "hit_rate": 0.6389,
-   "brier": 0.3493
+   "hit_rate": 0.6111,
+   "brier": 0.4119
+  },
+  "base_rate": {
+   "hit_rate": 0.5833,
+   "brier": 0.5404
   },
   "always_hold": {
    "hit_rate": 0.6389,
@@ -38,12 +42,12 @@
    "start_after": 12,
    "n": 24,
    "mix": {
-    "hits": 14,
-    "brier": 0.4616
+    "hits": 13,
+    "brier": 0.545
    },
    "cd": {
-    "hits": 18,
-    "brier": 0.4322
+    "hits": 13,
+    "brier": 0.6272
    },
    "always_hold": {
     "hits": 18
@@ -52,28 +56,28 @@
     {
      "meeting": "2023-10-19",
      "w": 0.7,
-     "hit": false,
-     "brier": 0.5124,
+     "hit": true,
+     "brier": 0.4829,
      "cd_hit": true,
-     "cd_brier": 0.0178,
+     "cd_brier": 0.0,
      "actual": "hold"
     },
     {
      "meeting": "2023-11-30",
-     "w": 0.6,
+     "w": 0.7,
      "hit": true,
-     "brier": 0.1263,
+     "brier": 0.0566,
      "cd_hit": true,
-     "cd_brier": 0.1432,
+     "cd_brier": 0.0,
      "actual": "hold"
     },
     {
      "meeting": "2024-01-11",
      "w": 0.6,
      "hit": false,
-     "brier": 0.7237,
+     "brier": 0.72,
      "cd_hit": true,
-     "cd_brier": 0.0001,
+     "cd_brier": 0.0,
      "actual": "hold"
     },
     {
@@ -89,52 +93,52 @@
      "meeting": "2024-04-12",
      "w": 0.5,
      "hit": true,
-     "brier": 0.0442,
-     "cd_hit": true,
-     "cd_brier": 0.0,
+     "brier": 0.3509,
+     "cd_hit": false,
+     "cd_brier": 0.5843,
      "actual": "hold"
     },
     {
      "meeting": "2024-05-23",
      "w": 0.5,
      "hit": false,
-     "brier": 0.5,
+     "brier": 0.7487,
      "cd_hit": true,
-     "cd_brier": 0.0,
+     "cd_brier": 0.1001,
      "actual": "hold"
     },
     {
      "meeting": "2024-07-11",
      "w": 0.4,
      "hit": true,
-     "brier": 0.32,
+     "brier": 0.3708,
      "cd_hit": true,
-     "cd_brier": 0.0,
+     "cd_brier": 0.0052,
      "actual": "hold"
     },
     {
      "meeting": "2024-08-22",
      "w": 0.4,
      "hit": false,
-     "brier": 0.9101,
-     "cd_hit": true,
-     "cd_brier": 0.4188,
+     "brier": 1.161,
+     "cd_hit": false,
+     "cd_brier": 0.7277,
      "actual": "hold"
     },
     {
      "meeting": "2024-10-11",
-     "w": 0.3,
+     "w": 0.4,
      "hit": true,
-     "brier": 0.2902,
+     "brier": 0.2132,
      "cd_hit": false,
      "cd_brier": 0.5923,
      "actual": "cut"
     },
     {
      "meeting": "2024-11-28",
-     "w": 0.3,
+     "w": 0.4,
      "hit": false,
-     "brier": 0.98,
+     "brier": 0.72,
      "cd_hit": false,
      "cd_brier": 2.0,
      "actual": "cut"
@@ -188,9 +192,9 @@
      "meeting": "2025-08-28",
      "w": 0.4,
      "hit": true,
-     "brier": 0.4654,
+     "brier": 0.2393,
      "cd_hit": true,
-     "cd_brier": 0.2975,
+     "cd_brier": 0.0501,
      "actual": "hold"
     },
     {
@@ -206,9 +210,9 @@
      "meeting": "2025-11-27",
      "w": 0.4,
      "hit": true,
-     "brier": 0.2701,
+     "brier": 0.534,
      "cd_hit": true,
-     "cd_brier": 0.0,
+     "cd_brier": 0.2771,
      "actual": "hold"
     },
     {
@@ -224,63 +228,89 @@
      "meeting": "2026-02-26",
      "w": 0.4,
      "hit": true,
-     "brier": 0.069,
-     "cd_hit": true,
-     "cd_brier": 0.0,
+     "brier": 0.4877,
+     "cd_hit": false,
+     "cd_brier": 0.777,
      "actual": "hold"
     },
     {
      "meeting": "2026-04-10",
-     "w": 0.3,
-     "hit": true,
-     "brier": 0.1431,
-     "cd_hit": true,
-     "cd_brier": 0.0861,
+     "w": 0.4,
+     "hit": false,
+     "brier": 0.8489,
+     "cd_hit": false,
+     "cd_brier": 1.3258,
      "actual": "hold"
     },
     {
      "meeting": "2026-05-28",
-     "w": 0.3,
+     "w": 0.4,
      "hit": true,
-     "brier": 0.1994,
+     "brier": 0.2462,
      "cd_hit": true,
      "cd_brier": 0.0887,
      "actual": "hold"
     },
     {
      "meeting": "2026-07-16",
-     "w": 0.3,
-     "hit": true,
-     "brier": 0.0442,
-     "cd_hit": true,
-     "cd_brier": 0.0902,
+     "w": 0.4,
+     "hit": false,
+     "brier": 0.72,
+     "cd_hit": false,
+     "cd_brier": 2.0,
      "actual": "hike"
     },
     {
      "meeting": "2026-08-27",
-     "w": 0.3,
+     "w": 0.4,
      "hit": false,
-     "brier": 0.98,
+     "brier": 0.6789,
      "cd_hit": false,
-     "cd_brier": 2.0,
+     "cd_brier": 1.886,
      "actual": "hike"
     }
    ]
+  },
+  "hits_by_actual": {
+   "hold": {
+    "n": 23,
+    "cd": 17,
+    "kofr": 7,
+    "blend": 14,
+    "base_rate": 18,
+    "always_hold": 23
+   },
+   "hike": {
+    "n": 9,
+    "cd": 4,
+    "kofr": 9,
+    "blend": 5,
+    "base_rate": 3,
+    "always_hold": 0
+   },
+   "cut": {
+    "n": 4,
+    "cd": 0,
+    "kofr": 4,
+    "blend": 3,
+    "base_rate": 0,
+    "always_hold": 0
+   }
   },
   "by_outcome": {
    "n_change": 13,
    "n_hold": 23,
    "cd": {
-    "change": 0.4118,
-    "hold": 0.8496
+    "change": 0.3454,
+    "hold": 0.7533
    },
    "kofr": {
     "change": 1.0,
     "hold": 0.3454
    },
    "blend": {
-    "change": 0.7059,
-    "hold": 0.5975
+    "change": 0.6727,
+    "hold": 0.5494
    }
   }
  },
@@ -296,7 +326,16 @@
    "move_bp": 0,
    "hit": true,
    "brier": 0.0,
-   "source": "CD 91일 모형"
+   "source": "CD 91일 모형",
+   "spread_bp": 16.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.3333,
+    "p_hold": 0.3333,
+    "p_cut": 0.3333,
+    "hit": false,
+    "brier": 0.6667
+   }
   },
   {
    "meeting": "2021-04-15",
@@ -309,7 +348,16 @@
    "move_bp": 0,
    "hit": true,
    "brier": 0.0,
-   "source": "CD 91일 모형"
+   "source": "CD 91일 모형",
+   "spread_bp": 16.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.25,
+    "p_hold": 0.5,
+    "p_cut": 0.25,
+    "hit": true,
+    "brier": 0.375
+   }
   },
   {
    "meeting": "2021-05-27",
@@ -322,7 +370,16 @@
    "move_bp": 0,
    "hit": true,
    "brier": 0.0,
-   "source": "CD 91일 모형"
+   "source": "CD 91일 모형",
+   "spread_bp": 19.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.2,
+    "p_hold": 0.6,
+    "p_cut": 0.2,
+    "hit": true,
+    "brier": 0.24
+   }
   },
   {
    "meeting": "2021-07-15",
@@ -335,7 +392,16 @@
    "move_bp": 0,
    "hit": true,
    "brier": 0.0,
-   "source": "CD 91일 모형"
+   "source": "CD 91일 모형",
+   "spread_bp": 17.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.1667,
+    "p_hold": 0.6667,
+    "p_cut": 0.1667,
+    "hit": true,
+    "brier": 0.1667
+   }
   },
   {
    "meeting": "2021-08-26",
@@ -348,33 +414,60 @@
    "move_bp": 25,
    "hit": false,
    "brier": 2.0,
-   "source": "CD 91일 모형"
+   "source": "CD 91일 모형",
+   "spread_bp": 19.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.1429,
+    "p_hold": 0.7143,
+    "p_cut": 0.1429,
+    "hit": false,
+    "brier": 1.2653
+   }
   },
   {
    "meeting": "2021-10-12",
    "obs_date": "2021-10-06",
-   "p_hike": 0.0382,
-   "p_hold": 0.9618,
+   "p_hike": 0,
+   "p_hold": 1.0,
    "p_cut": 0,
    "pred": "hold",
    "actual": "hold",
    "move_bp": 0,
    "hit": true,
-   "brier": 0.0029,
-   "source": "CD 91일 모형"
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "spread_bp": 19.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.25,
+    "p_hold": 0.625,
+    "p_cut": 0.125,
+    "hit": true,
+    "brier": 0.2188
+   }
   },
   {
    "meeting": "2021-11-25",
    "obs_date": "2021-11-22",
-   "p_hike": 0.26,
-   "p_hold": 0.74,
+   "p_hike": 0.9672,
+   "p_hold": 0.0328,
    "p_cut": 0,
-   "pred": "hold",
+   "pred": "hike",
    "actual": "hike",
    "move_bp": 25,
-   "hit": false,
-   "brier": 1.0952,
-   "source": "CD 91일 모형"
+   "hit": true,
+   "brier": 0.0022,
+   "source": "CD 91일 모형",
+   "spread_bp": 19.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.2222,
+    "p_hold": 0.6667,
+    "p_cut": 0.1111,
+    "hit": false,
+    "brier": 1.0617
+   }
   },
   {
    "meeting": "2022-01-14",
@@ -387,7 +480,16 @@
    "move_bp": 25,
    "hit": false,
    "brier": 2.0,
-   "source": "CD 91일 모형"
+   "source": "CD 91일 모형",
+   "spread_bp": 19.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.3,
+    "p_hold": 0.6,
+    "p_cut": 0.1,
+    "hit": false,
+    "brier": 0.86
+   }
   },
   {
    "meeting": "2022-02-24",
@@ -400,7 +502,16 @@
    "move_bp": 0,
    "hit": true,
    "brier": 0.0,
-   "source": "CD 91일 모형"
+   "source": "CD 91일 모형",
+   "spread_bp": 19.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.3636,
+    "p_hold": 0.5455,
+    "p_cut": 0.0909,
+    "hit": true,
+    "brier": 0.3471
+   }
   },
   {
    "meeting": "2022-04-14",
@@ -414,6 +525,15 @@
    "hit": false,
    "brier": 2.0,
    "source": "CD 91일 모형",
+   "spread_bp": 19.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.3333,
+    "p_hold": 0.5833,
+    "p_cut": 0.0833,
+    "hit": false,
+    "brier": 0.7917
+   },
    "kofr": {
     "p_hike": 1.0,
     "p_hold": 0.0,
@@ -441,6 +561,15 @@
    "hit": false,
    "brier": 2.0,
    "source": "CD 91일 모형",
+   "spread_bp": 19.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.3846,
+    "p_hold": 0.5385,
+    "p_cut": 0.0769,
+    "hit": false,
+    "brier": 0.6746
+   },
    "kofr": {
     "p_hike": 1.0,
     "p_hold": 0.0,
@@ -468,6 +597,15 @@
    "hit": false,
    "brier": 2.0,
    "source": "CD 91일 모형",
+   "spread_bp": 19.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.4286,
+    "p_hold": 0.5,
+    "p_cut": 0.0714,
+    "hit": false,
+    "brier": 0.5816
+   },
    "kofr": {
     "p_hike": 1.0,
     "p_hold": 0.0,
@@ -486,15 +624,24 @@
   {
    "meeting": "2022-08-25",
    "obs_date": "2022-08-22",
-   "p_hike": 0.7942,
-   "p_hold": 0.2058,
+   "p_hike": 0.7183,
+   "p_hold": 0.2817,
    "p_cut": 0,
    "pred": "hike",
    "actual": "hike",
    "move_bp": 25,
    "hit": true,
-   "brier": 0.0847,
+   "brier": 0.1587,
    "source": "CD 91일 모형",
+   "spread_bp": 19.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.4667,
+    "p_hold": 0.4667,
+    "p_cut": 0.0667,
+    "hit": false,
+    "brier": 0.5067
+   },
    "kofr": {
     "p_hike": 1.0,
     "p_hold": 0.0,
@@ -503,11 +650,11 @@
     "brier": 0.0
    },
    "blend": {
-    "p_hike": 0.8971,
-    "p_hold": 0.1029,
+    "p_hike": 0.8592,
+    "p_hold": 0.1409,
     "p_cut": 0.0,
     "hit": true,
-    "brier": 0.0212
+    "brier": 0.0397
    }
   },
   {
@@ -522,6 +669,15 @@
    "hit": true,
    "brier": 0.0,
    "source": "CD 91일 모형",
+   "spread_bp": 19.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.5,
+    "p_hold": 0.4375,
+    "p_cut": 0.0625,
+    "hit": true,
+    "brier": 0.4453
+   },
    "kofr": {
     "p_hike": 1.0,
     "p_hold": 0.0,
@@ -549,6 +705,15 @@
    "hit": true,
    "brier": 0.0,
    "source": "CD 91일 모형",
+   "spread_bp": 20.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.5294,
+    "p_hold": 0.4118,
+    "p_cut": 0.0588,
+    "hit": true,
+    "brier": 0.3945
+   },
    "kofr": {
     "p_hike": 1.0,
     "p_hold": 0.0,
@@ -576,6 +741,15 @@
    "hit": true,
    "brier": 0.0,
    "source": "CD 91일 모형",
+   "spread_bp": 20.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.5556,
+    "p_hold": 0.3889,
+    "p_cut": 0.0556,
+    "hit": true,
+    "brier": 0.3519
+   },
    "kofr": {
     "p_hike": 1.0,
     "p_hold": 0.0,
@@ -595,14 +769,23 @@
    "meeting": "2023-02-23",
    "obs_date": "2023-02-20",
    "p_hike": 0,
-   "p_hold": 0.7319,
-   "p_cut": 0.2681,
-   "pred": "hold",
+   "p_hold": 0.4996,
+   "p_cut": 0.5004,
+   "pred": "cut",
    "actual": "hold",
    "move_bp": 0,
-   "hit": true,
-   "brier": 0.1438,
+   "hit": false,
+   "brier": 0.5008,
    "source": "CD 91일 모형",
+   "spread_bp": 21.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.5789,
+    "p_hold": 0.3684,
+    "p_cut": 0.0526,
+    "hit": false,
+    "brier": 0.7368
+   },
    "kofr": {
     "p_hike": 0.547,
     "p_hold": 0.453,
@@ -612,24 +795,33 @@
    },
    "blend": {
     "p_hike": 0.2735,
-    "p_hold": 0.5925,
-    "p_cut": 0.1341,
+    "p_hold": 0.4763,
+    "p_cut": 0.2502,
     "hit": true,
-    "brier": 0.2588
+    "brier": 0.4117
    }
   },
   {
    "meeting": "2023-04-11",
    "obs_date": "2023-04-06",
    "p_hike": 0,
-   "p_hold": 1.0,
-   "p_cut": 0,
+   "p_hold": 0.9845,
+   "p_cut": 0.0155,
    "pred": "hold",
    "actual": "hold",
    "move_bp": 0,
    "hit": true,
-   "brier": 0.0,
+   "brier": 0.0005,
    "source": "CD 91일 모형",
+   "spread_bp": 20.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.55,
+    "p_hold": 0.4,
+    "p_cut": 0.05,
+    "hit": false,
+    "brier": 0.665
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.1217,
@@ -639,10 +831,10 @@
    },
    "blend": {
     "p_hike": 0.0,
-    "p_hold": 0.5608,
-    "p_cut": 0.4391,
+    "p_hold": 0.5531,
+    "p_cut": 0.4469,
     "hit": true,
-    "brier": 0.3857
+    "brier": 0.3994
    }
   },
   {
@@ -657,6 +849,15 @@
    "hit": true,
    "brier": 0.0,
    "source": "CD 91일 모형",
+   "spread_bp": 19.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.5238,
+    "p_hold": 0.4286,
+    "p_cut": 0.0476,
+    "hit": false,
+    "brier": 0.6032
+   },
    "kofr": {
     "p_hike": 0.0689,
     "p_hold": 0.9311,
@@ -684,6 +885,15 @@
    "hit": true,
    "brier": 0.0,
    "source": "CD 91일 모형",
+   "spread_bp": 24.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.5,
+    "p_hold": 0.4545,
+    "p_cut": 0.0455,
+    "hit": false,
+    "brier": 0.5496
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.9296,
@@ -711,6 +921,15 @@
    "hit": true,
    "brier": 0.0,
    "source": "CD 91일 모형",
+   "spread_bp": 25.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.4783,
+    "p_hold": 0.4783,
+    "p_cut": 0.0435,
+    "hit": false,
+    "brier": 0.5028
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.468,
@@ -729,15 +948,24 @@
   {
    "meeting": "2023-10-19",
    "obs_date": "2023-10-16",
-   "p_hike": 0.0943,
-   "p_hold": 0.9057,
+   "p_hike": 0,
+   "p_hold": 1.0,
    "p_cut": 0,
    "pred": "hold",
    "actual": "hold",
    "move_bp": 0,
    "hit": true,
-   "brier": 0.0178,
+   "brier": 0.0,
    "source": "CD 91일 모형",
+   "spread_bp": 25.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.4583,
+    "p_hold": 0.5,
+    "p_cut": 0.0417,
+    "hit": true,
+    "brier": 0.4618
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.298,
@@ -746,25 +974,34 @@
     "brier": 0.9856
    },
    "blend": {
-    "p_hike": 0.0471,
-    "p_hold": 0.6018,
+    "p_hike": 0.0,
+    "p_hold": 0.649,
     "p_cut": 0.351,
     "hit": true,
-    "brier": 0.284
+    "brier": 0.2464
    }
   },
   {
    "meeting": "2023-11-30",
    "obs_date": "2023-11-27",
-   "p_hike": 0.2676,
-   "p_hold": 0.7324,
+   "p_hike": 0,
+   "p_hold": 1.0,
    "p_cut": 0,
    "pred": "hold",
    "actual": "hold",
    "move_bp": 0,
    "hit": true,
-   "brier": 0.1432,
+   "brier": 0.0,
    "source": "CD 91일 모형",
+   "spread_bp": 25.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.44,
+    "p_hold": 0.52,
+    "p_cut": 0.04,
+    "hit": true,
+    "brier": 0.4256
+   },
    "kofr": {
     "p_hike": 0.2404,
     "p_hold": 0.7596,
@@ -773,25 +1010,34 @@
     "brier": 0.1156
    },
    "blend": {
-    "p_hike": 0.254,
-    "p_hold": 0.746,
+    "p_hike": 0.1202,
+    "p_hold": 0.8798,
     "p_cut": 0.0,
     "hit": true,
-    "brier": 0.129
+    "brier": 0.0289
    }
   },
   {
    "meeting": "2024-01-11",
    "obs_date": "2024-01-08",
-   "p_hike": 0.0076,
-   "p_hold": 0.9924,
+   "p_hike": 0,
+   "p_hold": 1.0,
    "p_cut": 0,
    "pred": "hold",
    "actual": "hold",
    "move_bp": 0,
    "hit": true,
-   "brier": 0.0001,
+   "brier": 0.0,
    "source": "CD 91일 모형",
+   "spread_bp": 25.5,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.4231,
+    "p_hold": 0.5385,
+    "p_cut": 0.0385,
+    "hit": true,
+    "brier": 0.3935
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.0,
@@ -800,11 +1046,11 @@
     "brier": 2.0
    },
    "blend": {
-    "p_hike": 0.0038,
-    "p_hold": 0.4962,
+    "p_hike": 0.0,
+    "p_hold": 0.5,
     "p_cut": 0.5,
     "hit": false,
-    "brier": 0.5038
+    "brier": 0.5
    }
   },
   {
@@ -819,6 +1065,15 @@
    "hit": true,
    "brier": 0.0,
    "source": "CD 91일 모형",
+   "spread_bp": 25.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.4074,
+    "p_hold": 0.5556,
+    "p_cut": 0.037,
+    "hit": true,
+    "brier": 0.3649
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.3639,
@@ -838,14 +1093,23 @@
    "meeting": "2024-04-12",
    "obs_date": "2024-04-08",
    "p_hike": 0,
-   "p_hold": 1.0,
-   "p_cut": 0,
-   "pred": "hold",
+   "p_hold": 0.4595,
+   "p_cut": 0.5405,
+   "pred": "cut",
    "actual": "hold",
    "move_bp": 0,
-   "hit": true,
-   "brier": 0.0,
+   "hit": false,
+   "brier": 0.5843,
    "source": "CD 91일 모형",
+   "spread_bp": 25.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.3929,
+    "p_hold": 0.5714,
+    "p_cut": 0.0357,
+    "hit": true,
+    "brier": 0.3393
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.7028,
@@ -855,24 +1119,33 @@
    },
    "blend": {
     "p_hike": 0.0,
-    "p_hold": 0.8514,
-    "p_cut": 0.1486,
+    "p_hold": 0.5812,
+    "p_cut": 0.4189,
     "hit": true,
-    "brier": 0.0442
+    "brier": 0.3509
    }
   },
   {
    "meeting": "2024-05-23",
    "obs_date": "2024-05-20",
    "p_hike": 0,
-   "p_hold": 1.0,
-   "p_cut": 0,
+   "p_hold": 0.7763,
+   "p_cut": 0.2237,
    "pred": "hold",
    "actual": "hold",
    "move_bp": 0,
    "hit": true,
-   "brier": 0.0,
+   "brier": 0.1001,
    "source": "CD 91일 모형",
+   "spread_bp": 24.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.3793,
+    "p_hold": 0.5862,
+    "p_cut": 0.0345,
+    "hit": true,
+    "brier": 0.3163
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.0,
@@ -882,24 +1155,33 @@
    },
    "blend": {
     "p_hike": 0.0,
-    "p_hold": 0.5,
-    "p_cut": 0.5,
+    "p_hold": 0.3881,
+    "p_cut": 0.6119,
     "hit": false,
-    "brier": 0.5
+    "brier": 0.7488
    }
   },
   {
    "meeting": "2024-07-11",
    "obs_date": "2024-07-08",
    "p_hike": 0,
-   "p_hold": 1.0,
-   "p_cut": 0,
+   "p_hold": 0.949,
+   "p_cut": 0.051,
    "pred": "hold",
    "actual": "hold",
    "move_bp": 0,
    "hit": true,
-   "brier": 0.0,
+   "brier": 0.0052,
    "source": "CD 91일 모형",
+   "spread_bp": 20.5,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.3667,
+    "p_hold": 0.6,
+    "p_cut": 0.0333,
+    "hit": true,
+    "brier": 0.2956
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.0,
@@ -909,24 +1191,33 @@
    },
    "blend": {
     "p_hike": 0.0,
-    "p_hold": 0.5,
-    "p_cut": 0.5,
+    "p_hold": 0.4745,
+    "p_cut": 0.5255,
     "hit": false,
-    "brier": 0.5
+    "brier": 0.5523
    }
   },
   {
    "meeting": "2024-08-22",
    "obs_date": "2024-08-19",
    "p_hike": 0,
-   "p_hold": 0.5424,
-   "p_cut": 0.4576,
-   "pred": "hold",
+   "p_hold": 0.3968,
+   "p_cut": 0.6032,
+   "pred": "cut",
    "actual": "hold",
    "move_bp": 0,
-   "hit": true,
-   "brier": 0.4188,
+   "hit": false,
+   "brier": 0.7277,
    "source": "CD 91일 모형",
+   "spread_bp": 20.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.3548,
+    "p_hold": 0.6129,
+    "p_cut": 0.0323,
+    "hit": true,
+    "brier": 0.2768
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.0,
@@ -936,10 +1227,10 @@
    },
    "blend": {
     "p_hike": 0.0,
-    "p_hold": 0.2712,
-    "p_cut": 0.7288,
+    "p_hold": 0.1984,
+    "p_cut": 0.8016,
     "hit": false,
-    "brier": 1.0623
+    "brier": 1.2851
    }
   },
   {
@@ -954,6 +1245,15 @@
    "hit": false,
    "brier": 0.5923,
    "source": "CD 91일 모형",
+   "spread_bp": 18.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.3438,
+    "p_hold": 0.625,
+    "p_cut": 0.0312,
+    "hit": false,
+    "brier": 1.4473
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.0,
@@ -981,6 +1281,15 @@
    "hit": false,
    "brier": 2.0,
    "source": "CD 91일 모형",
+   "spread_bp": 18.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.3333,
+    "p_hold": 0.6061,
+    "p_cut": 0.0606,
+    "hit": false,
+    "brier": 1.3609
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.0,
@@ -1008,6 +1317,15 @@
    "hit": true,
    "brier": 0.3411,
    "source": "CD 91일 모형",
+   "spread_bp": 18.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.3235,
+    "p_hold": 0.5882,
+    "p_cut": 0.0882,
+    "hit": true,
+    "brier": 0.282
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.0,
@@ -1035,6 +1353,15 @@
    "hit": false,
    "brier": 0.9766,
    "source": "CD 91일 모형",
+   "spread_bp": 18.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.3143,
+    "p_hold": 0.6,
+    "p_cut": 0.0857,
+    "hit": false,
+    "brier": 1.2947
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.0,
@@ -1062,6 +1389,15 @@
    "hit": false,
    "brier": 0.9828,
    "source": "CD 91일 모형",
+   "spread_bp": 18.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.3056,
+    "p_hold": 0.5833,
+    "p_cut": 0.1111,
+    "hit": true,
+    "brier": 0.2793
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.2559,
@@ -1089,6 +1425,15 @@
    "hit": false,
    "brier": 1.9397,
    "source": "CD 91일 모형",
+   "spread_bp": 18.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.2973,
+    "p_hold": 0.5946,
+    "p_cut": 0.1081,
+    "hit": false,
+    "brier": 1.2374
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.0,
@@ -1116,6 +1461,15 @@
    "hit": true,
    "brier": 0.3987,
    "source": "CD 91일 모형",
+   "spread_bp": 18.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.2895,
+    "p_hold": 0.5789,
+    "p_cut": 0.1316,
+    "hit": true,
+    "brier": 0.2784
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.0,
@@ -1135,14 +1489,23 @@
    "meeting": "2025-08-28",
    "obs_date": "2025-08-25",
    "p_hike": 0,
-   "p_hold": 0.6143,
-   "p_cut": 0.3857,
+   "p_hold": 0.8418,
+   "p_cut": 0.1582,
    "pred": "hold",
    "actual": "hold",
    "move_bp": 0,
    "hit": true,
-   "brier": 0.2975,
+   "brier": 0.0501,
    "source": "CD 91일 모형",
+   "spread_bp": 14.5,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.2821,
+    "p_hold": 0.5897,
+    "p_cut": 0.1282,
+    "hit": true,
+    "brier": 0.2643
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.3726,
@@ -1152,10 +1515,10 @@
    },
    "blend": {
     "p_hike": 0.0,
-    "p_hold": 0.4934,
-    "p_cut": 0.5065,
-    "hit": false,
-    "brier": 0.5132
+    "p_hold": 0.6072,
+    "p_cut": 0.3928,
+    "hit": true,
+    "brier": 0.3086
    }
   },
   {
@@ -1170,6 +1533,15 @@
    "hit": true,
    "brier": 0.0,
    "source": "CD 91일 모형",
+   "spread_bp": 10.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.275,
+    "p_hold": 0.6,
+    "p_cut": 0.125,
+    "hit": true,
+    "brier": 0.2513
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.5555,
@@ -1188,15 +1560,24 @@
   {
    "meeting": "2025-11-27",
    "obs_date": "2025-11-24",
-   "p_hike": 0,
-   "p_hold": 1.0,
+   "p_hike": 0.3722,
+   "p_hold": 0.6278,
    "p_cut": 0,
    "pred": "hold",
    "actual": "hold",
    "move_bp": 0,
    "hit": true,
-   "brier": 0.0,
+   "brier": 0.2771,
    "source": "CD 91일 모형",
+   "spread_bp": 10.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.2683,
+    "p_hold": 0.6098,
+    "p_cut": 0.122,
+    "hit": true,
+    "brier": 0.2391
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.0812,
@@ -1205,11 +1586,11 @@
     "brier": 1.6884
    },
    "blend": {
-    "p_hike": 0.0,
-    "p_hold": 0.5406,
+    "p_hike": 0.1861,
+    "p_hold": 0.3545,
     "p_cut": 0.4594,
-    "hit": true,
-    "brier": 0.4221
+    "hit": false,
+    "brier": 0.6624
    }
   },
   {
@@ -1224,6 +1605,15 @@
    "hit": true,
    "brier": 0.0,
    "source": "CD 91일 모형",
+   "spread_bp": 10.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.2619,
+    "p_hold": 0.619,
+    "p_cut": 0.119,
+    "hit": true,
+    "brier": 0.2279
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.0852,
@@ -1242,15 +1632,24 @@
   {
    "meeting": "2026-02-26",
    "obs_date": "2026-02-23",
-   "p_hike": 0,
-   "p_hold": 1.0,
+   "p_hike": 0.6233,
+   "p_hold": 0.3767,
    "p_cut": 0,
-   "pred": "hold",
+   "pred": "hike",
    "actual": "hold",
    "move_bp": 0,
-   "hit": true,
-   "brier": 0.0,
+   "hit": false,
+   "brier": 0.777,
    "source": "CD 91일 모형",
+   "spread_bp": 10.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.2558,
+    "p_hold": 0.6279,
+    "p_cut": 0.1163,
+    "hit": true,
+    "brier": 0.2174
+   },
    "kofr": {
     "p_hike": 0,
     "p_hold": 0.5355,
@@ -1259,25 +1658,34 @@
     "brier": 0.4315
    },
    "blend": {
-    "p_hike": 0.0,
-    "p_hold": 0.7677,
+    "p_hike": 0.3116,
+    "p_hold": 0.4561,
     "p_cut": 0.2323,
     "hit": true,
-    "brier": 0.1079
+    "brier": 0.4469
    }
   },
   {
    "meeting": "2026-04-10",
    "obs_date": "2026-04-07",
-   "p_hike": 0.2075,
-   "p_hold": 0.7925,
+   "p_hike": 0.8142,
+   "p_hold": 0.1858,
    "p_cut": 0,
-   "pred": "hold",
+   "pred": "hike",
    "actual": "hold",
    "move_bp": 0,
-   "hit": true,
-   "brier": 0.0861,
+   "hit": false,
+   "brier": 1.3258,
    "source": "CD 91일 모형",
+   "spread_bp": 10.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.25,
+    "p_hold": 0.6364,
+    "p_cut": 0.1136,
+    "hit": true,
+    "brier": 0.2076
+   },
    "kofr": {
     "p_hike": 0.4074,
     "p_hold": 0.5926,
@@ -1286,11 +1694,11 @@
     "brier": 0.3319
    },
    "blend": {
-    "p_hike": 0.3075,
-    "p_hold": 0.6925,
+    "p_hike": 0.6108,
+    "p_hold": 0.3892,
     "p_cut": 0.0,
-    "hit": true,
-    "brier": 0.1891
+    "hit": false,
+    "brier": 0.7462
    }
   },
   {
@@ -1305,6 +1713,15 @@
    "hit": true,
    "brier": 0.0887,
    "source": "CD 91일 모형",
+   "spread_bp": 18.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.2444,
+    "p_hold": 0.6444,
+    "p_cut": 0.1111,
+    "hit": true,
+    "brier": 0.1985
+   },
    "kofr": {
     "p_hike": 0.5612,
     "p_hold": 0.4388,
@@ -1323,33 +1740,6 @@
   {
    "meeting": "2026-07-16",
    "obs_date": "2026-07-13",
-   "p_hike": 0.7876,
-   "p_hold": 0.2124,
-   "p_cut": 0,
-   "pred": "hike",
-   "actual": "hike",
-   "move_bp": 25,
-   "hit": true,
-   "brier": 0.0902,
-   "source": "CD 91일 모형",
-   "kofr": {
-    "p_hike": 1.0,
-    "p_hold": 0.0,
-    "p_cut": 0,
-    "hit": true,
-    "brier": 0.0
-   },
-   "blend": {
-    "p_hike": 0.8938,
-    "p_hold": 0.1062,
-    "p_cut": 0.0,
-    "hit": true,
-    "brier": 0.0226
-   }
-  },
-  {
-   "meeting": "2026-08-27",
-   "obs_date": "2026-08-24",
    "p_hike": 0,
    "p_hold": 1.0,
    "p_cut": 0,
@@ -1359,6 +1749,15 @@
    "hit": false,
    "brier": 2.0,
    "source": "CD 91일 모형",
+   "spread_bp": 28.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.2391,
+    "p_hold": 0.6522,
+    "p_cut": 0.1087,
+    "hit": false,
+    "brier": 1.0161
+   },
    "kofr": {
     "p_hike": 1.0,
     "p_hold": 0.0,
@@ -1372,6 +1771,42 @@
     "p_cut": 0.0,
     "hit": false,
     "brier": 0.5
+   }
+  },
+  {
+   "meeting": "2026-08-27",
+   "obs_date": "2026-08-24",
+   "p_hike": 0,
+   "p_hold": 0.9393,
+   "p_cut": 0.0607,
+   "pred": "hold",
+   "actual": "hike",
+   "move_bp": 25,
+   "hit": false,
+   "brier": 1.886,
+   "source": "CD 91일 모형",
+   "spread_bp": 31.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.2553,
+    "p_hold": 0.6383,
+    "p_cut": 0.1064,
+    "hit": false,
+    "brier": 0.9733
+   },
+   "kofr": {
+    "p_hike": 1.0,
+    "p_hold": 0.0,
+    "p_cut": 0,
+    "hit": true,
+    "brier": 0.0
+   },
+   "blend": {
+    "p_hike": 0.5,
+    "p_hold": 0.4697,
+    "p_cut": 0.0303,
+    "hit": true,
+    "brier": 0.4715
    }
   }
  ],

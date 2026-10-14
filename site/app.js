@@ -146,6 +146,7 @@
     // 시장
     tiles.push(h("div", { class: "tile" }, h("div", { class: "k" }, `모형 추정(CD) · ${nextDate ? mon(nextDate) + " 회의" : "다음 회의"} 인상 확률${staleFrom ? ` · ${ymd(staleFrom)} 기준` : ""}`),
       h("div", { class: "v" }, nxt ? pct(nxt.p_hike) : "–"),
+      nxt && nxt.range ? h("div", { class: "s" }, `가능 범위 ${pct(nxt.range.min, 0)}~${pct(nxt.range.max, 0)} (회의 배분 가정에 따라)`) : "",
       h("div", { class: "s" }, ms[1] ? `${mon(ms[1].date)} ${pct(ms[1].p_hike)} · 기대금리 ${fx(ms[1].expected)}%` : "")));
     // 한은 점도표
     tiles.push(h("div", { class: "tile" }, h("div", { class: "k" }, `한은 · 최신 점도표(${dp ? ymd(dp.date) : "–"}) 중간값`),
@@ -156,13 +157,14 @@
       h("div", { class: "v" }, c && c.n ? pct(c.hike_share, 0) : "–"),
       h("div", { class: "s" }, c && c.n ? `${c.counts["인상"] || 0}/${c.n}곳 · ` + secondCons(ms[1]) : "")));
     // 엇갈림: 방향 신호가 다르면 강조
-    const sig = [nxt ? nxt.p_hike >= 0.5 : null, dp && r0 != null ? dp.median > r0 : null, c && c.n ? c.hike_share >= 0.5 : null];
+    // 점도표는 6개월 뒤 전망이라 '다음 회의' 신호와 비교하지 않는다(10월 동결·이후 인상은 일관된 경로)
+    const sig = [nxt ? nxt.p_hike >= 0.5 : null, null, c && c.n ? c.hike_share >= 0.5 : null];
     const known = sig.filter((x) => x != null);
     const diverge = known.length >= 2 && known.some((x) => x !== known[0]);
     if (diverge) {
       sig.forEach((x, i) => { if (x != null && x !== majority(known)) tiles[i].classList.add("diverge"); });
       const lbl = ["모형 추정", "점도표", "전문가"].map((n, i) => sig[i] == null ? null : `${n} ${sig[i] ? "인상 쪽" : "동결 쪽"}`).filter(Boolean).join(" · ");
-      tiles.push(h("div", { class: "strip-note" }, `엇갈림 — ${lbl} (점도표는 6개월 뒤 전망, 모형 추정·전문가는 다음 회의 기준)`));
+      tiles.push(h("div", { class: "strip-note" }, `엇갈림 — ${lbl} (둘 다 다음 회의 기준)`));
     }
     const Q = D.qual && D.qual.synthesis;
     const pr = D.qual && D.qual.pressure;
@@ -246,6 +248,8 @@
         gaugeSVG(m.p_hike),
         h("div", { class: "sub" }, `동결 ${pct(m.p_hold)} · 인상 ${pct(m.p_hike)}` + (m.p_cut > 0 ? ` · 인하 ${pct(m.p_cut)}` : "")),
         h("div", { class: "sub" }, `회의 뒤 기대 금리 ${fx(m.expected, 3)}%`),
+        m.range ? h("div", { class: "sub range" }, `같은 금리로 가능한 범위: ${m.range.direction === "cut" ? "인하" : "인상"} ${pct(m.range.min)}~${pct(m.range.max)}`
+          + ` · 표시값은 늦은 회의부터 배정(가까운 회의부터 배정하면 ${pct(m.range.early)})`) : "",
         h("div", { class: "sub parts" }, partsLine(staleFrom ? live : snap, m.date)),
         h("div", { class: "method-tag" }, m.source || ({ bootstrap: "부트스트래핑", min_hike: "최소 인상 경로", lsq: "비음수 최소제곱" }[m.method] || m.method)));
     });
@@ -692,7 +696,7 @@
     kids.push(h("ul", { class: "news" }, ...(arts.length ? arts.map((a) => h("li", {},
       h("div", { class: "m" }, `${a.published.slice(5, 16).replace("T", " ")} · ${a.press}${a.dup_press && a.dup_press.length ? ` 외 ${a.dup_press.length}곳` : ""} · ${a.origin === "yna" ? "연합 RSS" : "네이버"}${a.event_n > 1 ? ` · 같은 사건 보도 ${a.event_n}건: ${a.event}` : ""}`),
       h("div", { class: "t" }, ext(a.link, a.title)),
-      h("div", { class: "sum" }, h("span", { class: `tag ${dirCls[a.direction]}` }, `${a.direction} ${"▮".repeat(a.strength)}`), " ", h("b", {}, a.factor), " · ", a.reason))) : [h("li", { class: "empty" }, "해당 기사 없음")])));
+      h("div", { class: "sum" }, h("span", { class: `tag ${dirCls[a.direction]}` }, `${a.direction} ${"▮".repeat(a.strength)}`), " ", h("b", {}, a.factor), a.signal ? ` · ${a.signal}` : "", " · ", a.reason))) : [h("li", { class: "empty" }, "해당 기사 없음")])));
     if ((Q.errors || []).length) kids.push(h("p", { class: "note" }, "마지막 실행 오류: " + Q.errors.join("; ")));
     el.replaceChildren(...kids.flat());
     qualTrend();
@@ -747,8 +751,12 @@
       ["CD 91일 모형 (기본)", `${Math.round(C.cd.hit_rate * C.n)}/${C.n}`, pct(C.cd.hit_rate), C.cd.brier.toFixed(3)],
       ["KOFR 선물 모형 (실험)", `${Math.round(C.kofr.hit_rate * C.n)}/${C.n}`, pct(C.kofr.hit_rate), C.kofr.brier.toFixed(3)],
       ["혼합 KOFR 50% (실험)", `${Math.round(C.blend.hit_rate * C.n)}/${C.n}`, pct(C.blend.hit_rate), C.blend.brier.toFixed(3)],
+      ["과거 결정 빈도 (비교 기준)", `${Math.round(C.base_rate.hit_rate * C.n)}/${C.n}`, pct(C.base_rate.hit_rate), C.base_rate.brier.toFixed(3)],
       ["항상 동결 (비교 기준)", `${Math.round(C.always_hold.hit_rate * C.n)}/${C.n}`, pct(C.always_hold.hit_rate), C.always_hold.brier.toFixed(3)],
     ]) : p(h("span", { class: "note" }, "KOFR 선물 이력 수집 전이라 비교표 없음"));
+    const HB = C && C.hits_by_actual;
+    const byActTable = HB ? table(["실제 결정", "회의 수", "CD 모형", "KOFR 선물", "혼합", "과거 결정 빈도", "항상 동결"],
+      ["hold", "hike", "cut"].map((a) => [actK[a], HB[a].n, ...["cd", "kofr", "blend", "base_rate", "always_hold"].map((k) => `${HB[a][k]}/${HB[a].n}`)])) : "";
     const wfTable = W && W.n ? table(["방식", "적중", "Brier"], [
       ["혼합(비율을 그때까지의 회의로만 선택)", `${W.mix.hits}/${W.n}`, W.mix.brier.toFixed(3)],
       ["CD 91일 모형", `${W.cd.hits}/${W.n}`, W.cd.brier.toFixed(3)],
@@ -785,7 +793,8 @@
             li("만기 구간에 회의가 하나면 E_1을 바로 푼다(부트스트래핑)."),
             li("회의가 둘 이상이면 미지수가 식보다 많다. '최소 인상 경로'로 나눈다: 늦은 회의부터 0.25%p 격자 상한까지 채우고 남는 부분을 앞 회의에 둔다. 이 규칙은 가까운 회의 확률을 낮게 잡는 쪽으로 기운다."),
             li("회의별 Δ_k = E_k − E_(k−1). 0 < Δ < 25bp면 인상확률 = Δ ÷ 25bp. Δ ≥ 25bp면 25bp 인상 확정에 초과분을 50bp 확률로 둔다(인상확률 합 100%). 음수는 인하로 대칭."),
-            li("회의 뒤 목표금리 분포는 기대금리를 맞추는 인접 두 격자점(FedWatch 수준 방식)."))),
+            li("회의 뒤 목표금리 분포는 기대금리를 맞추는 인접 두 격자점으로 표시한다. 회의별 결과를 독립 확률나무로 잇는 CME FedWatch와 달리 분포를 좁게 보이게 한다(예: 두 회의 각 50%면 실제 누적 결과는 0·25·50bp가 25·50·25%이지만 '25bp 100%'로 표시)."),
+          li("CD 한 금리로는 회의 사이 배분이 정해지지 않는다. 화면의 '같은 금리로 가능한 범위'는 동결·한 방향 25bp만 허용할 때 이 금리와 양립하는 회의별 확률의 최소·최대다. 예: 10/13 CD 3.24%, 스프레드 18bp → 83×p(10월)+48×p(11월)=21.84 → 10월 0~26.3%, 11월 0~45.5%. 게이지 값은 그중 '늦은 회의부터 배정' 경로다."))),
         ...sub("계산 예시 (검산 고정값)",
           p("기준일 2026-10-13, 기준금리 3.00%, CD 91일 3.24%, 정상 스프레드 10bp, 회의 10/22·11/26."),
           table(["단계", "값"], [
@@ -823,20 +832,24 @@
           h("ul", {},
             li(`CD 모형은 동결을 잘 맞히지만(동결 회의에 평균 ${pct(C.by_outcome.cd.hold, 0)}) 금리 변경을 놓친다(변경 회의에 평균 ${pct(C.by_outcome.cd.change, 0)}).`),
             li(`KOFR 선물 모형은 반대다. 변경 회의에 평균 ${pct(C.by_outcome.kofr.change, 0)}를 줬지만 동결 회의에서 헛신호가 많다(동결에 평균 ${pct(C.by_outcome.kofr.hold, 0)}).`),
-            li(`적중 수로는 어느 방식도 '항상 동결'(${Math.round(C.always_hold.hit_rate * C.n)}/${C.n})을 확실히 넘지 못했다. 혼합은 Brier가 가장 낮지만 같은 표본으로 비율을 정한 값이고, 순차 검증에서는 CD보다 나빴다.`),
-            li("결론: 현재 모형 추정치는 방향을 가늠하는 참고치다. 단정적인 '시장 확률'로 인용하지 않는다."))] : [p("KOFR 선물 이력 수집 전")])),
+            li(`CD 모형의 Brier ${C.cd.brier.toFixed(3)}는 '과거 결정 빈도'(${C.base_rate.brier.toFixed(3)})보다 ${C.cd.brier < C.base_rate.brier ? "낮다(낫다)" : "높다(못하다)"}. 금리 변경 ${HB.hike.n + HB.cut.n}회 중 CD가 맞힌 것은 ${HB.hike.cd + HB.cut.cd}회다.`),
+            li("백테스트의 정상 스프레드는 회의마다 그 시점 이전 자료로만 다시 추정했다(미래정보 제거). 처음 공개한 성적(CD 27/36·Brier 0.461)은 2023~24년 구간으로 구한 18bp를 2021~22년 예측에도 쓴 값이라 실제보다 좋게 나왔다."),
+            li("결론: 현재 모형 추정치는 단순 비교 기준보다 낫다는 근거가 없다. 금리에 반영된 기대를 가늠하는 참고치로만 쓰고, 단정적인 확률로 인용하지 않는다."))] : [p("KOFR 선물 이력 수집 전")])),
+        ...sub("결과별 적중", byActTable, p(h("span", { class: "note" }, "전체 적중률은 동결이 많은 표본에서 높게 나온다. 금리 변경(인상·인하) 포착률을 따로 본다."))),
         ...sub("방법",
           h("ul", {},
             li("각 회의 3영업일 전 종가로 계산한 확률과 실제 결정을 비교한다."),
             li("적중: 가장 높은 확률을 준 결과(인상·동결·인하)가 실제와 같으면 적중. 최고 확률이 둘 이상 같으면(예: 인상 50%·동결 50%) 동률로 보고 적중으로 치지 않는다."),
             li("Brier 점수: 세 결과의 (확률 − 실제 0/1)² 합의 평균. 0이 완벽, 낮을수록 좋다. 적중률보다 확률의 질을 잘 잰다."),
-            li("비교 기준 '항상 동결': 이 표본에서 동결이 많아 적중률이 높게 나온다. 모형이 이를 넘지 못하면 예측력이 있다고 보기 어렵다."))),
+            li("비교 기준 '항상 동결': 이 표본에서 동결이 많아 적중률이 높게 나온다. 모형이 이를 넘지 못하면 예측력이 있다고 보기 어렵다."),
+            li("비교 기준 '과거 결정 빈도': 그 회의 이전 결정들의 인상·동결·인하 비율(각 +1 보정)을 확률로 쓴다. 정보 없이 낼 수 있는 확률이라, 모형은 최소한 이보다 Brier가 낮아야 한다."),
+            li("미래정보 제거: 정상 스프레드는 관측일 전날까지 자료 중 기준금리가 120일 넘게 바뀌지 않은 날의 (CD − 기준금리) 중앙값(최근 2년)으로 회의마다 다시 구한다. KOFR 실제치·회의 일정도 관측일 이전 값만 쓴다."))),
         ...sub(`세 방식 비교 ${C ? `(두 모형 모두 계산된 회의 ${C.n}회, ${ymd(C.first)}부터)` : ""}`, cmpTable,
           p(h("span", { class: "note" }, "혼합 비율 50%는 같은 표본을 보고 정한 값이라 이 표의 혼합 성적은 실제보다 좋게 나올 수 있다."))),
         ...sub("순차 검증 (비율을 미리 알 수 없다고 놓고 다시 잼)",
           p(W && W.n ? `처음 ${W.start_after}회로 KOFR 비율(0~100%, 10%p 간격)을 Brier 최소로 고르고, 다음 회의를 그 비율로 예측한다. 회의를 하나씩 넘기며 반복해 ${W.n}회를 예측했다.` : "자료 부족"),
           wfTable,
-          p("결론: 순차 검증에서 혼합이 CD 모형보다 낫다는 근거는 없다. 어느 방식도 적중률로 '항상 동결'을 넘지 못했다. 그래서 기본값은 CD 모형 추정치로 두고, KOFR 선물과 혼합은 실험값으로 기록만 한다.")),
+          p(W && W.n ? `결과: 혼합 Brier ${W.mix.brier.toFixed(3)}, CD ${W.cd.brier.toFixed(3)}. 적중은 혼합 ${W.mix.hits}/${W.n}, CD ${W.cd.hits}/${W.n}, 항상 동결 ${W.always_hold.hits}/${W.n}. 표본이 작고 금리 변경 사례가 적어 어느 쪽 우위도 확정할 수 없다. 기본값은 CD 모형 추정치로 두고 실험값은 기록만 한다.` : "")),
         ...sub("평가에서 뺀 회의", excl.length ? h("ul", {}, ...excl.map((x) => li(x))) : p("없음")),
         ...sub(`회의별 예측 (${B.n || 0}회)`, B.n ? p(B.rule) : p(h("span", { class: "note" }, B.note || "백테스트 결과 없음")), rowsTable)),
       ...sec("5. 기본값 교체 기준 (사전 고정)",
@@ -857,7 +870,7 @@
           li("압력지수 = Σ(방향×강도×중복보도 가중) ÷ Σ(강도×가중). 최근 72시간 관련 기사만."),
           li("종합 판단은 하루 1회: 기사 태그 + 모형 추정치·점도표·한은 발언·지표를 넣고 다음 금통위 기준 방향(−2~+2), 근거, 반대 근거, 관전 포인트를 받는다."))),
       ...sec("데이터 출처", h("ul", {}, ...(D.meta.sources || []).map((s) => li(s.url ? ext(s.url, s.name) : s.name, ` — ${s.what}`)))),
-      ...sec("수집 상태", h("ul", {}, ...Object.entries(D.status || {}).map(([k, v]) => li(`${k}: ${v.ok ? "정상" : "실패"} · 마지막 시도 ${v.last_attempt || "–"} · 마지막 성공 ${v.last_success || "없음"} · ${v.message || ""}`)),
+      ...sec("수집 상태", h("ul", {}, ...Object.entries(D.status || {}).map(([k, v]) => li(`${k}: ${!v.ok ? "실패" : (v.message || "").startsWith("일부 실패") ? "일부 실패" : "정상"} · 마지막 시도 ${v.last_attempt || "–"} · 마지막 성공 ${v.last_success || "없음"} · ${v.message || ""}`)),
         Object.keys(D.status || {}).length ? "" : li("수집 기록 없음"))),
     );
   }
