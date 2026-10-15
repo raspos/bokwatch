@@ -323,7 +323,7 @@
     const ch = pm ? m.p_hike - pm.p_hike : null;
     const cls = ch == null ? "flat" : ch > 0.0005 ? "up" : ch < -0.0005 ? "down" : "flat";
     const cand = ["동결", ...os.filter((o) => o.bp !== 0).map((o) => o.name)].filter((x, i, a) => a.indexOf(x) === i);
-    const tailNote = (m.tail_assumed || []).length ? ` · ${m.tail_assumed.map((x) => `${+x.slice(5, 7)}월`).join("·")} 동결 가정` : "";
+    const tailNote = "";
     return h("div", { class: "gauge decision" },
       h("span", { class: `badge chg ${cls}`, title: pm ? `전일(${ymd(pd)}) 대비 인상 확률 변화` : "전일 데이터 없음" }, ch == null ? "전일 –" : "인상 전일 " + pp(ch)),
       h("h4", {}, `${dmon(m.date)} 금리 결정 전망`),
@@ -424,7 +424,7 @@
       const os = outcomes(m);
       const r = h("tr", {}, h("td", {}, ymd(m.date)), h("td", {}, fx(ex, 3) + "%"), h("td", {}, bp(ex - snap.r0)), h("td", {}, bp(ex - prevE)),
         h("td", {}, os.map((o) => `${o.name} ${pct(o.p)}`).join(" · ")),
-        h("td", { class: "l" }, m.method === "kofr_ois" ? `${m.ois_source}${(m.tail_assumed || []).length ? " · 1월 동결 가정" : ""}` : "CD 91일 · 가능 범위 최고 경로"));
+        h("td", { class: "l" }, m.method === "kofr_ois" ? m.ois_source : "CD 91일 · 가능 범위 최고 경로"));
       prevE = ex;
       return r;
     });
