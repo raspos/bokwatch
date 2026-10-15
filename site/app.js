@@ -147,7 +147,7 @@
     const lastVisit = store("bokwatch.lastVisit");
     const mainKw = D.news.main_keyword || "신현송";
     const fresh = D.news.items.filter((x) => x.keywords.includes(mainKw) && (lastVisit ? x.published > lastVisit : (m.new_main_news || []).includes(x.id)));
-    if (fresh.length) kids.push(h("span", { class: "badge new" }, `새 ${mainKw} 기사 ${fresh.length}`));
+    void fresh;
     // 경고 문구는 머리말에 띄우지 않는다(산출 중단 사유는 확률 게이지 자리, 상세는 투입 금리 아래 설명에 나온다)
     $("#meta").replaceChildren(...kids);
 
@@ -565,6 +565,7 @@
       h("div", { class: "v" }, fx(x.yoy, 1) + "%"),
       h("div", { class: "s" }, (x.prev_yoy != null ? `전월 ${fx(x.prev_yoy, 1)}%` : "") + (x.core_yoy != null ? ` · 근원 ${fx(x.core_yoy, 1)}%` : "")
         + (x.prev_core_yoy != null ? `(전월 ${fx(x.prev_core_yoy, 1)}%)` : "")),
+      x.mom != null ? h("div", { class: "s" }, `전월비 ${x.mom >= 0 ? "+" : ""}${fx(x.mom, 1)}%` + (x.core_mom != null ? ` · 근원 ${x.core_mom >= 0 ? "+" : ""}${fx(x.core_mom, 1)}%` : "") + " (계절조정)") : "",
       x.consensus ? h("div", { class: "s" }, `예상 ${fx(x.consensus.yoy, 1)}%` + (x.consensus.core_yoy != null ? ` · 근원 예상 ${fx(x.consensus.core_yoy, 1)}%` : "") + " → "
         + [x.yoy - x.consensus.yoy, x.core_yoy != null && x.consensus.core_yoy != null ? x.core_yoy - x.consensus.core_yoy : null]
           .map((d, i) => d == null ? "" : `${i ? "근원 " : ""}${d > 0.04 ? "상회" : d < -0.04 ? "하회" : "부합"}`).filter(Boolean).join(" · ")) : "",
@@ -701,7 +702,9 @@
     $("#timeline").replaceChildren(...sp.map((s) => h("li", { class: s.tone },
       h("div", { class: "when" }, `${ymd(s.date)} · ${s.venue} · ${s.speaker}`, h("span", { class: `tag ${s.tone}` }, tn[s.tone] || s.tone)),
       h("div", {}, "“" + s.quote + "”", s.note ? h("small", {}, s.note) : ""),
-      h("div", { class: "note" }, s.link ? ext(s.link, "기사") : ""))));
+      h("div", { class: "note" }, s.link ? ext(s.link, "인용 기사") : ""),
+      (s.articles || []).length ? more(`관련 기사 ${s.articles.length}건`, h("ul", { class: "rel" }, ...s.articles.map((a) =>
+        h("li", {}, `${a.published.slice(5, 16).replace("T", " ").replace("-", "/")} · ${a.press} `, ext(a.link, a.title))))) : null)));
     if (!sp.length) $("#timeline").replaceChildren(h("li", {}, "해당 발언 없음"));
 
     renderTone();
@@ -770,24 +773,7 @@
   }
 
   function renderNews() {
-    const N = D.news, kw = N.main_keyword || "신현송";
-    const items = N.items.filter((x) => x.keywords.includes(kw) && (!S.chip || x.keywords.includes(S.chip)));
-    const pool = S.chip ? N.items.filter((x) => x.keywords.includes(S.chip)) : items;
-    const today = todayKST();
-    const wk = new Date(Date.parse(today) - 6 * 864e5).toISOString().slice(0, 10);
-    const all = N.items.filter((x) => x.keywords.includes(kw));
-    $("#newsCount").textContent = `최근 24시간 ${all.length}건`;
-    $("#chips").replaceChildren(h("button", { class: "chip", "aria-pressed": !S.chip, onclick: () => setS({ chip: "" }) }, `${kw} 전체`),
-      ...(N.chips || []).map((c) => h("button", { class: "chip", "aria-pressed": S.chip === c, onclick: () => setS({ chip: S.chip === c ? "" : c }) },
-        c, h("small", {}, String(N.items.filter((x) => x.keywords.includes(c)).length)))));
-    const list = (S.chip ? pool : items).slice(0, 80);
-    const st = D.status.news;
-    $("#newsList").replaceChildren(...(list.length ? list.map((x) => h("li", {},
-      h("div", { class: "m" }, `${x.published.slice(5, 16).replace("T", " ")} · ${x.feed}`),
-      h("div", { class: "t" }, ext(x.link, hl(x.title, [kw, ...(N.chips || [])]))),
-      x.summary ? h("div", { class: "sum" }, hl(x.summary, [kw])) : "")) :
-      [h("li", { class: "empty" }, st && st.last_success ? `해당 기사 없음 (마지막 수집 ${st.last_success.replace("T", " ")})` : "수집 전입니다 (매일 10시 갱신 뒤 표시).")]));
-
+    // 기사 목록은 뺐다(총재 발언은 가이던스 탭 타임라인의 기사 링크로 본다)
     // 보고서 표
     const meets = (D.meta.upcoming || []).slice(0, 2);
     const cols = [
@@ -1260,12 +1246,12 @@
     const sp = (D.guidance.speeches || [])[0];
     const nw = (D.news.items || []).map((x) => x.published).sort().pop();
     return { market: D.meta.built, guidance: sp ? sp.date + "T18:00+09:00" : null, minutes: D.minutes.updated,
-      news: nw, qual: D.qual && D.qual.updated, method: D.meta.built };
+      news: D.reports.asof ? D.reports.asof + "T18:00+09:00" : nw, qual: D.qual && D.qual.updated, method: D.meta.built };
   }
   function renderTabs() {
     const seen = store("bokwatch.lastVisit");
     const ts = tabStamps();
-    const label = { market: "확률 추정", guidance: "가이던스", minutes: "의사록", news: "기사·보고서", qual: "정성 판단(AI)", method: "방법·검증" };
+    const label = { market: "확률 추정", guidance: "가이던스", minutes: "의사록", news: "보고서", qual: "정성 판단(AI)", method: "방법·검증" };
     document.querySelectorAll("#tabs button").forEach((b) => {
       const t = b.dataset.tab, iso = ts[t];
       const isNew = t !== S.tab && t !== "method" && iso && seen && iso.slice(0, 16) > seen

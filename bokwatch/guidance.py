@@ -110,6 +110,71 @@ def tone_score(texts: list[str], lex: dict) -> dict:
 
 
 # ---------------------------------------------------------------- 묶음
+def _stems(text: str) -> set[str]:
+    """한글·영문 낱말의 어간 비슷한 앞부분(끝 글자 하나는 조사일 수 있어 뗀다)."""
+    import re
+    out = set()
+    for w in re.findall(r"[가-힣A-Za-z0-9]{2,}", text or ""):
+        out.add(w[:-1] if len(w) >= 3 else w)
+    return out
+
+
+VENUE_KEYS = {  # 발언 자리별로 기사 제목·요약에서 찾을 말
+    "국회": ["국감", "국정감사", "국회"],
+    "IMF": ["IMF", "총재와의 대화", "연차총회", "자연이자율", "중립금리"],
+    "CNN": ["CNN", "퍼스펙티브", "K자", "양극화", "저소득"],
+    "간담회": ["기자간담회", "간담회"],
+    "설명회": ["설명회"],
+    "잭슨홀": ["잭슨홀", "특파원"],
+    "면담": ["부총리", "면담"],
+}
+RATE_WORDS = ("금리", "물가", "인상", "인하", "환율", "통화정책", "긴축", "중립", "인플레", "AI", "양극화", "성장", "원화")
+
+
+def related_articles(speeches: list[dict], press: dict, days: int = 2) -> None:
+    """발언 자리(날짜+장소)마다 관련 기사를 모은다. 지정 언론사, 발언일~2일 뒤, 제목에 총재·금리 관련 말.
+    기사 하나는 점수가 가장 높은 자리 하나에만 붙인다(자리 낱말 2점 + 발언 낱말 1점, 2점 이상)."""
+    import json
+    from datetime import timedelta
+    from urllib.parse import urlparse
+    from .common import SITE_DATA
+    arts = []
+    for f in ("naver.jsonl", "news.jsonl"):
+        path = SITE_DATA / f
+        if path.exists():
+            arts += [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+    pool, seen = [], set()
+    for a in arts:
+        name = press.get(urlparse(a["link"]).netloc)
+        t = a["title"]
+        if not name or a["link"] in seen or not any(k in t for k in ("신현송", "총재")) or not any(k in t for k in RATE_WORDS):
+            continue
+        seen.add(a["link"])
+        pool.append({**a, "press_name": name, "text": t + " " + (a.get("summary") or "")})
+    events: dict[tuple, dict] = {}
+    for s in speeches:
+        ev = events.setdefault((s["date"], s["venue"]), {"stems": set(), "keys": []})
+        ev["stems"] |= _stems(s.get("quote", ""))
+        ev["keys"] = next((v for k, v in VENUE_KEYS.items() if k in s["venue"]), [])
+    found: dict[tuple, list] = {k: [] for k in events}
+    for a in pool:
+        best, best_sc = None, 0
+        for (dd, venue), ev in events.items():
+            d0 = date.fromisoformat(dd)
+            if not (d0.isoformat() <= a["published"] <= (d0 + timedelta(days=days)).isoformat() + "T23:59"):
+                continue
+            sc = 2 * sum(1 for k in ev["keys"] if k in a["text"]) + sum(1 for w in ev["stems"] if w in a["text"])
+            if sc > best_sc:
+                best, best_sc = (dd, venue), sc
+        if best and best_sc >= 2:
+            found[best].append({"press": a["press_name"], "title": a["title"], "link": a["link"], "published": a["published"]})
+    first = set()
+    for s in speeches:
+        k = (s["date"], s["venue"])
+        s["articles"] = sorted(found[k], key=lambda x: x["published"]) if k not in first else []
+        first.add(k)
+
+
 def build_guidance(cfg: dict, minutes: dict | None = None, today: date | None = None) -> dict:
     g = load_guidance()
     meets = sorted(g["meetings"], key=lambda m: m["date"])
@@ -143,6 +208,7 @@ def build_guidance(cfg: dict, minutes: dict | None = None, today: date | None = 
     from .common import all_meetings
     nxt = next_dotplot_meeting(all_meetings(cfg), cfg.get("dotplot_months", []), today or date.today())
     speeches = sorted(g["speeches"], key=lambda s: s["date"], reverse=True)
+    related_articles(speeches, (cfg.get("news") or {}).get("press") or {})
     return {
         "meetings": list(reversed(out_meetings)),
         "dotplots": [{"date": m["date"], "rate": m["rate"], **m["dotplot"]} for m in reversed(dots)],

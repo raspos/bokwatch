@@ -172,11 +172,19 @@ def parse_bls_api(j: dict) -> dict[str, list[tuple[str, float]]]:
     return out
 
 
+# 미국 PPI 최종수요: 전체(WPUFD4)·식품·에너지 제외(WPUFD49116)는 계절조정 전 전년동월비, 전월비는 계절조정(WPSFD4·WPSFD49116)
+PPI_SERIES = ["WPUFD4", "WPUFD49116", "WPSFD4", "WPSFD49116"]
+
+
+def mom(points: list[tuple[str, float]]) -> float | None:
+    return round((points[-1][1] / points[-2][1] - 1) * 100, 1) if points and len(points) >= 2 else None
+
+
 def bls_cpi() -> dict[str, list[tuple[str, float]]]:
     """BLS 공식 API(키 없이 하루 25회): CPI-U 전체(CUUR0000SA0)·근원(CUUR0000SA0L1E), 계절조정 전.
     FRED CPIAUCNS·CPILFENS와 같은 지수이고, 발표 직후 바로 반영된다."""
     y = now_kst().year
-    r = requests.post(BLS_API, json={"seriesid": ["CUUR0000SA0", "CUUR0000SA0L1E"], "startyear": str(y - 2), "endyear": str(y)},
+    r = requests.post(BLS_API, json={"seriesid": ["CUUR0000SA0", "CUUR0000SA0L1E", *PPI_SERIES], "startyear": str(y - 2), "endyear": str(y)},
                       headers={**UA, "Content-type": "application/json"}, timeout=60)
     r.raise_for_status()
     return parse_bls_api(r.json())
@@ -237,7 +245,7 @@ def manual_events() -> list[dict]:
 
 
 def build_events(cfg, scraped: dict, indicators: dict, minutes: dict, today: date) -> dict:
-    evs = list(scraped.get("us_cpi", [])) + list(scraped.get("us_jobs", [])) + list(scraped.get("fomc", []))
+    evs = list(scraped.get("us_cpi", [])) + list(scraped.get("us_jobs", [])) + list(scraped.get("us_ppi", [])) + list(scraped.get("fomc", []))
     evs += internal_events(cfg, minutes) + manual_events()
     # 같은 날짜·라벨 중복 제거(수기 입력이 우선)
     uniq = {}
@@ -289,10 +297,12 @@ def main(argv=None) -> int:
             ics = r.text
         except Exception as e:
             # BLS는 데이터센터 IP(GitHub Actions 등)를 403으로 막는다. 직전 일정이 있으면 실패로 띄우지 않는다.
-            (soft if any(x["date"] >= today_s for k in ("cpi", "jobs") for x in keep(k)) else errors).append(
+            (soft if any(x["date"] >= today_s for k in ("cpi", "jobs", "ppi") for x in keep(k)) else errors).append(
                 f"BLS 캘린더: {type(e).__name__}")
     for key, url, label, kind, summary in [("us_cpi", ec["bls_cpi_url"], "미국 CPI", "cpi", "Consumer Price Index"),
-                                           ("us_jobs", ec["bls_jobs_url"], "미국 고용보고서", "jobs", "Employment Situation")]:
+                                           ("us_jobs", ec["bls_jobs_url"], "미국 고용보고서", "jobs", "Employment Situation"),
+                                           ("us_ppi", ec.get("bls_ppi_url", "https://www.bls.gov/schedule/news_release/ppi.htm"),
+                                            "미국 PPI", "ppi", "Producer Price Index")]:
         imp = 3 if kind == "cpi" else 2
         try:
             r = requests.get(url, headers=UA, timeout=30)
@@ -329,6 +339,13 @@ def main(argv=None) -> int:
         b = bls_cpi()
         us, core = yoy_from_series(b["CUUR0000SA0"]), yoy_from_series(b["CUUR0000SA0L1E"])
         src = "BLS CPI-U CUUR0000SA0·CUUR0000SA0L1E (계절조정 전, 전년동월비)"
+        pp, pc = yoy_from_series(b.get("WPUFD4") or []), yoy_from_series(b.get("WPUFD49116") or [])
+        if pp:
+            same = pc and pc["month"] == pp["month"]
+            indicators["us_ppi"] = {**pp, "core_yoy": pc["yoy"] if same else None, "prev_core_yoy": pc.get("prev_yoy") if same else None,
+                                    "mom": mom(b.get("WPSFD4")), "core_mom": mom(b.get("WPSFD49116")),
+                                    "source": "BLS PPI 최종수요 WPUFD4·WPUFD49116(식품·에너지 제외), 전년동월비 계절조정 전·전월비 계절조정",
+                                    "label": "미국 PPI"}
     except Exception as e:
         errors.append(f"BLS API: {type(e).__name__}: {e} → FRED로 대체")
         try:
