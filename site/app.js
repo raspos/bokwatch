@@ -928,9 +928,12 @@
     const facs = [...new Set((Q.articles || []).map((a) => a.factor))];
     const sel = h("select", { "aria-label": "요인", onchange: (e) => setS({ qf: e.target.value }) }, h("option", { value: "" }, "요인 전체"), ...facs.map((f) => h("option", { value: f, selected: S.qf === f }, f)));
     const dsel = h("select", { "aria-label": "방향", onchange: (e) => setS({ qd: e.target.value }) }, h("option", { value: "" }, "방향 전체"), ...Object.keys(dirCls).map((f) => h("option", { value: f, selected: S.qd === f }, f)));
-    kids.push(h("div", { class: "row-head" }, h("h3", {}, "태깅된 기사 ", h("small", {}, "최근 7일 · 관련 기사만")), h("div", { class: "filters" }, sel, dsel)));
+    // 태깅된 기사: 접어 두고 누르면 연다(필터를 바꿔 다시 그려도 열린 상태 유지)
     const arts = (Q.articles || []).filter((a) => (!S.qf || a.factor === S.qf) && (!S.qd || a.direction === S.qd)).slice(0, 100);
-    kids.push(h("ul", { class: "news" }, ...(arts.length ? arts.map((a) => h("li", {},
+    const tagBox = h("details", { class: "cdref", open: tagOpen, ontoggle: (e) => { tagOpen = e.target.open; } },
+      h("summary", {}, `태깅된 기사 ${(Q.articles || []).length}건`), h("div", { class: "row-head" }, h("span", {}), h("div", { class: "filters" }, sel, dsel)));
+    kids.push(tagBox);
+    tagBox.append(h("ul", { class: "news" }, ...(arts.length ? arts.map((a) => h("li", {},
       h("div", { class: "m" }, `${a.published.slice(5, 16).replace("T", " ")} · ${a.press}${a.dup_press && a.dup_press.length ? ` 외 ${a.dup_press.length}곳` : ""} · ${a.origin === "yna" ? "연합 RSS" : "네이버"}${a.event_n > 1 ? ` · 같은 사건 보도 ${a.event_n}건: ${a.event}` : ""}`),
       h("div", { class: "t" }, ext(a.link, a.title)),
       h("div", { class: "sum" }, h("span", { class: `tag ${dirCls[a.direction]}` }, `${a.direction} ${"▮".repeat(a.strength)}`), " ", h("b", {}, a.factor), a.signal ? ` · ${a.signal}` : "", " · ", a.reason))) : [h("li", { class: "empty" }, "해당 기사 없음")])));
@@ -939,6 +942,7 @@
     qualTrend();
   }
 
+  let tagOpen = false;
   function factorBars(fs) {
     if (!fs.length) return h("p", { class: "note" }, "관련 기사 없음");
     const mx = Math.max(1, ...fs.map((f) => Math.max(f.up, f.down)));
