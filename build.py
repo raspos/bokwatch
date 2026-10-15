@@ -187,7 +187,7 @@ def main(argv=None):
         if cur and not cur.get("default_ok", True):
             ok = [x for x in index if (read_json(SNAP / f"{x}.json", {}) or {}).get("default_ok", True)]
             last_ok = d(ok[-1]) if ok else None
-            stalled = (f"{d(cur['asof']).month}/{d(cur['asof']).day} CD 91일 만기가 확정 일정({cfg['schedule_known_through']}) 밖이라 "
+            stalled = (f"{d(cur['asof']).month}/{d(cur['asof']).day} CD 91일 만기가 확정·가정 일정({cfg.get('assumed_known_through') or cfg['schedule_known_through']}) 밖이라 "
                        "기본 추정치(CD 모형) 산출 중단"
                        + (f". 마지막 산출 {last_ok.month}/{last_ok.day}" if last_ok else "")
                        + ". 다음 해 금통위 일정 공지 후 재개. KOFR 선물 실험값은 계속 표시")

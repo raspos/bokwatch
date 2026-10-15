@@ -85,13 +85,27 @@ def pit_spread(rows, iid: str, day: date, lookback_days: int = 730, settle_days:
 def meetings_after(cfg, day: date) -> list[date]:
     ms = {d(x) for ys in cfg["meetings"].values() for x in (ys or [])}
     ms |= {d(x["date"]) for x in cfg.get("past_decisions", [])}
+    ms |= assumed_meetings(cfg)
     return sorted(m for m in ms if m > day)
+
+
+def assumed_meetings(cfg) -> set[date]:
+    """공지 전 다음 해 회의 가정(계산 전용). 해당 연도 일정이 입력되면 쓰지 않는다."""
+    known_years = {y for y, ys in cfg["meetings"].items() if ys}
+    return {d(x) for x in (cfg.get("assumed_meetings") or []) if str(d(x).year) not in known_years}
+
+
+def known_through(cfg) -> date:
+    k = d(cfg["schedule_known_through"])
+    if assumed_meetings(cfg) and cfg.get("assumed_known_through"):
+        k = max(k, d(cfg["assumed_known_through"]))
+    return k
 
 
 def instruments_on(rows, cfg, day: date, spreads: dict):
     """그날 투입할 상품. OIS가 있으면 OIS 우선. (instruments, input_table, warnings)"""
     defs = item_defs(cfg)
-    known = d(cfg["schedule_known_through"])
+    known = known_through(cfg)
     start = model.settlement_start(day)
     table, warns = [], []
     ois_ids = [i for i, x in defs.items() if x["kind"] == "ois" and day.isoformat() in series(rows, i)]
@@ -214,6 +228,13 @@ def run_day(rows, cfg, day: date, spreads: dict, shifts=(-5, 0, 5), fut_by_date=
             kf["spread_how"], kf["price_date"] = s_how, fut_day
             if not kf["meetings"]:
                 kf = None
+    # 가정 회의는 계산에만 쓰고 회의 목록(화면·기록)에서는 뺀다
+    asm = {x.isoformat() for x in assumed_meetings(cfg)}
+    used_asm = sorted(x for x in asm if x > day.isoformat()
+                      and any(m["date"] == x for k in (cd or {}) for m in cd[k]["meetings"]))
+    if cd and used_asm:
+        for k in cd:
+            cd[k]["meetings"] = [m for m in cd[k]["meetings"] if m["date"] not in asm]
     if not cd and not kf:
         return None
     # 기본값 = CD 모형 추정치. KOFR 선물·혼합은 실험값(components)으로만 둔다.
@@ -231,7 +252,7 @@ def run_day(rows, cfg, day: date, spreads: dict, shifts=(-5, 0, 5), fut_by_date=
     if not kf:
         warns.append("KOFR 선물 가격 없음 — 실험값 없음")
     return {
-        "asof": day.isoformat(), "r0": r0, "r0_source": r0_src, "default_ok": bool(cd),
+        "asof": day.isoformat(), "r0": r0, "r0_source": r0_src, "default_ok": bool(cd), "assumed_meetings": used_asm,
         "inputs": table, "warnings": warns, "scenarios": scen,
         "components": {"cd": cd, "kofr_futures": kf, "blend_experimental": exp_blend},
     }
