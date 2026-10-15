@@ -327,7 +327,7 @@
     const kf = c.kofr_futures && c.kofr_futures.meetings.find((x) => x.date === date);
     const bl = c.blend_experimental && c.blend_experimental.meetings.find((x) => x.date === date);
     const qm = c.qual_mix && c.qual_mix.meeting === date ? c.qual_mix : null;
-    const ko = c.kofr_ois && c.kofr_ois.next && c.kofr_ois.next.meeting === date ? c.kofr_ois.next : null;
+    const ko = c.kofr_ois && (c.kofr_ois.path || []).find((x) => x.meeting === date) || null;
     return "실험값 — " + [...(ko ? [`KOFR OIS(자체 산출) ${pct(ko.p_hike)}${ko.p_cut > 0 ? ` · 인하 ${pct(ko.p_cut)}` : ""}`] : []), kf ? `KOFR 선물 ${pct(kf.p_hike)}` : "KOFR 선물 –", bl ? `혼합 ${pct(bl.p_hike)}` : "혼합 –",
       ...(qm ? [`AI 정성 ${pct(qm.qual.p_hike)}`, qm.w10 ? `CD+정성10% ${pct(qm.w10.p_hike)}` : ""] : [])].filter(Boolean).join(" · ");
   }
@@ -920,6 +920,7 @@
       h("ul", {},
         li("CD: 1주(7일)·2주(15일)·1개월 = 금융투자협회 CD 시가평가수익률(AAA 5사 평균), 3개월 = CD 91일(ECOS)."),
         li("스프레드(만기별) = 과거 각 날짜의 'CD − 그 기간 실제 KOFR 일복리' 중앙값(ISDA 방식, 최대 5년). 그날까지 기간이 끝나고 KOFR가 공시된 관측만 쓴다. KOFR 이력이 2021-11부터라 아직 5년을 채우지 못했다."),
+        li("그다음 회의: 3개월 OIS 식 91 × OIS = Σ 구간 일수 × (그 구간 기준금리 + k)에 1개월물로 푼 다음 회의 뒤 금리를 넣고 남은 회의 뒤 금리를 푼다(부트스트래핑). 만기 직전 7일 이내 회의는 변화 없음으로 둔다. 미지수가 둘 이상 남으면 내지 않는다."),
         li(code("30 × OIS(1개월) = 회의 전 일수 × (r0 + k) + 회의 뒤 일수 × (E + k)"), " — k = KOFR − 기준금리 정상 차이(60일 중앙값). 1개월 안 회의가 하나뿐이라 다음 회의 뒤 기대 기준금리 E를 바로 푼다. Δ = E − r0를 CD 91일 모형과 같은 규칙으로 확률로 바꾼다."),
         li("예탁원 공시값(2025-04-14~2025-10-24, 129일)과 비교: 자체 산출이 평균 1주 +3.5bp, 2주 +3.6bp, 1개월 +2.5bp, 3개월 +1.6bp 높다(스프레드 관측 기간이 짧은 탓으로 보인다). 예탁원 값은 재배포 금지라 화면에 싣지 않는다."),
         li("한계: CD 시가평가수익률은 소수 둘째 자리(버림)라 1bp 단위다. 1개월물 1bp는 회의 확률 약 5%p다. 평가금리라 체결 금리가 아니다. 공시가 18시 이후라 오전 갱신에는 전 영업일 값이 들어간다.")),
@@ -928,8 +929,9 @@
       const C = cur.curve;
       kids.push(table(["만기", "CD", "스프레드", "KOFR OIS(자체)"], ["w1", "w2", "m1", "m3"].filter((k) => C[k]).map((k) =>
         [C[k].label, `${fx(C[k].cd, 2)}% (${ymd(C[k].cd_date)})`, `${(C[k].spread * 100).toFixed(1)}bp (${C[k].n_obs}일)`, `${fx(C[k].ois, 3)}%`])));
-      const n = cur.next;
-      if (n) kids.push(p(h("b", {}, `${ymd(n.meeting)} 회의: `), `회의 전 ${n.pre_days}일·뒤 ${n.post_days}일, KOFR−기준금리 ${(n.kofr_base * 100).toFixed(1)}bp → 회의 뒤 기대 ${fx(n.expected, 3)}%(Δ ${n.delta_bp.toFixed(1)}bp) → 인상 ${pct(n.p_hike)} · 동결 ${pct(n.p_hold)}${n.p_cut > 0 ? ` · 인하 ${pct(n.p_cut)}` : ""}`));
+      for (const n of (cur.path || [])) kids.push(p(h("b", {}, `${ymd(n.meeting)} 회의(${n.source}): `),
+        (n.pre_days != null ? `회의 전 ${n.pre_days}일·뒤 ${n.post_days}일, ` : "") + `KOFR−기준금리 ${(n.kofr_base * 100).toFixed(1)}bp → 회의 뒤 기대 ${fx(n.expected, 3)}%(직전 대비 Δ ${n.delta_bp.toFixed(1)}bp) → 인상 ${pct(n.p_hike)} · 동결 ${pct(n.p_hold)}${n.p_cut > 0 ? ` · 인하 ${pct(n.p_cut)}` : ""}`
+        + (n.tail_assumed && n.tail_assumed.length ? ` (만기 직전 ${n.tail_assumed.map(ymd).join("·")} 회의는 뒤 구간이 짧아 변화 없음으로 둠)` : "")));
     }
     if (X && X.n) {
       const S = X.summary, B = S.same_as_cd91;
@@ -943,6 +945,12 @@
         X.rows.map((r) => [ymd(r.meeting), ymd(r.obs_date), `${actK[r.actual]}${r.move_bp ? ` ${r.move_bp > 0 ? "+" : ""}${r.move_bp}bp` : ""}`,
           `${fx(r.ois.cd_1m, 2)}% → ${fx(r.ois.ois_1m, 3)}%`, `${r.ois.delta_bp.toFixed(1)}bp`, `${pct(r.ois.p_hike)} / ${pct(r.ois.p_cut)}`,
           r.cd91 ? `${pct(r.cd91.p_hike)} / ${pct(r.cd91.p_cut)}` : "–"])),
+        ...(X.second && X.second.n ? [h("h3", {}, `그다음 회의 예측 (${X.second.n}회, 같은 관측일)`),
+          p(`KOFR OIS Brier ${X.second.ois.brier.toFixed(3)}(적중 ${X.second.ois.hits}/${X.second.n}) · 항상 동결 ${X.second.always_hold.brier.toFixed(3)}(적중 ${X.second.always_hold.hits}/${X.second.n})`
+            + (X.second.same_as_cd91 ? ` · 같은 ${X.second.same_as_cd91.n}회 CD 91일 모형 ${X.second.same_as_cd91.cd91.toFixed(3)}` : "") + "."),
+          table(["관측일", "회의", "실제", "Δ", "OIS 인상 / 인하", "CD 91일 인상 / 인하"], X.second.rows.map((r) => [ymd(r.obs_date), ymd(r.meeting),
+            `${actK[r.actual]}${r.move_bp ? ` ${r.move_bp > 0 ? "+" : ""}${r.move_bp}bp` : ""}`, `${r.ois.delta_bp.toFixed(1)}bp`,
+            `${pct(r.ois.p_hike)} / ${pct(r.ois.p_cut)}`, r.cd91 ? `${pct(r.cd91.p_hike)} / ${pct(r.cd91.p_cut)}` : "–"]))] : []),
         p(h("span", { class: "note" }, "표본이 작다(인상 2회·인하 4회). 같은 자료로 CD 단기물 직접 역산 방식 3개(1-2절)를 먼저 시험한 뒤 이 방식을 시험했다. 산식은 예탁원 공시 방식을 따른 것으로 결과를 보고 고르지 않았지만, 기본값 교체는 앞으로 회의 3영업일 전 기록으로 평가한 뒤 정한다.")));
     }
     return sec("1-1. 자체 산출 KOFR OIS (실험값)", ...kids);

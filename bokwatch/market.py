@@ -265,6 +265,18 @@ def run_day(rows, cfg, day: date, spreads: dict, shifts=(-5, 0, 5), fut_by_date=
     }
 
 
+def cd91_meeting_at(rows, cfg, obs: date, meeting: str) -> dict | None:
+    """백테스트와 같은 조건(당시까지 자료로 정한 스프레드)의 CD 91일 모형 회의별 점추정."""
+    sp = {}
+    for iid in cfg["model"]["use"]:
+        v = pit_spread(rows, iid, obs)
+        sp[iid] = {"value": v if v is not None else float(cfg["model"].get("spread_fallback", {}).get(iid, 0.10)), "how": "당시까지 자료"}
+    res = run_day(rows, cfg, obs, sp, shifts=(0,))
+    if not res:
+        return None
+    return next((m for m in res["scenarios"]["0"]["meetings"] if m["date"] == meeting and m["in_range"]), None)
+
+
 def data_dates(rows, cfg, fut_by_date=None) -> list[date]:
     ids = set(cfg["model"]["use"]) | {i["id"] for i in cfg["ecos"]["ois"]["items"]}
     return sorted({d(r["date"]) for r in rows if r["id"] in ids} | {d(k) for k in (fut_by_date or {})})

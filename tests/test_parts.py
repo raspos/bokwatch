@@ -324,3 +324,18 @@ def test_kofr_ois_compounding_and_next_meeting():
     assert (n["pre_days"], n["post_days"]) == (7, 23)
     assert abs(n["expected"] - ((30 * 3.0762 - 7 * 3.033) / 23 - 0.033)) < 1e-4
     assert abs(n["p_hike"] - (n["expected"] - 3.0) / 0.25) < 1e-3
+
+
+def test_kofr_ois_bootstrap_second_meeting():
+    from datetime import date
+    from bokwatch import kofr_ois
+    c = {"m1": {"cd_date": "2026-10-14", "tenor_days": 30, "ois": 3.0762},
+         "m3": {"cd_date": "2026-10-14", "tenor_days": 91, "ois": 3.1284}}
+    ms = [date(2026, 10, 22), date(2026, 11, 26), date(2027, 1, 11)]
+    path = kofr_ois.solve_path(c, 3.00, 0.033, ms)
+    assert [x["meeting"] for x in path] == ["2026-10-22", "2026-11-26"]
+    e1, e2 = path[0]["expected"], path[1]["expected"]
+    # 91×OIS = 7×(r0+k) + 35×(E1+k) + (46+3)×(E2+k), 1/11 회의(뒤 3일)는 변화 없음
+    assert abs(91 * 3.1284 - (7 * 3.033 + 35 * (e1 + 0.033) + 49 * (e2 + 0.033))) < 0.01
+    assert path[1]["tail_assumed"] == ["2027-01-11"]
+    assert abs(path[1]["delta_bp"] - (e2 - e1) * 100) < 0.01

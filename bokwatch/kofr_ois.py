@@ -118,20 +118,87 @@ def next_meeting(ois_row: dict, r0: float, k_spread: float, meetings: list[date]
             "expected": round(e, 4), "delta_bp": round((e - r0) * 100, 2), **{f"p_{k}": round(v, 4) for k, v in p.items()}}
 
 
+TAIL_DAYS = 7  # 3개월 만기 직전 회의의 뒤 구간이 이 일수 이하면 그 회의는 변화 없음으로 둔다(영향이 작아 풀 수 없음)
+
+
+def _probs(delta: float) -> dict:
+    dist = model.move_distribution(delta)
+    p = {"hike": sum(v for k, v in dist.items() if k > 0), "cut": sum(v for k, v in dist.items() if k < 0)}
+    p["hold"] = 1 - p["hike"] - p["cut"]
+    return {f"p_{k}": round(v, 4) for k, v in p.items()}
+
+
+def solve_path(c: dict, r0: float, k_spread: float, meetings: list[date]) -> list[dict]:
+    """1개월 OIS로 다음 회의, 3개월 OIS로 그다음 회의를 차례로 푼다(부트스트래핑).
+    회의별 확률은 Δ_k = E_k − E_(k−1)로 CD 91일 모형과 같은 규칙. 미지수가 둘 이상 남으면 풀지 않는다."""
+    known: dict[date, float] = {}
+    out = []
+    first = next_meeting(c, r0, k_spread, meetings)
+    if first:
+        known[d(first["meeting"])] = first["expected"]
+        out.append({**first, "source": "1개월 OIS"})
+    x = c.get("m3")
+    if not x:
+        return out
+    start = model.settlement_start(d(x["cd_date"]))
+    T = x["tenor_days"]
+    end = start + timedelta(days=T)
+    ms = [m for m in sorted(meetings) if start <= m < end]
+    if not ms:
+        return out
+    unknown = [m for m in ms if m not in known]
+    tail = [m for m in unknown[1:] if (end - m).days <= TAIL_DAYS]
+    core = [m for m in unknown if m not in tail]
+    if len(core) != 1:
+        return out
+    target = core[0]
+    # T×OIS = 회의 전×(r0+k) + Σ 구간 일수×(E_i + k). 대상 회의와 그 뒤 꼬리 회의 구간은 같은 E로 둔다.
+    bounds = ms + [end]
+    lhs = T * x["ois"] - (ms[0] - start).days * (r0 + k_spread)
+    coef, level = 0, r0
+    for i, m in enumerate(ms):
+        days = (bounds[i + 1] - m).days
+        if m in known:
+            level = known[m]
+            lhs -= days * (level + k_spread)
+        elif m == target or m in tail:
+            coef += days
+            lhs -= days * k_spread
+        else:
+            return out
+    if coef <= 0:
+        return out
+    e = lhs / coef
+    prev_m = max((m for m in known if m < target), default=None)
+    prev = known[prev_m] if prev_m else r0
+    out.append({"meeting": target.isoformat(), "source": "3개월 OIS" + (" + 1개월 OIS" if known else ""),
+                "kofr_base": round(k_spread, 4), "expected": round(e, 4), "delta_bp": round((e - prev) * 100, 2),
+                "tail_assumed": [m.isoformat() for m in tail], **_probs(e - prev)})
+    return out
+
+
 def compute(o: OIS, day: date, r0: float, k_spread: float, meetings: list[date], max_stale: int = 5) -> dict | None:
     c = o.curve_on(day, max_stale)
     if not c:
         return None
-    return {"curve": c, "next": next_meeting(c, r0, k_spread, meetings)}
+    path = solve_path(c, r0, k_spread, meetings)
+    return {"curve": c, "next": next_meeting(c, r0, k_spread, meetings), "path": path}
 
 
 # ---------------------------------------------------------------- 백테스트
-def backtest(o: OIS, kspread_on, meetings: list[date], decisions: list[dict], cd91_rows: list[dict], n_before: int = 3) -> dict:
+def backtest(o: OIS, kspread_on, meetings: list[date], decisions: list[dict], cd91_rows: list[dict], n_before: int = 3,
+             cd91_second=None) -> dict:
     from .market import _score
     days = sorted(d(k) for k in o.curve)
     cd91 = {r["meeting"]: r for r in cd91_rows}
     rows, prev, prior = [], None, []
-    for x in sorted(decisions, key=lambda z: z["date"]):
+    dec_sorted = sorted(decisions, key=lambda z: z["date"])
+    move_of = {}
+    for a, b in zip(dec_sorted, dec_sorted[1:]):
+        mv2 = round((float(b["rate"]) - float(a["rate"])) * 100)
+        move_of[b["date"]] = (mv2, "hike" if mv2 > 0 else "cut" if mv2 < 0 else "hold")
+    second = []
+    for x in dec_sorted:
         md, rate = d(x["date"]), float(x["rate"])
         if prev is None:
             prev = rate
@@ -146,6 +213,25 @@ def backtest(o: OIS, kspread_on, meetings: list[date], decisions: list[dict], cd
             continue
         obs = days[i - n_before]
         res = compute(o, obs, r0, kspread_on(obs), meetings, max_stale=0)
+        # 두 번째 회의: 같은 관측일의 경로에서 다음다음 회의
+        nxt = next((z for z in dec_sorted if z["date"] > x["date"]), None)
+        if res and nxt and nxt["date"] in move_of:
+            p2 = next((z for z in res["path"] if z["meeting"] == nxt["date"]), None)
+            if p2:
+                mv2, act2 = move_of[nxt["date"]]
+                q = {k: p2[f"p_{k}"] for k in ("hike", "hold", "cut")}
+                pr2, br2 = _score(q, act2)
+                hold_br = _score({"hike": 0.0, "hold": 1.0, "cut": 0.0}, act2)[1]
+                r2 = {"meeting": nxt["date"], "obs_date": obs.isoformat(), "actual": act2, "move_bp": mv2,
+                      "ois": {**{f"p_{k}": v for k, v in q.items()}, "hit": pr2 == act2, "brier": round(br2, 4), "delta_bp": p2["delta_bp"], "expected": p2["expected"]},
+                      "always_hold": {"hit": act2 == "hold", "brier": hold_br}}
+                if cd91_second:
+                    c2 = cd91_second(obs, nxt["date"])
+                    if c2:
+                        qc = {k: c2[f"p_{k}"] for k in ("hike", "hold", "cut")}
+                        prc, brc = _score(qc, act2)
+                        r2["cd91"] = {**{f"p_{k}": v for k, v in qc.items()}, "hit": prc == act2, "brier": round(brc, 4)}
+                second.append(r2)
         if not res or not res["next"] or res["next"]["meeting"] != md.isoformat():
             continue
         nx = res["next"]
@@ -172,8 +258,17 @@ def backtest(o: OIS, kspread_on, meetings: list[date], decisions: list[dict], cd
         both = [r for r in rows if "cd91" in r]
         if both:
             summ["same_as_cd91"] = {"n": len(both), **{n: _summ(both, g) for n, g in {**get, "cd91": lambda r: r["cd91"]}.items()}}
+    sec = {"n": len(second), "rows": second}
+    if second:
+        sec["ois"] = {"hits": sum(r["ois"]["hit"] for r in second), "brier": round(statistics.mean(r["ois"]["brier"] for r in second), 4)}
+        sec["always_hold"] = {"hits": sum(r["always_hold"]["hit"] for r in second),
+                              "brier": round(statistics.mean(r["always_hold"]["brier"] for r in second), 4)}
+        both = [r for r in second if "cd91" in r]
+        if both:
+            sec["same_as_cd91"] = {"n": len(both), **{k: round(statistics.mean(r[k]["brier"] for r in both), 4)
+                                                       for k in ("ois", "cd91", "always_hold")}}
     return {"n": len(rows), "first": rows[0]["meeting"] if rows else None, "rule": f"회의 {n_before}영업일 전 공시값",
-            "summary": summ, "rows": rows}
+            "summary": summ, "rows": rows, "second": sec}
 
 
 def _summ(rows, g) -> dict:
@@ -186,8 +281,8 @@ def _summ(rows, g) -> dict:
             "by_actual": by}
 
 
-def write(o: OIS, kspread_on, meetings, decisions, cd91_rows, current=None) -> dict:
-    out = backtest(o, kspread_on, meetings, decisions, cd91_rows)
+def write(o: OIS, kspread_on, meetings, decisions, cd91_rows, current=None, cd91_second=None) -> dict:
+    out = backtest(o, kspread_on, meetings, decisions, cd91_rows, cd91_second=cd91_second)
     out["current"] = current
     write_json(SITE_DATA / "kofr_ois.json", out)
     return out

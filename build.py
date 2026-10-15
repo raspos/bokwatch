@@ -56,7 +56,8 @@ def build_market(cfg, today):
         cd_short.write_backtest(curve, market.series(rows, "base"), market.meetings_after(cfg, d("2000-01-01")),
                                 cfg.get("past_decisions", []), bt.get("rows", []), current=last_cs)
         kofr_ois.write(ois, lambda x: market.kofr_spread(rows, x, cfg)[0], market.meetings_after(cfg, d("2000-01-01")),
-                       cfg.get("past_decisions", []), bt.get("rows", []), current=last_ko)
+                       cfg.get("past_decisions", []), bt.get("rows", []), current=last_ko,
+                       cd91_second=lambda obs, m: market.cd91_meeting_at(rows, cfg, obs, m))
     return index
 
 
@@ -87,8 +88,8 @@ def experimental_note(cur, date_s: str) -> str:
     out = []
     kf = next((m for m in (comp.get("kofr_futures") or {}).get("meetings", []) if m["date"] == date_s), None)
     bl = next((m for m in (comp.get("blend_experimental") or {}).get("meetings", []) if m["date"] == date_s), None)
-    ko = ((comp.get("kofr_ois") or {}).get("next")) or None
-    if ko and ko["meeting"] == date_s:
+    ko = next((x for x in (comp.get("kofr_ois") or {}).get("path", []) if x["meeting"] == date_s), None)
+    if ko:
         out.append(f"KOFR OIS 자체(실험) {ko['p_hike'] * 100:.1f}%")
     cs_ = (comp.get("cd_short") or {}).get("m1")
     if cs_ and cs_["meeting"] == date_s:
