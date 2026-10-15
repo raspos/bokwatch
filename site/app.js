@@ -776,7 +776,7 @@
     const today = todayKST();
     const wk = new Date(Date.parse(today) - 6 * 864e5).toISOString().slice(0, 10);
     const all = N.items.filter((x) => x.keywords.includes(kw));
-    $("#newsCount").textContent = `오늘 ${all.filter((x) => x.published.slice(0, 10) === today).length}건 · 최근 7일 ${all.filter((x) => x.published.slice(0, 10) >= wk).length}건`;
+    $("#newsCount").textContent = `최근 24시간 ${all.length}건`;
     $("#chips").replaceChildren(h("button", { class: "chip", "aria-pressed": !S.chip, onclick: () => setS({ chip: "" }) }, `${kw} 전체`),
       ...(N.chips || []).map((c) => h("button", { class: "chip", "aria-pressed": S.chip === c, onclick: () => setS({ chip: S.chip === c ? "" : c }) },
         c, h("small", {}, String(N.items.filter((x) => x.keywords.includes(c)).length)))));
@@ -786,7 +786,7 @@
       h("div", { class: "m" }, `${x.published.slice(5, 16).replace("T", " ")} · ${x.feed}`),
       h("div", { class: "t" }, ext(x.link, hl(x.title, [kw, ...(N.chips || [])]))),
       x.summary ? h("div", { class: "sum" }, hl(x.summary, [kw])) : "")) :
-      [h("li", { class: "empty" }, st && st.last_success ? `해당 기사 없음 (마지막 수집 ${st.last_success.replace("T", " ")})` : "RSS 수집 전입니다 (매일 10시 갱신 뒤 표시).")]));
+      [h("li", { class: "empty" }, st && st.last_success ? `해당 기사 없음 (마지막 수집 ${st.last_success.replace("T", " ")})` : "수집 전입니다 (매일 10시 갱신 뒤 표시).")]));
 
     // 보고서 표
     const meets = (D.meta.upcoming || []).slice(0, 2);

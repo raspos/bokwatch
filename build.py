@@ -203,6 +203,7 @@ def main(argv=None):
 
     main_kw = cfg["news"]["main_keyword"]
     news = only_press(merge_naver(load_news(), main_kw, cfg["news"]["chips"], now), cfg["news"].get("press") or {}, main_kw)
+    news = [x for x in news if x["published"] >= (now - timedelta(hours=24)).isoformat(timespec="minutes")]  # 기사 탭은 최근 24시간만
     # '새 신현송 기사' = 최근 24시간 게재분 (화면에서는 마지막 방문 이후분을 따로 센다)
     cutoff = (now - timedelta(hours=24)).isoformat()
     new_main = [x["id"] for x in news if main_kw in x["keywords"] and x["published"] >= cutoff]
