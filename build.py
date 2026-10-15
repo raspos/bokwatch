@@ -61,6 +61,33 @@ def build_market(cfg, today):
     return index
 
 
+def merge_naver(yna: list[dict], main_kw: str, chips: list[str], now, days: int = 7) -> list[dict]:
+    """기사 탭: 연합뉴스 RSS + 네이버 뉴스 검색(최근 7일, 키워드 매칭). 제목·요약·링크만. 같은 기사(링크·제목)는 한 번."""
+    import re
+    from bokwatch.fetch_news import match_keywords
+    path = SITE_DATA / "naver.jsonl"
+    if not path.exists():
+        return yna
+    key = lambda s: re.sub(r"[^0-9A-Za-z가-힣]", "", s)[:24]
+    seen_link = {x["link"] for x in yna}
+    seen_title = {key(x["title"]) for x in yna}
+    cutoff = (now - timedelta(days=days)).isoformat()
+    out = list(yna)
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        x = json.loads(line)
+        if x["published"] < cutoff or x["link"] in seen_link or key(x["title"]) in seen_title:
+            continue
+        kws = match_keywords(x, main_kw, chips)
+        if not kws:
+            continue
+        seen_link.add(x["link"]); seen_title.add(key(x["title"]))
+        out.append({"id": x["id"], "title": x["title"], "published": x["published"], "link": x["link"],
+                    "feed": x.get("press", "네이버"), "origin": "naver", "summary": (x.get("summary") or "")[:200], "keywords": kws})
+    return sorted(out, key=lambda x: x["published"], reverse=True)
+
+
 PROB_LOG = DATA / "prob_log.csv"
 LOG_FIELDS = ["date", "asof", "status", "meeting", "p_hike", "p_hold", "p_cut", "expected", "instrument", "spread_bp", "note"]
 
@@ -160,8 +187,8 @@ def main(argv=None):
     if read_json(SITE_DATA / "status.json") is None:
         write_json(SITE_DATA / "status.json", {})
 
-    news = load_news()
     main_kw = cfg["news"]["main_keyword"]
+    news = merge_naver(load_news(), main_kw, cfg["news"]["chips"], now)
     # '새 신현송 기사' = 최근 24시간 게재분 (화면에서는 마지막 방문 이후분을 따로 센다)
     cutoff = (now - timedelta(hours=24)).isoformat()
     new_main = [x["id"] for x in news if main_kw in x["keywords"] and x["published"] >= cutoff]
@@ -246,7 +273,7 @@ def main(argv=None):
                 {"name": "한국은행 홈페이지", "what": "통화정책방향 결정문, 금통위 의사록, 기자간담회", "url": "https://www.bok.or.kr/"},
                 {"name": "연합뉴스 RSS", "what": "제목·시각·링크·피드 요약", "url": "https://www.yna.co.kr/rss/index"},
                 {"name": "BLS·연준·FRED", "what": "미국 CPI·고용 일정, FOMC 일정, 미국 CPI 실제치", "url": "https://www.bls.gov/schedule/"},
-                {"name": "네이버 뉴스 검색 API(NAVER API HUB)", "what": "제목·검색 요약·링크(AI 정성 판단 입력)", "url": "https://api.ncloud-docs.com/docs/naver-api-hub-search-news"},
+                {"name": "네이버 뉴스 검색 API(NAVER API HUB)", "what": "제목·검색 요약·링크(기사 탭 최근 7일·AI 정성 판단 입력)", "url": "https://api.ncloud-docs.com/docs/naver-api-hub-search-news"},
                 {"name": "OpenAI API", "what": "기사 태깅(한은·연준 영향 구분)·사건 묶기·정성 종합 판단(자동, 참고용)", "url": None},
                 {"name": "data/reports.yaml", "what": "증권사·IB 전망(수기, 보도 인용)", "url": None},
                 {"name": "data/guidance.yaml", "what": "결정·표결·점도표(한은 공보 대조), 발언(보도 인용)", "url": None},
