@@ -22,18 +22,20 @@ meetings:
     # 한은 공보 2026-07-14호: "금융통화위원 7명 모두 찬성". 의사록(2026년 제13차) 토의결론 만장일치
     vote: {for: 7, dissent: []}
     statement_file: data/statements/2026-07-16.txt
-    press_quotes: []
+    press_quotes:
+      - {speaker: 신현송 총재, text: "물가상승률이 목표 수준까지 안정적으로 수렴한다는 확신이 들 때까지 대응하겠다"}
     forward_guidance: null
     dotplot: null
     verify: false
-    source: 한은 공보 2026-07-14호
+    source: 한은 공보 2026-07-14호, 언론 보도(간담회 인용)
 
   - date: "2026-08-27"
     rate: 3.00
     decision: 인상
     vote: {for: 6, dissent: [{name: 황건일 위원, view: 동결}]}
     statement_file: data/statements/2026-08-27.txt
-    press_quotes: []
+    press_quotes:
+      - {speaker: 신현송 총재, text: "지금보다 한 번 더 올리는 정도인 만큼 완만한 인상세를 예상하고 있다"}
     forward_guidance: null
     dotplot: {3.00: 5, 3.25: 10, 3.50: 6}
     outlook: {gdp_2026: 3.3, gdp_2027: 2.9}
@@ -45,6 +47,18 @@ meetings:
 speeches:
   - {date: "2026-05-28", venue: 금통위 간담회, speaker: 신현송 총재, tone: hawk,
      quote: "향후 적절한 시점에 기준금리를 인상할 필요가 있다는 게 내부 판단", link: null, verify: true}
+  # 7·8월 금통위 기자간담회(2026-10-15 추가, 보도 인용)
+  - {date: "2026-07-16", venue: 금통위 간담회, speaker: 신현송 총재, tone: hawk,
+     quote: "물가상승률이 목표 수준까지 안정적으로 수렴한다는 확신이 들 때까지 대응하겠다",
+     link: "https://www.fnnews.com/news/202607161303293438", verify: true}
+  - {date: "2026-07-16", venue: 금통위 간담회, speaker: 신현송 총재, tone: hawk,
+     quote: "모든 가능성을 열어두고 정책을 펴겠다", link: "https://www.fnnews.com/news/202607161303293438", verify: true,
+     note: 8월 연속 인상 가능성 질문에 대한 답}
+  - {date: "2026-08-27", venue: 금통위 간담회, speaker: 신현송 총재, tone: neutral,
+     quote: "연거푸 두 번 인상한 만큼 그 효과를 점검해야 한다", link: "https://www.newspim.com/news/view/20260827000972", verify: true}
+  - {date: "2026-08-27", venue: 금통위 간담회, speaker: 신현송 총재, tone: hawk,
+     quote: "지금보다 한 번 더 올리는 정도인 만큼 완만한 인상세를 예상하고 있다",
+     link: "https://www.newspim.com/news/view/20260827000972", verify: true, note: 점도표 6개월 시계 중간값 3.25% 설명}
   - {date: "2026-09-10", venue: 보고서 설명회, speaker: 박종우 부총재보, tone: neutral,
      quote: "현 3.00%는 기존 중립금리 범위 상단", link: null, verify: true}
   - {date: "2026-09-10", venue: 보고서 설명회, speaker: 박종우 부총재보, tone: dove,

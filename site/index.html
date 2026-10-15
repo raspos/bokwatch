@@ -22,7 +22,7 @@
 <meta name="twitter:title" content="BOK워치 — 한국은행 금통위 금리 결정 모니터">
 <meta name="twitter:description" content="모형 추정 확률 · 총재 발언 · 의사록 · 전문가 전망. 매일 오전 10시 갱신.">
 <meta name="twitter:image" content="https://bokwatch.pages.dev/og.png">
-<link rel="stylesheet" href="style.css?v=20261015za">
+<link rel="stylesheet" href="style.css?v=20261015zb">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 </head>
 <body>
@@ -60,19 +60,20 @@
 
 <main>
   <section class="panel" id="tab-market" role="tabpanel">
-    <div class="row-head">
-      <h2>회의별 금리 결정 전망 <small>모형 추정치 · 자체 합성 KOFR OIS 기준</small></h2>
-    </div>
+    <h2>회의별 금리 결정 전망</h2>
     <div class="gauges" id="gauges"><div class="gauge skel"></div><div class="gauge skel"></div></div>
-    <p class="note stale-note" id="staleNote" hidden></p>
-    <h3>회의 뒤 기대 기준금리 <small>자체 합성 KOFR OIS · 회의마다 동결 또는 25bp 변경 가정</small></h3>
+    <h3>회의 뒤 기대 기준금리</h3>
     <div class="tbl-wrap"><table class="grid" id="probTable"></table></div>
-    <p class="note" id="probNote"></p>
-    <h3>OIS 계산 근거·민감도 <small>CD − 만기별 스프레드 = OIS → 회의 뒤 기대금리</small></h3>
-    <div class="tbl-wrap"><table class="grid" id="oisTable"></table></div>
-    <p class="note" id="oisNote"></p>
+    <details class="more">
+      <summary>설명·근거</summary>
+      <p class="note" id="probNote"></p>
+      <p class="note stale-note" id="staleNote" hidden></p>
+      <h4>OIS 계산 근거·민감도</h4>
+      <div class="tbl-wrap"><table class="grid" id="oisTable"></table></div>
+      <p class="note" id="oisNote"></p>
+    </details>
     <details class="cdref" id="cdRef">
-      <summary>CD 91일 참고 범위 <small>정상 스프레드 가정을 바꿔 볼 수 있음 · 위 OIS 전망에는 영향 없음</small></summary>
+      <summary>CD 91일 참고 범위</summary>
       <div class="row-head">
         <p class="note" style="margin:0">정상 스프레드 가정</p>
         <div class="seg" id="spreadToggle" role="group" aria-label="CD 91일 정상 스프레드 가정">
@@ -82,21 +83,24 @@
       <div class="tbl-wrap"><table class="grid" id="cdRangeTable"></table></div>
       <p class="note spread-note" id="spreadNote"></p>
     </details>
-    <h3>날짜별 확률 기록 <small>매일 10시 갱신 때 화면에 낸 값 그대로 · 2026-10-15까지 CD 91일, 이후 KOFR OIS · 비고에 실험값</small></h3>
-    <div class="tbl-wrap"><table class="grid" id="logTable"></table></div>
-    <p class="note" id="logNote"></p>
-    <h3>투입 금리 <small>기준금리 대비 · 쓰임</small></h3>
-    <div class="tbl-wrap"><table class="grid" id="inputTable"></table></div>
-    <h3>KOFR 3개월 선물 <small>실험값 · 한국거래소 정산가격 · 계산에 쓴 결제월</small></h3>
-    <div class="tbl-wrap"><table class="grid" id="futTable"></table></div>
-    <p class="note" id="futNote"></p>
-    <h3>경제지표·이벤트 <small>다음 45일 · KST</small></h3>
+    <h3>경제지표·이벤트 <small>다음 45일</small></h3>
     <div class="cons" id="indicators"></div>
     <div class="tbl-wrap" style="margin-top:10px"><table class="grid" id="eventTable"></table></div>
-    <p class="note" id="eventNote"></p>
-    <h3 class="no-print">인상 확률 최근 흐름 <small>기본값(KOFR OIS, 계산되지 않는 날은 CD 91일) · 다가오는 회의만 · 과거 금리를 현재 가정으로 다시 계산</small></h3>
+    <details class="more"><summary>설명</summary><p class="note" id="eventNote"></p></details>
+    <h3 class="no-print">인상 확률 최근 흐름</h3>
     <div id="trend"></div>
-    <p class="note" id="marketNote"></p>
+    <h3>날짜별 확률 기록</h3>
+    <div class="tbl-wrap"><table class="grid" id="logTable"></table></div>
+    <details class="more"><summary>설명</summary><p class="note" id="logNote"></p></details>
+    <details class="cdref">
+      <summary>투입 금리·KOFR 선물</summary>
+      <h4>투입 금리</h4>
+      <div class="tbl-wrap"><table class="grid" id="inputTable"></table></div>
+      <p class="note" id="marketNote"></p>
+      <h4>KOFR 3개월 선물 <small>실험값</small></h4>
+      <div class="tbl-wrap"><table class="grid" id="futTable"></table></div>
+      <p class="note" id="futNote"></p>
+    </details>
   </section>
 
   <section class="panel" id="tab-guidance" role="tabpanel" hidden>
@@ -116,14 +120,14 @@
     <p class="note" id="dotNote"></p>
     <h2>회의별 결정·문구 변화</h2>
     <div id="meetCards"></div>
-    <h3 class="no-print">매파·비둘기 보조점수 <small>자동 산출 · 참고용</small></h3>
+    <h3 class="no-print">매파·비둘기 보조점수</h3>
     <div id="tone" class="chart small"></div>
   </section>
 
   <section class="panel" id="tab-minutes" role="tabpanel" hidden>
     <h2>금통위 의사록·결정문</h2>
     <div class="tbl-wrap"><table class="grid" id="minTable"></table></div>
-    <h3>최신 의사록 위원별 의견 <small>첫 문장 자동 판정</small></h3>
+    <h3>최신 의사록 위원별 의견</h3>
     <div id="views"></div>
   </section>
 
@@ -143,7 +147,7 @@
   </section>
 
   <section class="panel" id="tab-qual" role="tabpanel" hidden>
-    <h2>정성 판단 <small>뉴스 기반 · AI 자동 · 참고용</small></h2>
+    <h2>정성 판단 <small>AI 자동 · 참고용</small></h2>
     <div id="qualBody"></div>
   </section>
 
@@ -157,6 +161,6 @@
 <footer class="foot">BOK워치 · 수치는 기준일·출처 표기 기준</footer>
 <div id="tip" class="tip" role="tooltip" hidden></div>
 <script src="vendor/d3.v7.9.0.min.js"></script>
-<script src="app.js?v=20261015za"></script>
+<script src="app.js?v=20261015zb"></script>
 </body>
 </html>

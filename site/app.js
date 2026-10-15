@@ -45,6 +45,8 @@
   const busy = (on) => { const b = $("#busy"); if (b) b.classList.toggle("on", on); };
   function flash(el) { if (!el) return; el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
 
+  const more = (label, ...kids) => h("details", { class: "more" }, h("summary", {}, label), ...kids.filter(Boolean));
+
   async function getJSON(path) {
     try { const r = await fetch(path, { cache: "no-cache" }); if (!r.ok) return null; return await r.json(); }
     catch (e) { return null; }
@@ -174,23 +176,22 @@
     // 시장
     const nTop = nxt && nxt.method === "kofr_ois" ? outcomes(nxt).reduce((a, b) => (b.p > a.p ? b : a)) : null;
     tiles.push(h("div", { class: "tile" }, h("div", { class: "tgt" }, nextDate ? `대상: ${dmon(nextDate)} 회의` : "대상: 다음 회의"),
-      h("div", { class: "k" }, nTop ? `모형 추정(KOFR OIS) · 금리 결정 전망${staleFrom ? ` · ${ymd(staleFrom)} 기준` : ""}`
+      h("div", { class: "k" }, nTop ? `모형 추정(KOFR OIS)${staleFrom ? ` · ${ymd(staleFrom)} 기준` : ""}`
       : `모형 추정(CD) · ${nextDate ? mon(nextDate) + " 회의" : "다음 회의"} 인상 확률${staleFrom ? ` · ${ymd(staleFrom)} 기준` : ""}`),
       h("div", { class: "v" }, nTop ? `${nTop.name} ${pct(nTop.p)}` : nxt ? (nxt.range && nxt.range.direction === "hike" ? `최고 ${pct(nxt.range.max)}` : pct(nxt.p_hike)) : "–"),
       nTop ? h("div", { class: "s" }, outcomes(nxt).filter((o) => o.bp !== nTop.bp).map((o) => `${o.name} ${pct(o.p)}`).join(" · ")) : "",
-      nxt && nxt.range ? h("div", { class: "s" }, `가능 범위 ${pct(nxt.range.min, 0)}~${pct(nxt.range.max, 0)} (회의 배분 가정에 따라)`)
-        : nxt && nxt.cd91 && nxt.cd91.range ? h("div", { class: "s" }, `CD 91일 가능 범위 ${pct(nxt.cd91.range.min, 0)}~${pct(nxt.cd91.range.max, 0)}`) : "",
+      nxt && nxt.range ? h("div", { class: "s" }, `가능 범위 ${pct(nxt.range.min, 0)}~${pct(nxt.range.max, 0)}`) : "",
       h("div", { class: "s" }, ms[1] ? (ms[1].method === "kofr_ois"
         ? `${mon(ms[1].date)} ${(() => { const t = outcomes(ms[1]).reduce((a, b) => (b.p > a.p ? b : a)); return `${t.name} ${pct(t.p)}`; })()} · 인상 ${pct(ms[1].p_hike)}`
         : `${mon(ms[1].date)} ${pct(ms[1].p_hike)} · 기대금리 ${fx(ms[1].expected)}%`) : "")));
     // 한은 점도표
     tiles.push(h("div", { class: "tile" }, h("div", { class: "tgt" }, "대상: 6개월 뒤"),
-      h("div", { class: "k" }, `한은의 6개월 뒤 조건부 전망 · 점도표(${dp ? ymd(dp.date) : "–"}) 중간값`),
+      h("div", { class: "k" }, `한은 점도표 중간값(${dp ? md(dp.date) : "–"})`),
       h("div", { class: "v" }, dp ? fx(dp.median) + "%" : "–"),
       h("div", { class: "s" }, dp && r0 != null ? `현 ${fx(r0)}% 대비 위 ${dots(dp, r0).above} · 같음 ${dots(dp, r0).at} · 아래 ${dots(dp, r0).below}` : "")));
     // 전문가
     tiles.push(h("div", { class: "tile" }, h("div", { class: "tgt" }, `대상: ${nextDate ? mon(nextDate) : "다음"} 회의${ms[1] ? ` · ${mon(ms[1].date)} 회의` : ""}`),
-      h("div", { class: "k" }, `전문가 · ${nextDate ? mon(nextDate) : ""} 회의 전망 기관 비율`),
+      h("div", { class: "k" }, `전문가 전망`),
       h("div", { class: "v" }, c && c.n ? `${consTop(c).name} ${pct(consTop(c).n / c.n, 0)}` : "–"),
       h("div", { class: "s" }, c && c.n ? `${consTop(c).n}/${c.n}곳` + (Object.keys(c.counts).length > 1 ? " · " + Object.entries(c.counts).filter(([k]) => k !== consTop(c).name).map(([k, v]) => `${k} ${v}곳`).join(" · ") : "") : ""),
       h("div", { class: "s" }, secondCons(ms[1]))));
@@ -206,7 +207,7 @@
     }
     const Q = D.qual && D.qual.synthesis;
     const pr = D.qual && D.qual.pressure;
-    tiles.splice(3, 0, h("div", { class: "tile ref" }, h("div", { class: "tgt" }, "대상: 다음 회의 · 최근 기사"), h("div", { class: "k" }, "참고 · AI 정성 판단(뉴스)"),
+    tiles.splice(3, 0, h("div", { class: "tile ref" }, h("div", { class: "tgt" }, "대상: 다음 회의 · 최근 기사"), h("div", { class: "k" }, "AI 정성 판단(참고)"),
       h("div", { class: "v" }, Q ? LEAN[Q.lean] : "–"),
       h("div", { class: "s" }, Q ? Q.headline : "네이버 뉴스·OpenAI API 연결 후 표시",
         pr && pr.index != null ? ` · 압력지수 ${pr.index >= 0 ? "+" : ""}${pr.index.toFixed(2)}` : "")));
@@ -329,11 +330,11 @@
       h("h4", {}, `${dmon(m.date)} 금리 결정 전망`),
       decisionGaugeSVG(os, top, rest),
       h("div", { class: "dlegend" }, ...os.map((o) => h("span", {}, h("i", { class: o.cls }), `${o.name} ${pct(o.p)}`))),
-      h("div", { class: "sub" }, `자체 합성 OIS 기반 모형 추정 · ${cand.join(" 또는 ")} 가정${tailNote}`),
-      h("div", { class: "sub" }, `회의 뒤 기대 금리 ${fx(m.expected, 3)}% (${m.ois_source})`),
-      m.cd91 && m.cd91.range ? h("div", { class: "sub range" }, `참고 — CD 91일 같은 금리로 가능한 인상 확률 범위 ${pct(m.cd91.range.min)}~${pct(m.cd91.range.max)}`) : "",
-      h("div", { class: "sub parts" }, partsLine(snapForParts, m.date)),
-      h("div", { class: "method-tag" }, m.source));
+      h("div", { class: "sub" }, `회의 뒤 기대 금리 ${fx(m.expected, 3)}%`),
+      more("근거",
+        h("div", { class: "sub" }, `자체 합성 KOFR OIS(${m.ois_source}) 모형 추정 · ${cand.join(" 또는 ")} 가정${tailNote}`),
+        m.cd91 && m.cd91.range ? h("div", { class: "sub range" }, `참고 — CD 91일 가능 범위: 인상 ${pct(m.cd91.range.min)}~${pct(m.cd91.range.max)}`) : null,
+        h("div", { class: "sub parts" }, partsLine(snapForParts, m.date))));
   }
 
   // 기본 추정치가 멈춘 날이면 마지막으로 산출된 날의 스냅샷을 쓴다
@@ -386,9 +387,10 @@
         m.method === "kofr_ois" && m.cd91 && m.cd91.range ? h("div", { class: "sub range" }, `참고 — CD 91일 같은 금리로 가능한 범위: 인상 ${pct(m.cd91.range.min)}~${pct(m.cd91.range.max)}`) : "",
         m.method === "kofr_ois" ? "" : h("div", { class: "sub" }, `점추정(최소 인상 경로): 동결 ${pct(m.p_hold)} · 인상 ${pct(m.p_hike)}` + (m.p_cut > 0 ? ` · 인하 ${pct(m.p_cut)}` : "")
           + ` · 회의 뒤 기대 금리 ${fx(m.expected, 3)}%`),
-        m.range ? h("div", { class: "sub range" }, `같은 금리로 가능한 범위: ${m.range.direction === "cut" ? "인하" : "인상"} ${pct(m.range.min)}~${pct(m.range.max)}.`
-          + ` 각 회의를 따로 본 최고값이라 여러 회의의 최고값이 동시에 성립하지는 않는다(가까운 회의부터 배정 ${pct(m.range.early)}, 늦은 회의부터 배정 ${pct(m.range.late)})`) : "",
-        h("div", { class: "sub parts" }, partsLine(staleFrom ? live : snap, m.date)),
+        more("근거",
+          m.range ? h("div", { class: "sub range" }, `같은 금리로 가능한 범위: ${m.range.direction === "cut" ? "인하" : "인상"} ${pct(m.range.min)}~${pct(m.range.max)}.`
+            + ` 각 회의를 따로 본 최고값이라 여러 회의의 최고값이 동시에 성립하지는 않는다(가까운 회의부터 배정 ${pct(m.range.early)}, 늦은 회의부터 배정 ${pct(m.range.late)})`) : null,
+          h("div", { class: "sub parts" }, partsLine(staleFrom ? live : snap, m.date))),
         h("div", { class: "method-tag" }, m.source || ({ bootstrap: "부트스트래핑", min_hike: "최소 인상 경로", lsq: "비음수 최소제곱" }[m.method] || m.method)));
     });
     const out = scen.meetings.filter((m) => !m.in_range).map((m) => md(m.date));
@@ -417,14 +419,14 @@
 
     // 회의 뒤 기대 기준금리표(분포가 아니라 기대값). 누적 분포는 회의별 확률만으로 정해지지 않아 가능 범위로 따로 보인다.
     const bp = (x) => `${x >= 0 ? "+" : ""}${(x * 100).toFixed(1)}bp`;
-    const thead = h("thead", {}, h("tr", {}, ...["회의", "회의 뒤 기대 기준금리", "현재 대비", "직전 회의 대비", "그 회의 결정 확률", "근거"].map((x, i) => h("th", { class: i === 5 ? "l" : null }, x))));
+    const thead = h("thead", {}, h("tr", {}, ...["회의", "기대 기준금리", "현재 대비", "직전 회의 대비", "결정 확률", "계산"].map((x, i) => h("th", { class: i === 5 ? "l" : null }, x))));
     let prevE = snap.r0;
     const rows = ms.map((m) => {
       const ex = m.method === "kofr_ois" ? m.expected : (m.range && m.range.max_expected != null ? m.range.max_expected : m.expected);
       const os = outcomes(m);
       const r = h("tr", {}, h("td", {}, ymd(m.date)), h("td", {}, fx(ex, 3) + "%"), h("td", {}, bp(ex - snap.r0)), h("td", {}, bp(ex - prevE)),
         h("td", {}, os.map((o) => `${o.name} ${pct(o.p)}`).join(" · ")),
-        h("td", { class: "l" }, m.method === "kofr_ois" ? m.ois_source : "CD 91일 · 가능 범위 최고 경로"));
+        h("td", { class: "l" }, m.method === "kofr_ois" ? m.ois_source.replace(" OIS", "").replace(" + ", "·") + " OIS" : "CD 91일"));
       prevE = ex;
       return r;
     });
@@ -723,7 +725,7 @@
       .attr("fill", (p) => p.s >= 0 ? "var(--hike)" : "var(--cut)")
       .on("pointermove", (ev, p) => showTip(ev, [`${ymd(p.d)} 점수 ${p.s.toFixed(2)}`, `매파 단어 ${p.h} · 비둘기 단어 ${p.v}`])).on("pointerleave", hideTip);
     el.replaceChildren(h("div", { class: "legend" }, h("span", {}, h("i", { style: "background:var(--hike)" }), "매파(+)"), h("span", {}, h("i", { style: "background:var(--cut)" }), "비둘기(−)")),
-      svg.node(), h("div", { class: "note" }, "통방문·간담회 문장을 config 사전으로 센 값(문장당 점수). 자동 산출 · 참고용 — 문맥(부정·조건)을 읽지 못합니다."));
+      svg.node(), more("설명", h("div", { class: "note" }, "통방문·간담회 문장을 config 사전으로 센 값(문장당 점수). 자동 산출 · 참고용 — 문맥(부정·조건)을 읽지 못합니다.")));
   }
 
   // ------------------------------------------------------------ 탭 3 의사록
@@ -755,7 +757,7 @@
       h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },
         h("thead", {}, h("tr", {}, h("th", {}, "#"), h("th", {}, "입장"), h("th", { class: "l" }, "첫 문장"))),
         h("tbody", {}, v.paragraphs.map((p, i) => h("tr", {}, h("td", {}, i + 1), h("td", {}, p.lean), h("td", { class: "l" }, p.excerpt)))))),
-      h("p", { class: "note" }, "입장은 위원별 의견 개진(본회의) 단락의 첫 문장으로 자동 판정합니다. 의사록은 위원을 익명으로 적고, 소수의견 실명은 의결문 단서에서 옮깁니다."));
+      more("설명", h("p", { class: "note" }, "입장은 위원별 의견 개진(본회의) 단락의 첫 문장으로 자동 판정합니다. 의사록은 위원을 익명으로 적고, 소수의견 실명은 의결문 단서에서 옮깁니다.")));
   }
 
   // ------------------------------------------------------------ 탭 4 기사·보고서
@@ -893,7 +895,7 @@
             h("td", { class: "l" }, ...(x.examples.length ? x.examples.map((e, i) => h("div", {}, `${e.published.slice(5, 10)} ${e.press} `, ext(e.link, e.title),
               e.reports > 1 ? ` (보도 ${e.reports}건)` : "", h("small", {}, ` — ${e.reason}`))) : ["–"])));
         })))));
-      kids.push(h("p", { class: "note" }, "'높은 금리 유지'(긴축 기조 유지)는 이번 회의 동결과도 양립한다. '중기 경로'는 다음 회의가 아닌 시점(예: 6개월 뒤 점도표)에 관한 신호다."));
+      kids.push(more("설명", h("p", { class: "note" }, "'높은 금리 유지'(긴축 기조 유지)는 이번 회의 동결과도 양립한다. '중기 경로'는 다음 회의가 아닌 시점(예: 6개월 뒤 점도표)에 관한 신호다.")));
     }
 
     // 압력지수 + 요인
@@ -918,8 +920,8 @@
             h("td", { class: M.mixed ? "mixed" : null, title: M.mixed ? "기사별 방향이 엇갈려 하나로 줄이기 어렵다" : "" },
               M.mixed ? `혼재(가중 평균 ${rep})` : `${rep} (가중 평균 ${(g.direction >= 0 ? "+" : "") + g.direction.toFixed(2)})`));
         })))));
-      kids.push(h("p", { class: "note" }, "대표 방향 = 기사별 방향을 강도로 가중 평균한 값(+0.2 넘으면 인상 압력, −0.2 밑이면 인하 압력). 인상·인하 기사가 함께 많으면(가장 많은 쪽이 60% 미만이거나 적은 쪽이 25% 이상) '혼재'로 표시한다. "
-        + "대상은 AI가 기사마다 고른 주된 중앙은행(한은/연준/기타 해외)으로 센다. 이 구분이 생기기 전 태그는 요인('미 연준·글로벌 금리' = 해외)으로 센다. 방향은 한은 기준금리에 주는 함의만이다(연준 영향은 따로 분류). 시점은 AI 신호 태그 기준이다(추가 인상·높은 금리 유지·이번 회의 동결·인하 신호 = 다음 회의, 나머지 = 중기·배경)."));
+      kids.push(more("설명", h("p", { class: "note" }, "대표 방향 = 기사별 방향을 강도로 가중 평균한 값(+0.2 넘으면 인상 압력, −0.2 밑이면 인하 압력). 인상·인하 기사가 함께 많으면(가장 많은 쪽이 60% 미만이거나 적은 쪽이 25% 이상) '혼재'로 표시한다. "
+        + "대상은 AI가 기사마다 고른 주된 중앙은행(한은/연준/기타 해외)으로 센다. 이 구분이 생기기 전 태그는 요인('미 연준·글로벌 금리' = 해외)으로 센다. 방향은 한은 기준금리에 주는 함의만이다(연준 영향은 따로 분류). 시점은 AI 신호 태그 기준이다(추가 인상·높은 금리 유지·이번 회의 동결·인하 신호 = 다음 회의, 나머지 = 중기·배경).")));
     }
 
     // 기사 목록
