@@ -88,6 +88,20 @@ def merge_naver(yna: list[dict], main_kw: str, chips: list[str], now, days: int 
     return sorted(out, key=lambda x: x["published"], reverse=True)
 
 
+def only_press(items: list[dict], press: dict, main_kw: str) -> list[dict]:
+    """기사 탭은 지정 언론사만(표시 이름은 언론사명). 주 키워드(신현송)는 제목에 있을 때만 붙인다."""
+    from urllib.parse import urlparse
+    out = []
+    for x in items:
+        name = press.get(urlparse(x["link"]).netloc) if press else x.get("feed")
+        if not name:
+            continue
+        kws = [k for k in x["keywords"] if k != main_kw or main_kw in x["title"]]
+        if kws:
+            out.append(dict(x, feed=name, keywords=kws))
+    return out
+
+
 PROB_LOG = DATA / "prob_log.csv"
 LOG_FIELDS = ["date", "asof", "status", "meeting", "p_hike", "p_hold", "p_cut", "expected", "instrument", "spread_bp", "note"]
 
@@ -188,7 +202,7 @@ def main(argv=None):
         write_json(SITE_DATA / "status.json", {})
 
     main_kw = cfg["news"]["main_keyword"]
-    news = merge_naver(load_news(), main_kw, cfg["news"]["chips"], now)
+    news = only_press(merge_naver(load_news(), main_kw, cfg["news"]["chips"], now), cfg["news"].get("press") or {}, main_kw)
     # '새 신현송 기사' = 최근 24시간 게재분 (화면에서는 마지막 방문 이후분을 따로 센다)
     cutoff = (now - timedelta(hours=24)).isoformat()
     new_main = [x["id"] for x in news if main_kw in x["keywords"] and x["published"] >= cutoff]
