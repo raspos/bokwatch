@@ -169,3 +169,20 @@ def test_path_range_max_levels():
     assert round(r["2026-10-22"]["max_levels"]["3.25"], 3) == 0.263
     # 11월 최고 경로: 10월 0%, 11월 45.5% → 11월 뒤 3.25% 45.5%
     assert round(r["2026-11-26"]["max_levels"]["3.25"], 3) == 0.455 and abs(r["2026-11-26"]["max_expected"] - 3.1138) < 1e-3
+
+
+def test_decision_multinomial_probs_and_direction():
+    from bokwatch import decision_model as dm
+    rows = []
+    for i in range(60):
+        s = (i % 20) - 10
+        rows.append({"meeting": f"2010-01-{i % 28 + 1:02d}", "move_bp": 0, "spread_bp": s, "cd_chg_bp": s / 2, "core_gap": 0.0,
+                     "actual": "hike" if s > 5 else "cut" if s < -5 else "hold"})
+    m = dm.fit_multinomial(rows, feats=dm.MODELS["m3"])
+    hi = dm.predict(m, {"spread_bp": 9, "cd_chg_bp": 4.5, "core_gap": 0.0})
+    lo = dm.predict(m, {"spread_bp": -9, "cd_chg_bp": -4.5, "core_gap": 0.0})
+    assert abs(sum(hi.values()) - 1) < 1e-3 and abs(sum(lo.values()) - 1) < 1e-3
+    assert hi["hike"] > hi["cut"] and lo["cut"] > lo["hike"]
+    wf = dm.walk_forward(rows, start=40, feats=dm.MODELS["m3"], kind="multinomial")
+    b = wf["summary"]["model"]["by_actual"]
+    assert set(b) == {"cut", "hold", "hike"} and all("p_actual" in v and "brier" in v for v in b.values())

@@ -32,8 +32,13 @@ OUT = SITE_DATA / "decision.json"
 LAMBDA, START_N, N_BEFORE = 1.0, 40, 3
 CLASSES = ("cut", "hold", "hike")
 FEATURES = ("spread_bp", "cd_chg_bp", "core_gap")
-# 사전에 정한 두 모형: M1 변수 3개, M2 = M1 + 직전 기준금리 변경 방향(최근 270일 안, 없으면 0). 이 둘만 시험한다.
-MODELS = {"m1": ("spread_bp", "cd_chg_bp", "core_gap"), "m2": ("spread_bp", "cd_chg_bp", "core_gap", "last_move")}
+# 시험한 후보(누적 기록): M1 순서형·변수 3개, M2 순서형·M1+직전 변경 방향, M3 다항·M1과 같은 변수(2026-10-15 추가).
+# 직전 변경 방향 = 관측일 전 270일 안에서 '가장 최근 실제 기준금리 변경'(임시회의 포함)의 방향. 직전 회의 결정이 아니다.
+# 규제: 음의 로그우도 '합계' + λ·Σβ²(절편·경계 제외). 표준화는 학습 구간 평균·표준편차로만.
+MODELS = {"m1": ("spread_bp", "cd_chg_bp", "core_gap"), "m2": ("spread_bp", "cd_chg_bp", "core_gap", "last_move"),
+          "m3": ("spread_bp", "cd_chg_bp", "core_gap")}
+MODEL_KIND = {"m1": "ordered", "m2": "ordered", "m3": "multinomial"}
+DLOG = DATA / "decision_log.csv"         # 매일 다음 회의 예측(회의까지 남은 영업일 포함) — D−3 값으로 평가
 LABELS = {"spread_bp": "CD − 기준금리(bp)", "cd_chg_bp": "CD 20영업일 변화(bp)", "core_gap": "근원물가 − 물가목표(%p)",
           "last_move": "직전 기준금리 변경 방향(+1 인상, −1 인하, 0 없음·270일 경과)"}
 
@@ -162,7 +167,43 @@ def fit(rows: list[dict], lam: float = LAMBDA, feats=FEATURES) -> dict:
             "mu": mu.tolist(), "sd": sd.tolist(), "n": len(rows), "feats": list(feats)}
 
 
+def fit_multinomial(rows: list[dict], lam: float = LAMBDA, feats=FEATURES) -> dict:
+    """L2 규제 다항 로지스틱(동결 기준). 인상·인하에 서로 다른 계수를 허용한다."""
+    import numpy as np
+    from scipy.optimize import minimize
+    X = np.array([[r[k] for k in feats] for r in rows], float)
+    mu, sd = X.mean(0), X.std(0)
+    sd[sd == 0] = 1
+    Z = (X - mu) / sd
+    y = np.array([CLASSES.index(r["actual"]) for r in rows])
+    k = len(feats)
+
+    def unpack(w):  # cut, hike 각각 [절편, β...]; hold = 0
+        return w[: k + 1], w[k + 1:]
+
+    def nll(w):
+        wc, wh = unpack(w)
+        sc = wc[0] + Z @ wc[1:]
+        sh = wh[0] + Z @ wh[1:]
+        s = np.vstack([sc, np.zeros_like(sc), sh]).T
+        s = s - s.max(1, keepdims=True)
+        logp = s - np.log(np.exp(s).sum(1, keepdims=True))
+        return -logp[np.arange(len(y)), y].sum() + lam * ((wc[1:] ** 2).sum() + (wh[1:] ** 2).sum())
+    res = minimize(nll, np.zeros(2 * (k + 1)), method="L-BFGS-B")
+    wc, wh = unpack(res.x)
+    return {"kind": "multinomial", "cut": wc.tolist(), "hike": wh.tolist(), "mu": mu.tolist(), "sd": sd.tolist(),
+            "n": len(rows), "feats": list(feats), "beta": (wc[1:].tolist() + wh[1:].tolist())}
+
+
 def predict(m: dict, x: dict) -> dict:
+    if m.get("kind") == "multinomial":
+        z = [(x[k] - mu) / sd for k, mu, sd in zip(m["feats"], m["mu"], m["sd"])]
+        sc = m["cut"][0] + sum(b * v for b, v in zip(m["cut"][1:], z))
+        sh = m["hike"][0] + sum(b * v for b, v in zip(m["hike"][1:], z))
+        mx = max(sc, 0.0, sh)
+        e = [math.exp(sc - mx), math.exp(-mx), math.exp(sh - mx)]
+        s = sum(e)
+        return {"cut": round(e[0] / s, 4), "hold": round(e[1] / s, 4), "hike": round(e[2] / s, 4)}
     z = sum(b * (x[k] - mu) / sd for b, k, mu, sd in zip(m["beta"], m["feats"], m["mu"], m["sd"]))
     c1, c2 = _sig(m["t1"] - z), _sig(m["t2"] - z)
     return {"cut": round(c1, 4), "hold": round(c2 - c1, 4), "hike": round(1 - c2, 4)}
@@ -175,11 +216,15 @@ def _score(p: dict, actual: str):
     return pred == actual, sum((p[k] - (1.0 if k == actual else 0.0)) ** 2 for k in CLASSES)
 
 
-def walk_forward(rows: list[dict], start: int = START_N, feats=FEATURES) -> dict:
+def fit_any(rows, feats, kind):
+    return fit_multinomial(rows, feats=feats) if kind == "multinomial" else fit(rows, feats=feats)
+
+
+def walk_forward(rows: list[dict], start: int = START_N, feats=FEATURES, kind: str = "ordered") -> dict:
     preds = []
     for i in range(start, len(rows)):
         past, r = rows[:i], rows[i]
-        m = fit(past, feats=feats)
+        m = fit_any(past, feats, kind)
         p = predict(m, r)
         freq = {k: (sum(x["actual"] == k for x in past) + 1) / (len(past) + 3) for k in CLASSES}
         hit, br = _score(p, r["actual"])
@@ -190,14 +235,50 @@ def walk_forward(rows: list[dict], start: int = START_N, feats=FEATURES) -> dict
                       "hold_hit": r["actual"] == "hold", "hold_brier": round(_score({"cut": 0, "hold": 1, "hike": 0}, r["actual"])[1], 4)})
     n = len(preds)
 
-    def by(act, key):
+    def prob_actual(p, src):
+        return p[f"p_{p['actual']}"] if src == "model" else p["base_rate"][f"p_{p['actual']}"] if src == "base_rate" else (
+            1.0 if p["actual"] == "hold" else 0.0)
+
+    def by(act, key, bkey, src):
         rs = [p for p in preds if p["actual"] == act]
-        return {"n": len(rs), "hits": sum(p[key] for p in rs)}
+        return {"n": len(rs), "hits": sum(p[key] for p in rs),
+                "brier": round(statistics.mean(p[bkey] for p in rs), 4) if rs else None,
+                "p_actual": round(statistics.mean(prob_actual(p, src) for p in rs), 4) if rs else None}
     summ = {}
     for name, hk, bk in (("model", "hit", "brier"), ("base_rate", "base_hit", "base_brier"), ("always_hold", "hold_hit", "hold_brier")):
         summ[name] = {"hits": sum(p[hk] for p in preds), "brier": round(statistics.mean(p[bk] for p in preds), 4),
-                      "by_actual": {a: by(a, hk) for a in CLASSES}}
+                      "by_actual": {a: by(a, hk, bk, name) for a in CLASSES}}
     return {"n": n, "start_after": start, "first": preds[0]["meeting"] if preds else None, "summary": summ, "rows": preds}
+
+
+def verdict(models: dict) -> str:
+    names = {"m1": "M1", "m2": "M2", "m3": "M3"}
+    passed = [names.get(k, k) for k, m in models.items() if m["beats_baselines"]]
+    if not passed:
+        return f"후보 {len(models)}개 모두 순차 검증에서 '과거 결정 빈도'를 Brier 5% 이상 넘지 못했다. 화면 기본값으로 쓰지 않고 기록만 한다."
+    return (f"{'·'.join(passed)}가 개발 자료에서 통과선을 넘었다. 다만 후보 {len(models)}개를 시험했고 통과선도 첫 결과를 본 뒤 정했으므로 "
+            "채택 근거가 되지 않는다. 앞으로 새 회의의 3영업일 전 예측으로 다시 평가하기 전까지 기록만 한다.")
+
+
+def log_prediction(today: date, upcoming: list[date], ser, models: dict) -> None:
+    """매일 다음 회의 예측을 남긴다. 검증 성적은 '회의 3영업일 전' 기준이므로, 평가에는 bd_to_meeting == 3 행만 쓴다."""
+    if not upcoming or not any(m.get("next") for m in models.values()):
+        return
+    md = upcoming[0]
+    bd = sum(1 for k in range((md - today).days) if (today + timedelta(days=k)).weekday() < 5)
+    rows = []
+    if DLOG.exists():
+        with open(DLOG, encoding="utf-8") as f:
+            rows = [r for r in csv.DictReader(f) if r["date"] != today.isoformat()]
+    for name, m in models.items():
+        if m.get("next"):
+            p = m["next"]["probs"]
+            rows.append({"date": today.isoformat(), "meeting": md.isoformat(), "bd_to_meeting": bd, "model": name,
+                         "p_cut": p["cut"], "p_hold": p["hold"], "p_hike": p["hike"]})
+    with open(DLOG, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, ["date", "meeting", "bd_to_meeting", "model", "p_cut", "p_hold", "p_hike"])
+        w.writeheader()
+        w.writerows(sorted(rows, key=lambda r: (r["date"], r["model"])))
 
 
 # ---------------------------------------------------------------- 실행
@@ -221,26 +302,32 @@ def main(argv=None) -> int:
         x = features_on(ser, today)
         models = {}
         for name, feats in MODELS.items():
-            wf = walk_forward(rows, feats=feats)
-            full = fit(rows, feats=feats)
+            wf = walk_forward(rows, feats=feats, kind=MODEL_KIND[name])
+            full = fit_any(rows, feats, MODEL_KIND[name])
             s = wf["summary"]
             # 의미 있는 개선: 과거 결정 빈도보다 Brier 5% 이상 낮고 항상 동결보다도 낮아야 한다.
             # 5%는 첫 결과(2026-10-15)를 본 뒤 정한 값이다. 이후 평가에서는 바꾸지 않는다.
             beats = s["model"]["brier"] < 0.95 * s["base_rate"]["brier"] and s["model"]["brier"] < s["always_hold"]["brier"]
-            models[name] = {"features": [{"key": k, "label": LABELS[k]} for k in feats],
-                            "coef_standardized": dict(zip(feats, [round(b, 3) for b in full["beta"]])),
+            models[name] = {"kind": MODEL_KIND[name], "features": [{"key": k, "label": LABELS[k]} for k in feats],
+                            "coef_standardized": ({f"{c}:{k}": round(b, 3) for c, bs in (("인하", full["cut"][1:]), ("인상", full["hike"][1:]))
+                                                   for k, b in zip(feats, bs)} if MODEL_KIND[name] == "multinomial"
+                                                  else dict(zip(feats, [round(b, 3) for b in full["beta"]]))),
+                            "threshold_brier": round(0.95 * s["base_rate"]["brier"], 4),
                             "walk_forward": wf, "beats_baselines": beats,
                             "next": ({"meeting": upcoming[0].isoformat(), "probs": predict(full, x)} if upcoming and x else None)}
         out = {"updated": now_kst().isoformat(timespec="minutes"), "n_meetings": len(rows),
                "span": [rows[0]["meeting"], rows[-1]["meeting"]] if rows else None,
                "class_counts": {k: sum(r["actual"] == k for r in rows) for k in CLASSES},
                "lambda": LAMBDA, "start_n": START_N, "inputs_today": x, "models": models,
-               "adopt": any(m["beats_baselines"] for m in models.values()),
-               "verdict": ("순차 검증에서 단순 비교 기준을 의미 있게 넘은 모형이 있다." if any(m["beats_baselines"] for m in models.values())
-                           else "두 모형 모두 순차 검증에서 '과거 결정 빈도'를 의미 있게(Brier 5% 이상) 넘지 못했다. 화면 기본값으로 쓰지 않고 기록만 한다.")}
+               # 지금까지의 회의는 후보를 고르는 데 쓴 개발 자료다. 여기서 통과선을 넘어도 채택하지 않는다.
+               "adopt": False, "candidates_tested": len(MODELS),
+               "passed_on_dev": [k for k, m in models.items() if m["beats_baselines"]],
+               "verdict": verdict(models)}
         write_json(OUT, out)
+        log_prediction(today, upcoming, ser, models)
         sm = {k: v["walk_forward"]["summary"] for k, v in models.items()}
         record_status("decision", True, f"회의 {len(rows)}회 · Brier M1 {sm['m1']['model']['brier']} · M2 {sm['m2']['model']['brier']}"
+                                        f" · M3 {sm['m3']['model']['brier']}"
                                         f" · 빈도 {sm['m1']['base_rate']['brier']} · 동결 {sm['m1']['always_hold']['brier']}")
         print(out["verdict"], {k: v["model"]["brier"] for k, v in sm.items()}, "빈도", sm["m1"]["base_rate"]["brier"])
     except Exception as e:

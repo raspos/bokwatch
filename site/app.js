@@ -905,7 +905,7 @@
     const X = D.decision;
     if (!X || !X.models) return sec("4-1. 결정 예측 모형 (실험)", p(h("span", { class: "note" }, "아직 산출 전")));
     const actK = { hike: "인상", hold: "동결", cut: "인하" };
-    const names = { m1: "M1 (변수 3개)", m2: "M2 (M1 + 직전 변경 방향)" };
+    const names = { m1: "M1 순서형 (변수 3개)", m2: "M2 순서형 (M1 + 직전 변경 방향)", m3: "M3 다항 (M1과 같은 변수)" };
     const rows = [];
     for (const [k, m] of Object.entries(X.models)) {
       const s = m.walk_forward.summary.model, b = s.by_actual;
@@ -923,11 +923,23 @@
         + `동결 ${X.class_counts.hold}·인상 ${X.class_counts.hike}·인하 ${X.class_counts.cut})를 회의 1건 = 표본 1개로 쓴다.`),
       h("ul", {},
         li("모형: 순서형 로지스틱(인하 < 동결 < 인상), L2 규제 λ=" + X.lambda + ". 입력은 회의 3영업일 전에 알 수 있던 값만 쓴다(근원물가는 발표 시점 기준)."),
-        li("M1 변수: CD 91일 − 기준금리, CD 20영업일 변화, 근원물가(식료품·에너지 제외) − 물가목표. M2는 직전 기준금리 변경 방향을 더한다. 시험한 모형은 이 둘뿐이다."),
+        li("M1 변수: CD 91일 − 기준금리, CD 20영업일 변화, 근원물가(식료품·에너지 제외) − 물가목표. M2는 직전 기준금리 변경 방향을 더한다(순서형). M3는 M1과 같은 변수로 인상·인하에 서로 다른 계수를 주는 다항 로지스틱이다(2026-10-15 추가). 시험한 후보는 이 셋이다."),
         li(`순차 검증: 처음 ${X.start_n}회로 학습을 시작해, 회의마다 그 이전 회의로만 다시 학습하고 다음 회의를 예측했다.`),
-        li("채택 기준: '과거 결정 빈도'보다 Brier가 5% 이상 낮고 '항상 동결'보다도 낮을 것. 이 5% 기준은 첫 결과(2026-10-15)를 본 뒤 정했다. 앞으로 새 회의로 평가할 때는 이 기준을 바꾸지 않는다.")),
+        li(`채택 기준: '과거 결정 빈도'보다 Brier가 5% 이상 낮고(현재 통과선 ${Object.values(X.models)[0].threshold_brier}) '항상 동결'보다도 낮을 것. 5%는 통계적 유의성이 아니라 실무상 최소 개선 기준이고, 첫 결과(2026-10-15)를 본 뒤 정했다.`),
+        li("지금까지의 146회는 모형 개발·비교에 쓴 자료로 취급한다. 시험한 후보 수(현재 3개)를 기록하고, 앞으로는 바꾸지 않은 규칙으로 새 회의마다 3영업일 전 예측(data/decision_log.csv)을 쌓아 평가한다."),
+        li("규제·표준화: 음의 로그우도 합계 + λ·Σβ²(절편·경계 제외). 표준화는 학습 구간 평균·표준편차로만. 물가목표는 당시 목표(2016년부터 2.0%, 그 전 범위 목표의 가운데 3.0%). 직전 변경 방향은 직전 회의 결정이 아니라 270일 안 가장 최근 실제 변경(임시회의 포함)의 방향.")),
       table(["모형", "적중", "Brier", "인상 포착", "인하 포착", `다음 회의 예측(실험)`], rows),
+      h("h3", {}, "결과별 분해 ", h("small", {}, "실제 결과에 준 평균 확률 · 그 회의들의 평균 Brier(낮을수록 좋음)")),
+      table(["실제 결정", ...Object.keys(X.models).map((k) => names[k] || k), "과거 결정 빈도"],
+        ["hike", "hold", "cut"].map((a) => {
+          const s0b = s0.summary.base_rate.by_actual[a];
+          return [`${actK[a]} ${s0b.n}회`, ...Object.values(X.models).map((m) => {
+            const b = m.walk_forward.summary.model.by_actual[a];
+            return `${pct(b.p_actual)} · ${b.brier.toFixed(3)}`;
+          }), `${pct(s0b.p_actual)} · ${s0b.brier.toFixed(3)}`];
+        })),
       p(h("b", {}, "판정: "), X.verdict),
+      p(h("span", { class: "note" }, `다음 회의 예측 읽는 법: 현재 입력이 과거 결정 비율(${["hike", "hold", "cut"].map((k) => `${actK[k]} ${pct(X.class_counts[k] / X.n_meetings)}`).join("·")}, ${X.n_meetings}회)보다 어느 쪽으로 기울었는지만 보여 준다. 결정 확률을 정확히 내는 능력은 검증되지 않았다. 모형별 값을 평균하거나 범위로 묶어 쓰지 않는다. 검증 성적은 회의 3영업일 전 기준이라 그 전 날짜의 예측에는 그대로 적용되지 않는다.`)),
       p(h("span", { class: "note" }, `오늘 입력: CD−기준금리 ${xin.spread_bp ?? "–"}bp · CD 20영업일 변화 ${xin.cd_chg_bp ?? "–"}bp · `
         + `근원물가−목표 ${xin.core_gap ?? "–"}%p(${xin.cpi_month || "–"}분) · 직전 변경 ${xin.last_move === 1 ? "인상" : xin.last_move === -1 ? "인하" : "없음"}`)));
   }
