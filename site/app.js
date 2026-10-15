@@ -446,6 +446,24 @@
       }
     }
     $("#probNote").textContent = notes.join(" ");
+    // FedWatch 방식: 회의별 이동 확률을 곱해 회의 뒤 기준금리 분포를 잇는다(독립 가정). OIS로 낸 회의까지만.
+    const fwMs = [];
+    for (const m of ms) { if (m.method !== "kofr_ois") break; fwMs.push(m); }
+    if (fwMs.length) {
+      let dist = { [snap.r0.toFixed(2)]: 1 };
+      const rowsFw = fwMs.map((m) => {
+        const next = {};
+        for (const [lv, p0] of Object.entries(dist)) for (const o of outcomes(m)) {
+          const k = (+lv + o.bp / 100).toFixed(2);
+          next[k] = (next[k] || 0) + p0 * o.p;
+        }
+        dist = next;
+        return [m.date, { ...dist }];
+      });
+      const lvls = [...new Set(rowsFw.flatMap(([, d]) => Object.keys(d)))].sort((a, b) => a - b);
+      $("#fwTable").replaceChildren(h("thead", {}, h("tr", {}, h("th", {}, "회의 뒤"), ...lvls.map((l) => h("th", {}, l + "%")))),
+        h("tbody", {}, ...rowsFw.map(([d, dd]) => h("tr", {}, h("td", {}, ymd(d)), ...lvls.map((l) => h("td", { class: dd[l] ? null : "zero" }, pct(dd[l] || 0)))))));
+    } else $("#fwTable").replaceChildren();
 
     // OIS 계산 근거·민감도
     const ko = (live.components || {}).kofr_ois;
@@ -1158,6 +1176,16 @@
             `${pct(r.ois.p_hike)} / ${pct(r.ois.p_cut)}`, r.cd91 ? `${pct(r.cd91.p_hike)} / ${pct(r.cd91.p_cut)}` : "–"]))] : []),
         p(h("span", { class: "note" }, "표본이 작다(인상 2회·인하 4회). 같은 자료로 CD 단기물 직접 역산 방식 3개(1-2절)를 먼저 시험한 뒤 이 방식을 시험했다. 산식은 예탁원 공시 방식을 따른 것으로 결과를 보고 고르지 않았다. 2026-10-15 기본값으로 바꿨고, 회의 3영업일 전 기록 8회로 다시 판정한다(5절).")));
     }
+    kids.push(h("h3", {}, "CME FedWatch 방식과의 차이"),
+      table(["항목", "CME FedWatch", "BOK워치"], [
+        ["입력 가격", "30일 연방기금 선물(ZQ) 체결 가격 → 그달 평균 실효금리(EFFR)", "자체 합성 KOFR OIS(금투협 CD 평가금리 − 스프레드). 거래 가격이 아니고 1bp 단위"],
+        ["회의 전후 나누기", "회의 있는 달을 회의 전 N일·뒤 M일로 나눠 그달 시작·끝 금리를 역산", "1개월·3개월 OIS 기간을 회의 전·뒤 일수로 나눠 회의 뒤 기대 금리를 역산(같은 원리)"],
+        ["시작점", "회의 없는 달(기준월) 선물로 앞뒤 달의 시작·끝 금리를 이어 붙임", "회의 전 구간은 '현재 기준금리 + KOFR−기준금리 차이'로 둠. 1개월물로 다음 회의, 3개월물로 그다음 회의"],
+        ["회의별 확률", "Δ/25bp를 정수와 소수로 나눠 두 결과(예: 50bp 10%·75bp 90%)", "같음(Δ = 그 회의 뒤 기대 금리 − 직전 회의 뒤 기대 금리)"],
+        ["정책금리와 시장금리 차이", "EFFR이 목표금리 변화에 비례해 움직인다고 가정", "KOFR − 기준금리 차이(60일 중앙값)가 일정하다고 가정"],
+        ["여러 회의 누적 분포", "회의별 확률을 곱함(이진 확률 트리, 회의 사이 독립 가정)", "회의별 확률만으로는 정해지지 않아 가능 범위로 보이고, 독립 가정(FedWatch 방식) 값을 함께 보인다"],
+      ]),
+      p(h("span", { class: "note" }, "출처: CME Group 'Understanding the CME Group FedWatch Tool Methodology'(2025-01-23). BOK워치는 CME Group과 관계없다.")));
     return sec("1-1. 자체 산출 KOFR OIS (기본 추정치, 2026-10-15부터)", ...kids);
   }
 
