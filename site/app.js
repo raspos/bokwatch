@@ -1343,7 +1343,25 @@
     bind();
     await renderAll();
     watchUpdates();
+    showViews();
   })();
+
+  // 조회수(하단): 세션당 한 번만 센다. 서버 함수가 없거나 실패하면 표시하지 않는다.
+  async function showViews() {
+    const el = $("#views");
+    if (!el || location.protocol === "file:") return;
+    let counted = false;
+    try { counted = sessionStorage.getItem("bokwatch.counted") === "1"; } catch (e) { /* 사생활 보호 모드 등 */ }
+    try {
+      const r = await fetch("api/views", { method: counted ? "GET" : "POST", cache: "no-store" });
+      if (!r.ok) return;
+      const v = await r.json();
+      if (typeof v.total !== "number") return;
+      try { sessionStorage.setItem("bokwatch.counted", "1"); } catch (e) { /* 무시 */ }
+      el.textContent = `조회수 오늘 ${v.today.toLocaleString("ko-KR")} · 누적 ${v.total.toLocaleString("ko-KR")}`;
+      el.hidden = false;
+    } catch (e) { /* 표시 안 함 */ }
+  }
 
   function watchUpdates() {
     const check = async () => {
