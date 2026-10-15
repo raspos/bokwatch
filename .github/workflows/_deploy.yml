@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ["site/**", "functions/**"]
+    paths: ["site/**", "functions/**", ".github/workflows/_deploy.yml"]
 permissions:
   contents: read
   pages: write
@@ -31,6 +31,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { ref: main }
+      - name: 조회수 KV 준비(없으면 만들고 VIEWS로 연결)
+        continue-on-error: true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          W="npx --yes wrangler@3.114.0"
+          find_id() { $W kv namespace list 2>/dev/null | python3 -c "import json,sys; d=json.load(sys.stdin); print(next((x['id'] for x in d if x['title']=='bokwatch-views'), ''))"; }
+          ID=$(find_id || true)
+          if [ -z "$ID" ]; then $W kv namespace create bokwatch-views; ID=$(find_id || true); fi
+          if [ -n "$ID" ]; then
+            python3 -c 'import sys; n, i = sys.argv[1], sys.argv[2]; open("wrangler.toml", "w").write(f"name = \"{n}\"\npages_build_output_dir = \"site\"\ncompatibility_date = \"2024-09-01\"\n\n[[kv_namespaces]]\nbinding = \"VIEWS\"\nid = \"{i}\"\n")' "${{ vars.CF_PAGES_PROJECT || 'joongang-bokwatch' }}" "$ID"
+            echo "KV 연결: $ID"; cat wrangler.toml
+          else
+            echo "KV 준비 실패(토큰 권한 확인 필요) — 조회수 없이 배포"
+          fi
       - name: Cloudflare Pages 배포
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
