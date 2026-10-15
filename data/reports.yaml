@@ -1,9 +1,61 @@
 # 기관 전망 (수기 입력). verify: true = 언론 보도 인용 초기값, 원문 대조 필요.
 # calls: 회의별 전망  {회의일: {call: 동결|인상|인하, size: 0.25}}
 # dissent: 소수의견 전망 문자열, terminal: 최종금리(%), path: 경로 설명
-asof: "2026-10-14"
+asof: "2026-10-15"
 
 reports:
+  - institution: 현대차증권
+    author: 최제민
+    published: "2026-10-13"
+    calls:
+      "2026-10-22": {call: 동결}
+      "2026-11-26": {call: 인상, size: 0.25}
+    dissent: null
+    terminal: 3.50
+    path: "11월 3.25%, 2027년 1분기 3.50%"
+    rationale: 10월은 두 차례 인상 효과·소비 둔화 확인하며 동결, 11월 수정 경제전망에서 성장률 상향하며 인상
+    source: 뉴스1 10/13·쿠키뉴스 10/14 (보고서 원문 미확인)
+    link: "https://www.news1.kr/economy/trend/6317410"
+    verify: true
+
+  - institution: 한국투자증권
+    author: 안재균
+    published: "2026-10-13"
+    calls:
+      "2026-10-22": {call: 동결, note: 매파적 기조 가능}
+    dissent: null
+    terminal: null
+    path: null
+    rationale: 10월 동결 유력, 동결하더라도 매파적 기조가 드러날 수 있음
+    source: 뉴스1 10/13 (보고서 원문 미확인)
+    link: "https://www.news1.kr/economy/trend/6317410"
+    verify: true
+
+  - institution: 신영증권
+    author: 조용구
+    published: "2026-10-13"
+    calls:
+      "2026-11-26": {call: 인상, size: 0.25}
+    dissent: null
+    terminal: null
+    path: null
+    rationale: 다음 인상 시점은 11월, 긴축 기조 지속
+    source: 아주경제 10/13 (보고서 원문 미확인)
+    link: "https://www.ajunews.com/view/20261013151439774"
+    verify: true
+
+  - institution: NH투자증권
+    author: 강승원
+    published: "2026-10-13"
+    calls: {}
+    dissent: null
+    terminal: 3.50
+    path: null
+    rationale: 최종금리 3.50%, 시장 일각의 3.75% 우려는 과도
+    source: 뉴스1 10/13 (보고서 원문 미확인)
+    link: "https://www.news1.kr/economy/trend/6317410"
+    verify: true
+
   - institution: 한국씨티은행
     author: 김진욱
     published: "2026-10-14"
@@ -95,7 +147,16 @@ reports:
     verify: true
 
 # 금투협 채권시장지표 설문 (월간)
+# 10월 금통위 대상 설문은 '2026년 11월 채권시장지표'로 나온다(작년 같은 설문은 10/21 발표). 10/15 기준 미발표 확인.
 kofia_survey:
+  - month: "2026-09"
+    status: 발표
+    period: "2026-08-13~2026-08-19"
+    respondents: null
+    hold: 79
+    hike: 20
+    cut: null
+    source: "금투협 2026년 9월 채권시장지표(8/25 발표, 8/27 금통위 대상) · 언론 보도 인용"
   - month: "2026-10"
     status: 미발표   # 발표 시 아래 필드 입력
     period: null     # 예) "2026-10-01~2026-10-07"

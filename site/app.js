@@ -809,11 +809,13 @@
     $("#repTable").replaceChildren(thead, h("tbody", {}, tb));
 
     renderConsensus();
-    const K = (D.reports.kofia || []).filter((k) => k.hold != null);
+    const K = D.reports.kofia || [];
+    const pc = (v) => v == null ? "–" : v + "%";
     $("#kofia").replaceChildren(K.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },
-      h("thead", {}, h("tr", {}, ...["월", "조사기간", "응답자", "동결", "인상", "인하"].map((t) => h("th", {}, t)))),
-      h("tbody", {}, K.map((k) => h("tr", {}, h("td", {}, k.month), h("td", {}, k.period || "–"), h("td", {}, k.respondents ?? "–"), h("td", {}, k.hold + "%"), h("td", {}, k.hike + "%"), h("td", {}, k.cut + "%"))))))
-      : h("p", { class: "note" }, (D.reports.kofia || []).map((k) => `${k.month}: ${k.status || "미입력"}`).join(" · ") + " — 발표 시 data/reports.yaml에 입력"));
+      h("thead", {}, h("tr", {}, ...["월", "상태", "조사기간", "응답자", "동결", "인상", "인하", "출처"].map((t, i) => h("th", { class: i === 7 ? "l" : null }, t)))),
+      h("tbody", {}, K.slice().reverse().map((k) => h("tr", {}, h("td", {}, k.month), h("td", {}, k.status || "–"), h("td", {}, k.period || "–"), h("td", {}, k.respondents ?? "–"),
+        h("td", {}, pc(k.hold)), h("td", {}, pc(k.hike)), h("td", {}, pc(k.cut)), h("td", { class: "l" }, k.source || (k.status === "미발표" ? "10월 금통위 대상 설문은 '11월 채권시장지표'로 발표(작년 10/21)" : "–")))))))
+      : h("p", { class: "note" }, "금투협 설문 미입력"));
   }
 
   async function renderConsensus() {
