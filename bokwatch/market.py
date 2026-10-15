@@ -444,7 +444,7 @@ def backtest(rows, cfg, spreads, start_year=2021, n_before=3, fut_by_date=None) 
         }
     w = cfg["model"].get("blend", {}).get("experimental_kofr_weight", 0.5)
     return {
-        "n": n, "rule": f"회의 {n_before}영업일 전 종가, 기본 스프레드. 기본값 CD 91일 모형, 실험값 KOFR 선물·혼합(KOFR {w:.0%})",
+        "n": n, "rule": f"회의 {n_before}영업일 전 종가, 그 시점까지 자료로 정한 스프레드. CD 91일 모형(2026-10-15 전 기본값)·KOFR 선물·혼합(KOFR {w:.0%})·자체 합성 KOFR OIS(현재 기본값, 2023-05부터)",
         "excluded": excluded,
         "hit_rate": round(sum(r["hit"] for r in out) / n, 4) if n else None,
         "brier": round(statistics.mean(r["brier"] for r in out), 4) if n else None,

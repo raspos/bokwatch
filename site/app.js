@@ -689,10 +689,13 @@
 
     // 타임라인
     const fill = (selEl, vals, cur, all) => selEl.replaceChildren(h("option", { value: "" }, all), ...vals.map((v) => h("option", { value: v, selected: v === cur }, v)));
-    fill($("#spkSel"), G.speakers || [], S.spk, "발언자 전체");
+    // 기본은 총재 발언만. '발언자 전체'를 고르면 부총재·위원 발언도 함께
+    const isGov = (s) => / 총재$/.test(s) && !s.includes("부총재");
+    $("#spkSel").replaceChildren(h("option", { value: "" }, "총재"), h("option", { value: "*", selected: S.spk === "*" }, "발언자 전체"),
+      ...(G.speakers || []).filter((v) => !isGov(v)).map((v) => h("option", { value: v, selected: v === S.spk }, v)));
     fill($("#venSel"), G.venues || [], S.ven, "장소 전체");
     const tn = { hawk: "매파", dove: "비둘기", neutral: "중립" };
-    const sp = (G.speeches || []).filter((s) => (!S.spk || s.speaker === S.spk) && (!S.ven || s.venue === S.ven));
+    const sp = (G.speeches || []).filter((s) => (!S.spk ? isGov(s.speaker) : S.spk === "*" || s.speaker === S.spk) && (!S.ven || s.venue === S.ven));
     $("#timeline").replaceChildren(...sp.map((s) => h("li", { class: s.tone },
       h("div", { class: "when" }, `${ymd(s.date)} · ${s.venue} · ${s.speaker}`, h("span", { class: `tag ${s.tone}` }, tn[s.tone] || s.tone)),
       h("div", {}, "“" + s.quote + "”", s.note ? h("small", {}, s.note) : ""),
@@ -992,10 +995,12 @@
       ["CD 91일 모형", `${W.cd.hits}/${W.n}`, W.cd.brier.toFixed(3)],
       ["항상 동결", `${W.always_hold.hits}/${W.n}`, "–"],
     ]) : "";
+    const oisBy = Object.fromEntries(((D.kois && D.kois.rows) || []).map((r) => [r.meeting, r.ois]));
     const rowsTable = B.n ? h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },
-      h("thead", {}, h("tr", {}, ...["회의", "관측일", "실제", "CD 인상·동결·인하", "적중", "KOFR 인상·동결·인하", "적중", "혼합 인상·동결·인하", "적중"].map((x) => h("th", {}, x)))),
+      h("thead", {}, h("tr", {}, ...["회의", "관측일", "실제", "OIS(현재 기본) 인상·동결·인하", "적중", "CD 91일 인상·동결·인하", "적중", "KOFR 선물 인상·동결·인하", "적중", "혼합 인상·동결·인하", "적중"].map((x) => h("th", {}, x)))),
       h("tbody", {}, ...B.rows.map((r) => h("tr", {}, h("td", {}, ymd(r.meeting)), h("td", {}, ymd(r.obs_date)),
         h("td", {}, actK[r.actual] + (r.move_bp ? ` ${r.move_bp > 0 ? "+" : ""}${r.move_bp}bp` : "")),
+        ...(() => { const o = oisBy[r.meeting]; return o ? [h("td", {}, `${pct(o.p_hike, 0)}·${pct(o.p_hold, 0)}·${pct(o.p_cut, 0)}`), h("td", {}, ox(o.hit))] : [h("td", {}, "–"), h("td", {}, "–")]; })(),
         h("td", {}, `${pct(r.p_hike, 0)}·${pct(r.p_hold, 0)}·${pct(r.p_cut, 0)}`), h("td", {}, ox(r.hit)),
         h("td", {}, r.kofr ? `${pct(r.kofr.p_hike, 0)}·${pct(r.kofr.p_hold, 0)}·${pct(r.kofr.p_cut, 0)}` : "–"), h("td", {}, r.kofr ? ox(r.kofr.hit) : "–"),
         h("td", {}, r.blend ? `${pct(r.blend.p_hike, 0)}·${pct(r.blend.p_hold, 0)}·${pct(r.blend.p_cut, 0)}` : "–"), h("td", {}, r.blend ? ox(r.blend.hit) : "–")))))) : "";
@@ -1052,11 +1057,11 @@
         h("ul", {},
           li("하루 1회 AI(OpenAI)가 뉴스 사건 태그·점도표·한은 발언·지표만 보고 다음 금통위의 인상·동결·인하 확률을 직접 낸다. 같은 정보를 두 번 세지 않도록 시장금리로 계산한 확률은 입력에서 뺀다."),
           li("기본+정성 10%·20% = (1 − w) × 화면 기본값(2026-10-15부터 KOFR OIS, 그 전 CD 91일) + w × AI 정성 확률. 다음 회의 하나만 낸다."),
-          li("과거 기사로 거꾸로 만들 수 없어 백테스트가 없다. 날짜별 기록에 쌓고 '5. 기본값 교체 기준'과 같은 규칙으로 평가한다. AI 출력은 같은 입력에도 조금씩 달라 재현되지 않는다."))),
+          li("과거 기사로 거꾸로 만들 수 없어 백테스트가 없다. 날짜별 기록에 쌓고 '5. 기본값 교체 기록과 기준'과 같은 규칙으로 평가한다. AI 출력은 같은 입력에도 조금씩 달라 재현되지 않는다."))),
       ...sec("4. 검증",
         ...sub("백테스트 결과 요약", ...(C ? [
           table(["방식", "적중", "Brier", `금리 바뀐 회의 ${C.by_outcome.n_change}회: 실제 결과에 준 확률 평균`, `동결 회의 ${C.by_outcome.n_hold}회: 동결에 준 확률 평균`], [
-            ["CD 91일 모형 (기본)", `${Math.round(C.cd.hit_rate * C.n)}/${C.n}`, C.cd.brier.toFixed(3), pct(C.by_outcome.cd.change, 0), pct(C.by_outcome.cd.hold, 0)],
+            ["CD 91일 모형 (10/15 전 기본)", `${Math.round(C.cd.hit_rate * C.n)}/${C.n}`, C.cd.brier.toFixed(3), pct(C.by_outcome.cd.change, 0), pct(C.by_outcome.cd.hold, 0)],
             ["KOFR 선물 모형 (실험)", `${Math.round(C.kofr.hit_rate * C.n)}/${C.n}`, C.kofr.brier.toFixed(3), pct(C.by_outcome.kofr.change, 0), pct(C.by_outcome.kofr.hold, 0)],
             ["혼합 KOFR 50% (실험)", `${Math.round(C.blend.hit_rate * C.n)}/${C.n}`, C.blend.brier.toFixed(3), pct(C.by_outcome.blend.change, 0), pct(C.by_outcome.blend.hold, 0)],
             ["항상 동결 (비교 기준)", `${Math.round(C.always_hold.hit_rate * C.n)}/${C.n}`, C.always_hold.brier.toFixed(3), "0%", "100%"],
@@ -1066,7 +1071,7 @@
             li(`KOFR 선물 모형은 반대다. 변경 회의에 평균 ${pct(C.by_outcome.kofr.change, 0)}를 줬지만 동결 회의에서 헛신호가 많다(동결에 평균 ${pct(C.by_outcome.kofr.hold, 0)}).`),
             li(`CD 모형의 Brier ${C.cd.brier.toFixed(3)}는 '과거 결정 빈도'(${C.base_rate.brier.toFixed(3)})보다 ${C.cd.brier < C.base_rate.brier ? "낮다(낫다)" : "높다(못하다)"}. 금리 변경 ${HB.hike.n + HB.cut.n}회 중 CD가 맞힌 것은 ${HB.hike.cd + HB.cut.cd}회다.`),
             li("백테스트의 정상 스프레드는 회의마다 그 시점 이전 자료로만 다시 추정했다(미래정보 제거). 처음 공개한 성적(CD 27/36·Brier 0.461)은 2023~24년 구간으로 구한 18bp를 2021~22년 예측에도 쓴 값이라 실제보다 좋게 나왔다."),
-            li("결론: 현재 모형 추정치는 단순 비교 기준보다 낫다는 근거가 없다. 금리에 반영된 기대를 가늠하는 참고치로만 쓰고, 단정적인 확률로 인용하지 않는다."))] : [p("KOFR 선물 이력 수집 전")])),
+            li("결론: CD 91일·KOFR 선물·혼합은 단순 비교 기준보다 낫다는 근거가 없다. 현재 기본값인 자체 합성 KOFR OIS는 같은 회의에서 CD 91일보다 Brier가 낮지만(1-1절), '항상 동결'과의 차이는 확실하지 않다. 금리에 반영된 기대를 가늠하는 참고치로 쓰고, 단정적인 확률로 인용하지 않는다."))] : [p("KOFR 선물 이력 수집 전")])),
         ...sub("결과별 적중", byActTable, p(h("span", { class: "note" }, "전체 적중률은 동결이 많은 표본에서 높게 나온다. 금리 변경(인상·인하) 포착률을 따로 본다."))),
         ...sub("방법",
           h("ul", {},
@@ -1081,31 +1086,36 @@
         ...sub("순차 검증 (비율을 미리 알 수 없다고 놓고 다시 잼)",
           p(W && W.n ? `처음 ${W.start_after}회로 KOFR 비율(0~100%, 10%p 간격)을 Brier 최소로 고르고, 다음 회의를 그 비율로 예측한다. 회의를 하나씩 넘기며 반복해 ${W.n}회를 예측했다.` : "자료 부족"),
           wfTable,
-          p(W && W.n ? `결과: 혼합 Brier ${W.mix.brier.toFixed(3)}, CD ${W.cd.brier.toFixed(3)}. 적중은 혼합 ${W.mix.hits}/${W.n}, CD ${W.cd.hits}/${W.n}, 항상 동결 ${W.always_hold.hits}/${W.n}. 표본이 작고 금리 변경 사례가 적어 어느 쪽 우위도 확정할 수 없다. 기본값은 CD 모형 추정치로 두고 실험값은 기록만 한다.` : "")),
+          p(W && W.n ? `결과: 혼합 Brier ${W.mix.brier.toFixed(3)}, CD ${W.cd.brier.toFixed(3)}. 적중은 혼합 ${W.mix.hits}/${W.n}, CD ${W.cd.hits}/${W.n}, 항상 동결 ${W.always_hold.hits}/${W.n}. 표본이 작고 금리 변경 사례가 적어 어느 쪽 우위도 확정할 수 없다. 혼합은 실험값으로 기록만 한다.` : "")),
         ...sub("평가에서 뺀 회의", excl.length ? h("ul", {}, ...excl.map((x) => li(x))) : p("없음")),
-        ...sub(`회의별 예측 (${B.n || 0}회)`, B.n ? p(B.rule) : p(h("span", { class: "note" }, B.note || "백테스트 결과 없음")), rowsTable)),
+        ...sub(`회의별 예측 (${B.n || 0}회)`, B.n ? p(B.rule) : p(h("span", { class: "note" }, B.note || "백테스트 결과 없음")),
+          p(h("span", { class: "note" }, "OIS 열은 금융투자협회 CD 단기물 공시(2023-01-09부터)와 스프레드 관측 60일이 쌓인 2023-05 회의부터 있다. OIS 성적 요약은 1-1절.")), rowsTable)),
       ...decisionSection(sec, sub, p, li, table),
-      ...sec("5. 기본값 교체 기준 (사전 고정)",
+      ...sec("5. 기본값 교체 기록과 기준",
         h("ul", {},
           li("2026-10-15 교체: 기본값을 CD 91일 모형에서 자체 산출 KOFR OIS로 바꿨다. 근거: 같은 회의 백테스트 Brier 다음 회의 0.394 대 0.557(27회), 그다음 회의 0.465 대 0.665(26회). 한계: 인상 2회·인하 4회로 표본이 작고, 같은 자료로 CD 단기물 방식 3개를 먼저 시험했다. '항상 동결'과의 차이는 확실하지 않다(다음 회의 0.394 대 0.444, 그다음 0.465 대 0.462)."),
           li("OIS로 풀리지 않는 회의(1개월물 안에 회의가 없고 3개월물 안에 회의가 둘 이상인 날 등)는 CD 91일 모형 가능 범위를 쓴다."),
           li("2026-10-22 회의부터 날짜별 확률 기록(data/prob_log.csv)의 회의 3영업일 전 값으로 순차 평가한다. 8회 뒤 OIS의 평균 Brier가 CD 91일 모형이나 '항상 동결'보다 높으면 교체를 다시 검토한다."),
-          li("금통위 8회 동안 혼합(실험)의 평균 Brier가 CD 모형보다 낮고, '항상 동결'보다도 낮을 때 기본값 교체를 검토한다."),
-          li("KOFR 선물의 거래 반영 조건(최근 거래 빈도·거래량·미결제약정)은 교체 검토 때 같은 기록으로 따로 평가한다. 기준을 결과를 본 뒤 바꾸지 않는다."))),
+          li("실험값(KOFR 선물·혼합·AI 정성)은 같은 기록으로 평가한다. 금통위 8회 동안 평균 Brier가 기본값(OIS)과 '항상 동결'보다 모두 낮을 때만 교체를 검토한다. KOFR 선물은 거래 반영 조건(거래 빈도·거래량·미결제약정)을 따로 본다."),
+          li("앞으로 판정 기준은 결과를 본 뒤 바꾸지 않는다. 바꿀 때는 날짜와 이유를 이 절에 남긴다."))),
       ...sec("6. 한계",
         h("ul", {},
-          li("CD 금리에는 은행 자금사정과 신용 웃돈이 섞이고, 그 폭이 시기마다 크게 다르다."),
-          li("최소 인상 경로는 한 만기 안의 회의 사이 배정을 가정으로 정한다. 2026-08-27 인상처럼 가까운 회의를 놓칠 수 있다."),
-          li("2027년 금통위 일정이 공지되지 않아 1월 회의를 1/11로 가정해 계산한다(config assumed_meetings). 회의별 최고 확률은 영향이 없고 최저·점추정은 영향을 받는다. CD 만기가 가정 범위(2027-02-21)를 넘는 날부터는 다시 산출이 멈춘다."),
+          li("자체 합성 KOFR OIS는 거래된 OIS 금리가 아니다. CD 평가금리에서 과거 'CD − 실제 KOFR' 차이의 중앙값을 뺀 추정치라, 그 차이가 지금 평소와 다르면 확률이 치우친다. CD 공시값이 1bp 단위라 회의 확률에 5~7%p 안팎 오차가 늘 있다."),
+          li("OIS로는 회의별 확률만 나온다. 두 회의 이상 누적 분포(예: 두 번 모두 인상)는 정해지지 않아 가능 범위로만 보인다."),
+          li("CD 금리에는 은행 자금사정과 신용 웃돈이 섞이고, 그 폭이 시기마다 크게 다르다(CD 91일 참고 범위의 한계)."),
+          li("CD 91일 참고 범위의 '최소 인상 경로'는 한 만기 안의 회의 사이 배정을 가정으로 정한다. 2026-08-27 인상처럼 가까운 회의를 놓칠 수 있다."),
+          li("2027년 금통위 일정이 공지되지 않아 1월 회의를 1/11로 가정한다(config assumed_meetings). KOFR OIS 3개월물 계산에서는 이 회의를 동결로 두고, CD 91일 참고 범위의 최고값은 이 가정과 무관하다. CD 만기가 가정 범위(2027-02-21)를 넘는 날부터는 CD 91일 참고 범위가 멈춘다."),
           li("보도 인용 값(기관 전망·발언)은 원문 대조가 필요하다. 매파·비둘기 점수와 의사록 입장 분류는 자동 산출이다."),
-          li("AI 정성 판단은 기사 제목·검색 요약만 보고 내린 자동 판단이다. 확률 계산에 넣지 않는다."))),
+          li("AI 정성 판단은 기사 제목·검색 요약만 보고 내린 자동 판단이다. 기본 확률 계산에 넣지 않는다."))),
       ...sec("AI 정성 판단 방식",
         h("ul", {},
-          li("네이버 뉴스 검색 API(NAVER API HUB)와 연합뉴스 RSS 기사를 OpenAI 모델이 하나씩 태깅: 관련성, 요인 10종, 방향(인상 압력/중립/인하 압력), 강도 1~3, 근거 한 줄."),
-          li("압력지수 = Σ(방향×강도×중복보도 가중) ÷ Σ(강도×가중). 최근 72시간 관련 기사만."),
-          li("종합 판단은 하루 1회: 기사 태그 + 모형 추정치·점도표·한은 발언·지표를 넣고 다음 금통위 기준 방향(−2~+2), 근거, 반대 근거, 관전 포인트를 받는다."))),
+          li("네이버 뉴스 검색 API(NAVER API HUB)와 연합뉴스 RSS 기사를 OpenAI 모델이 하나씩 태깅: 관련성, 요인 10종, 다루는 중앙은행(한은/연준/기타 해외), 한은에 주는 방향과 연준에 주는 방향(따로), 강도 1~3, 다음 회의와의 관계 신호, 근거 한 줄."),
+          li("한은 방향은 기사에 한국으로 이어지는 경로(환율·한미 금리차·국내 물가)가 적혀 있을 때만 인상·인하로 둔다. 연준 인상 신호는 연준 방향에만 적는다(2026-10-15부터, 최근 7일 기사 다시 분류)."),
+          li("같은 사건 보도는 AI가 묶어 사건 하나로 센다. 압력지수 = Σ(사건 방향×강도×보도 수 가중, 최대 2배) ÷ Σ(강도×가중). 최근 72시간 관련 기사만. 사건 표에는 기사별 방향 분포를 함께 보이고, 엇갈리면 '혼재'로 표시한다."),
+          li("종합 판단은 하루 1회: 사건별 대표 기사 태그 + 점도표·한은 발언·지표를 넣고 다음 금통위 기준 방향(−2~+2), 근거, 반대 근거, 관전 포인트를 받는다. 보도가 많은 사건은 최종 분류와 요약의 해석을 대조해 '사건 분류와 요약 대조' 표로 보인다."))),
       ...sec("데이터 출처", h("ul", {}, ...(D.meta.sources || []).map((s) => li(s.url ? ext(s.url, s.name) : s.name, ` — ${s.what}`)))),
-      ...sec("수집 상태", h("ul", {}, ...Object.entries(D.status || {}).map(([k, v]) => li(`${k}: ${!v.ok ? "실패" : (v.message || "").startsWith("일부 실패") ? "일부 실패" : "정상"} · 마지막 시도 ${v.last_attempt || "–"} · 마지막 성공 ${v.last_success || "없음"} · ${v.message || ""}`)),
+      ...sec("수집 상태", h("ul", {}, ...Object.entries(D.status || {}).map(([k, v]) => li(h("i", { class: `fdot ${freshCls(v.last_success, v.ok === false)}` }), " ",
+        `${SRC_NAMES[k] || k}: ${!v.ok ? "실패" : (v.message || "").startsWith("일부 실패") ? "일부 실패" : "정상"} · 마지막 시도 ${stamp(v.last_attempt)} · 마지막 성공 ${v.last_success ? stamp(v.last_success) : "없음"} · ${v.message || ""}`)),
         Object.keys(D.status || {}).length ? "" : li("수집 기록 없음"))),
     );
   }
