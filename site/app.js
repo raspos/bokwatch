@@ -282,13 +282,16 @@
     // 확률표
     const levels = (D.meta.levels || [2.75, 3, 3.25, 3.5, 3.75]).map((x) => (+x).toFixed(2));
     const thead = h("thead", {}, h("tr", {}, h("th", {}, "회의"), ...levels.map((l) => h("th", {}, l + "%")), h("th", {}, "기대금리")));
+    // 게이지와 같은 기준: 그 회의 인상확률을 가능 범위 최고로 둔 경로의 회의 뒤 분포
     const rows = ms.map((m) => {
-      const vals = levels.map((l) => m.levels[l] || 0);
-      const outside = Object.entries(m.levels).filter(([l]) => !levels.includes(l));
-      const mx = Math.max(...Object.values(m.levels));
+      const lv = m.range && m.range.max_levels ? m.range.max_levels : m.levels;
+      const ex = m.range && m.range.max_expected != null ? m.range.max_expected : m.expected;
+      const vals = levels.map((l) => lv[l] || 0);
+      const outside = Object.entries(lv).filter(([l]) => !levels.includes(l));
+      const mx = Math.max(...Object.values(lv));
       return h("tr", {}, h("td", {}, ymd(m.date)),
         ...levels.map((l, i) => h("td", { class: vals[i] === mx && mx > 0 ? "max" : vals[i] === 0 ? "zero" : null }, vals[i] ? pct(vals[i]) : "0.0%")),
-        h("td", {}, fx(m.expected, 3) + "%" + (outside.length ? " *" : "")));
+        h("td", {}, fx(ex, 3) + "%" + (outside.length ? " *" : "")));
     });
     $("#probTable").replaceChildren(thead, h("tbody", {}, rows));
 
@@ -627,7 +630,10 @@
     const cons = D.reports.consensus;
     const cards = (D.meta.upcoming || []).slice(0, 2).map((m) => {
       const c = cons.by_meeting[m] || { counts: {}, n: 0 };
-      const mk = scen && scen.meetings.find((x) => x.date === m && x.in_range);
+      const mk0 = scen && scen.meetings.find((x) => x.date === m && x.in_range);
+      // 게이지와 같은 기준: 그 회의 인상확률을 가능 범위 최고로 둔 경로
+      const mk = mk0 && mk0.range && mk0.range.direction === "hike"
+        ? { ...mk0, p_hike: mk0.range.max, p_hold: 1 - mk0.range.max, p_cut: 0 } : mk0;
       const order = [["인상", "var(--hike)"], ["동결", "var(--hold)"], ["인하", "var(--cut)"]];
       const other = c.n - order.reduce((s, [k]) => s + (c.counts[k] || 0), 0);
       const bar = h("div", { class: "cbar", role: "img", "aria-label": "전망 기관 수" },
@@ -639,7 +645,7 @@
         mk.p_cut > 0.005 ? h("span", { style: `flex:${mk.p_cut};background:var(--cut)` }, "인하") : "") : h("div", { class: "note" }, "모형 추정치 없음");
       return h("div", { class: "tile" }, h("div", { class: "k" }, `${ymd(m)} 회의`),
         h("div", { class: "s" }, `전문가 ${c.n}곳 — 인상 ${pct(c.hike_share, 0)}`), bar,
-        h("div", { class: "s" }, `모형 추정(CD) — 인상 ${mk ? pct(mk.p_hike) : "–"}${mk ? asof : ""}`), mbar);
+        h("div", { class: "s" }, `모형 추정(CD) — 인상 ${mk ? (mk0.range ? "최고 " : "") + pct(mk.p_hike) : "–"}${mk ? asof : ""}`), mbar);
     });
     const term = Object.entries(cons.terminal || {});
     cards.push(h("div", { class: "tile" }, h("div", { class: "k" }, "최종금리 전망 분포"),

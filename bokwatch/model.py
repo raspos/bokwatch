@@ -301,13 +301,20 @@ def path_ranges(asof: date, r0: float, inst: "Instrument", meetings: list[date],
             left -= v * a[k]
         return ps
     early, late = fill(idx), fill(list(reversed(idx)))
+    sign = 1 if direction == "hike" else -1
     for k in idx:
         others = tot - a[k]
+        # 이 회의 확률을 최고로 둔 경로: 이 회의부터 채우고 남는 부분은 앞 회의 → 뒤 회의 순
+        mp = fill([k] + [i for i in idx if i != k])
+        cum = sum(mp[i] for i in idx if i <= k)
+        e_max = r0 + sign * step * cum
         out["meetings"][ms[k].isoformat()] = {
             "exposure_days": a[k],
             "min": round(max(0.0, min(1.0, (L - others) / a[k])), 4),
             "max": round(min(1.0, L / a[k]), 4),
-            "early": round(early[k], 4), "late": round(late[k], 4)}
+            "early": round(early[k], 4), "late": round(late[k], 4),
+            "max_expected": round(e_max, 4),
+            "max_levels": {f"{lv:.2f}": round(v, 4) for lv, v in sorted(level_distribution(e_max, r0, step).items())}}
     return out
 
 

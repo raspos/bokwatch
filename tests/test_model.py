@@ -159,3 +159,13 @@ def test_decision_model_point_in_time_and_ordering():
     m = dm.fit(rows)
     lo, hi = dm.predict(m, {"spread_bp": -30, "cd_chg_bp": -30, "core_gap": -3}), dm.predict(m, {"spread_bp": 30, "cd_chg_bp": 30, "core_gap": 3})
     assert hi["hike"] > lo["hike"] and lo["cut"] > hi["cut"] and abs(sum(hi.values()) - 1) < 1e-3
+
+
+def test_path_range_max_levels():
+    from bokwatch import model
+    r = model.path_ranges(date(2026, 10, 13), 3.00, model.Instrument("cd91", 3.24, 91, 0.18),
+                          [date(2026, 10, 22), date(2026, 11, 26)])["meetings"]
+    # 10월 최고 경로: 10월 26.3% → 회의 뒤 3.25% 26.3%
+    assert round(r["2026-10-22"]["max_levels"]["3.25"], 3) == 0.263
+    # 11월 최고 경로: 10월 0%, 11월 45.5% → 11월 뒤 3.25% 45.5%
+    assert round(r["2026-11-26"]["max_levels"]["3.25"], 3) == 0.455 and abs(r["2026-11-26"]["max_expected"] - 3.1138) < 1e-3

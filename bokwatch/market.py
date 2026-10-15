@@ -202,7 +202,7 @@ def run_day(rows, cfg, day: date, spreads: dict, shifts=(-5, 0, 5), fut_by_date=
             for m in cd[k]["meetings"]:
                 rg = pr["meetings"].get(m["date"])
                 if rg and m["in_range"]:
-                    m["range"] = {"direction": pr["direction"], **{x: rg[x] for x in ("min", "max", "early", "late")},
+                    m["range"] = {"direction": pr["direction"], **{x: rg[x] for x in ("min", "max", "early", "late", "max_expected", "max_levels")},
                                   "feasible": pr["feasible"]}
     kf = None
     if fut_by_date:
