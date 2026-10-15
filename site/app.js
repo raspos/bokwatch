@@ -30,6 +30,21 @@
   const todayKST = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
   const days = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
 
+  // 갱신 상태: 지난 시간과 색(26시간 안 초록, 50시간 안 노랑, 그 뒤 빨강)
+  const ageH = (iso) => iso ? (Date.now() - new Date(iso.length <= 10 ? iso + "T18:00+09:00" : iso).getTime()) / 3600e3 : null;
+  const freshCls = (iso, failed) => failed ? "bad" : iso == null ? "" : ageH(iso) <= 26 ? "ok" : ageH(iso) <= 50 ? "late" : "bad";
+  const rel = (iso) => {
+    const a = ageH(iso);
+    if (a == null) return "";
+    if (a < 1) return `${Math.max(1, Math.round(a * 60))}분 전`;
+    if (a < 48) return `${Math.round(a)}시간 전`;
+    return `${Math.round(a / 24)}일 전`;
+  };
+  const stamp = (iso) => iso ? iso.slice(5, 16).replace("T", " ").replace("-", "/") : "–";
+  const asofLine = (text, iso, failed) => h("div", { class: "asof" }, h("i", { class: `fdot ${freshCls(iso, failed)}` }), text);
+  const busy = (on) => { const b = $("#busy"); if (b) b.classList.toggle("on", on); };
+  function flash(el) { if (!el) return; el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
+
   async function getJSON(path) {
     try { const r = await fetch(path, { cache: "no-cache" }); if (!r.ok) return null; return await r.json(); }
     catch (e) { return null; }
@@ -98,6 +113,18 @@
   const prevDate = (date) => { const ix = D.meta.snapshots || []; const i = ix.indexOf(date); return i > 0 ? ix[i - 1] : null; };
 
   // ------------------------------------------------------------ 헤더·경고
+  const SRC_NAMES = { ecos: "ECOS 시장금리", cdcurve: "금투협 CD 단기물", krx: "KRX KOFR 선물", bok: "한은 홈페이지", news: "연합뉴스 RSS",
+    naver: "네이버 뉴스", events: "경제지표 일정", ai: "AI 정성 판단", decision: "결정 예측 모형" };
+  function freshPill(built) {
+    const st = D.status || {};
+    const failed = Object.values(st).some((v) => v && v.ok === false);
+    const lines = Object.entries(SRC_NAMES).filter(([k]) => st[k]).map(([k, n]) =>
+      `${st[k].ok === false ? "✕" : "✓"} ${n}: ${st[k].last_success ? stamp(st[k].last_success) : "성공 기록 없음"}${st[k].ok === false ? " (최근 시도 실패)" : ""}`);
+    return h("span", { class: "fresh", title: `매일 오전 10시 자동 갱신\n${lines.join("\n")}`, tabindex: 0 },
+      h("i", { class: `fdot ${freshCls(built, failed)}` }), "갱신 ", h("b", {}, stamp(built)), h("span", { class: "rel" }, rel(built)),
+      failed ? h("span", { class: "badge warn" }, "일부 실패") : "");
+  }
+
   function renderHeader(snap) {
     const m = D.meta;
     $("#banner").hidden = !m.banner;
@@ -105,7 +132,7 @@
     const next = (m.upcoming || [])[0];
     const kids = [
       h("span", {}, "데이터 기준 ", h("b", {}, ymd(snap ? snap.asof : m.latest))),
-      h("span", {}, "갱신 ", h("b", {}, m.built ? m.built.slice(5, 16).replace("T", " ") : "–")),
+      freshPill(m.built),
       h("span", {}, "기준금리 ", h("b", {}, snap ? fx(snap.r0) + "%" : (m.r0 != null ? fx(m.r0) + "%" : "–"))),
       next ? h("span", {}, "다음 금통위 ", h("b", {}, md(next)), " ", h("span", { class: "dday" }, `D-${days(today, next)}`)) : h("span", { class: "badge warn" }, "다음 금통위 일정 미입력"),
     ];
@@ -179,7 +206,28 @@
       h("div", { class: "v" }, Q ? LEAN[Q.lean] : "–"),
       h("div", { class: "s" }, Q ? Q.headline : "네이버 뉴스·OpenAI API 연결 후 표시",
         pr && pr.index != null ? ` · 압력지수 ${pr.index >= 0 ? "+" : ""}${pr.index.toFixed(2)}` : "")));
-    $("#strip").replaceChildren(...tiles);
+    // 카드마다 '무엇을, 언제 기준으로' 보여 주는지
+    const st = D.status || {};
+    const ko = snap && snap.components && snap.components.kofr_ois;
+    const cdDate = ko && ko.curve && ko.curve.m1 ? ko.curve.m1.cd_date : snap && snap.asof;
+    const marks = [
+      [nxt && nxt.method === "kofr_ois" ? `CD ${md(cdDate)} 공시값 · 갱신 ${stamp(D.meta.built)}` : `시장금리 ${md(snap ? snap.asof : D.meta.latest)} · 갱신 ${stamp(D.meta.built)}`,
+        D.meta.built, st.ecos && st.ecos.ok === false || st.cdcurve && st.cdcurve.ok === false],
+      [dp ? `${md(dp.date)} 회의 점도표` + (D.guidance.next_dotplot ? ` · 다음 ${md(D.guidance.next_dotplot)}` : "") : "점도표 없음", null, false],
+      [`보고서 ${D.reports.asof ? md(D.reports.asof) : "–"} 기준 · 기사 수집 ${stamp((st.naver || {}).last_success)}`, (st.naver || {}).last_success, st.naver && st.naver.ok === false],
+      [null, null, false],
+    ];
+    if (D.qual) marks[3] = [`AI 판단 ${stamp(D.qual.updated)} · 최근 ${D.qual.window_hours || 72}시간 기사`, D.qual.updated, st.ai && st.ai.ok === false];
+    tiles.filter((x) => x.classList.contains("tile")).forEach((el, i) => {
+      const mk = marks[i];
+      if (mk && mk[0]) el.append(asofLine(mk[0], mk[1], mk[2]));
+    });
+    const strip = $("#strip");
+    const changed = strip.dataset.key && strip.dataset.key !== `${S.d}|${S.s}`;
+    strip.dataset.key = `${S.d}|${S.s}`;
+    strip.removeAttribute("aria-busy");
+    strip.replaceChildren(...tiles);
+    if (changed) tiles.forEach(flash);
   }
   const LEAN = { "-2": "강한 인하 압력", "-1": "인하 압력", "0": "중립", "1": "인상 압력", "2": "강한 인상 압력" };
   const majority = (arr) => arr.filter(Boolean).length * 2 >= arr.length;
@@ -1111,12 +1159,32 @@
   }
 
   // ------------------------------------------------------------ 공통 렌더
+  function tabStamps() {
+    const sp = (D.guidance.speeches || [])[0];
+    const nw = (D.news.items || []).map((x) => x.published).sort().pop();
+    return { market: D.meta.built, guidance: sp ? sp.date + "T18:00+09:00" : null, minutes: D.minutes.updated,
+      news: nw, qual: D.qual && D.qual.updated, method: D.meta.built };
+  }
   function renderTabs() {
+    const seen = store("bokwatch.lastVisit");
+    const ts = tabStamps();
+    const label = { market: "확률 추정", guidance: "총재 가이던스", minutes: "의사록", news: "기사·보고서", qual: "정성 판단(AI)", method: "방법·검증" };
+    document.querySelectorAll("#tabs button").forEach((b) => {
+      const t = b.dataset.tab, iso = ts[t];
+      const isNew = t !== S.tab && t !== "method" && iso && seen && iso.slice(0, 16) > seen
+        || (t === "minutes" && (D.meta.new_minutes || []).length && t !== S.tab);
+      b.replaceChildren(label[t] || b.textContent, ...(isNew ? [h("i", { class: "tnew", "aria-label": "새 내용" })] : []));
+      b.title = !iso ? "" : t === "guidance" ? `최근 발언 ${md(iso.slice(0, 10))}` : `갱신 ${stamp(iso)} (${rel(iso)})`;
+    });
     document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === S.tab));
     for (const t of TABS) $("#tab-" + t).hidden = t !== S.tab;
   }
 
   async function renderAll() {
+    busy(true);
+    try { await renderAllInner(); } finally { busy(false); }
+  }
+  async function renderAllInner() {
     renderTabs();
     const snap = await snapshot(S.d);
     renderHeader(snap);
@@ -1181,5 +1249,22 @@
     if (!S.dot && D.guidance.dotplots && D.guidance.dotplots[0]) S.dot = D.guidance.dotplots[0].date;
     bind();
     await renderAll();
+    watchUpdates();
   })();
+
+  function watchUpdates() {
+    const check = async () => {
+      const m = await getJSON("data/meta.json");
+      if (!m || !m.built || m.built === D.meta.built) return;
+      const t = $("#toast");
+      t.replaceChildren(h("span", {}, `새 데이터가 반영됐습니다 (${stamp(m.built)} 갱신)`),
+        h("button", { type: "button", onclick: () => location.reload() }, "새로고침"),
+        h("button", { type: "button", "aria-label": "닫기", onclick: () => { t.hidden = true; } }, "닫기"));
+      t.hidden = false;
+    };
+    setInterval(check, 5 * 60e3);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) check(); });
+    // 지난 시간 표시를 1분마다 새로 쓴다
+    setInterval(() => { const el = $("#meta .fresh"); if (el) el.replaceWith(freshPill(D.meta.built)); }, 60e3);
+  }
 })();
