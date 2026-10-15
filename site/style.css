@@ -107,6 +107,12 @@ button:focus-visible, select:focus-visible, a:focus-visible, input:focus-visible
 @keyframes flash { 0% { background-color: color-mix(in srgb, var(--accent) 22%, var(--surface)); } 100% { background-color: var(--surface); } }
 .toast { position: fixed; right: 16px; bottom: 16px; z-index: 60; background: var(--ink); color: var(--surface); padding: 10px 14px; border-radius: 8px; font-size: 13px; display: flex; gap: 10px; align-items: center; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
 .toast[hidden] { display: none; }
+.cdref { margin: 18px 0 6px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; background: var(--surface); }
+.cdref > summary { cursor: pointer; font-weight: 700; font-size: 15px; padding: 4px 0; }
+.cdref > summary small { font-weight: 400; color: var(--ink-3); margin-left: 6px; }
+.cdref[open] > summary { margin-bottom: 8px; }
+.tile .tgt { display: inline-block; font-size: 11px; font-weight: 700; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: 4px; padding: 1px 6px; margin-bottom: 4px; }
+td.mixed { color: var(--hike); font-weight: 600; }
 .toast button { background: var(--surface); color: var(--ink); border: 0; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .busy::after, .skel, .fdot.ok, .flash { animation: none; } }
 .tile .k { font-size: 12px; color: var(--ink-3); }

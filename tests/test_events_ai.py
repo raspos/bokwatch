@@ -214,3 +214,18 @@ def test_signal_summary_counts_events_once():
     s = ai_judge.signal_summary(arts, tags, groups, NOW - timedelta(days=7))
     assert s["높은 금리 유지"]["events"] == 1 and s["추가 인상 신호"]["events"] == 0
     assert s["이번 회의 동결 신호"]["events"] == 1 and s["높은 금리 유지"]["examples"][0]["reports"] == 3
+
+
+def test_event_mix_and_bank_split_schema():
+    from bokwatch import ai_judge
+    tags = {"a": {"relevant": True, "direction": "인상 압력", "factor": "미 연준·글로벌 금리", "signal": "배경 요인", "target_bank": "연준", "fed_direction": "인상 압력"},
+            "b": {"relevant": True, "direction": "인하 압력", "factor": "금융안정·시장", "signal": "배경 요인", "target_bank": "해당 없음", "fed_direction": "해당 없음"},
+            "c": {"relevant": True, "direction": "인상 압력", "factor": "환율", "signal": "이번 회의 동결 신호", "target_bank": "한은", "fed_direction": "해당 없음"}}
+    m = ai_judge.event_mix(["a", "b", "c"], tags)["mix"]
+    assert m["direction"] == {"인상 압력": 2, "인하 압력": 1}
+    assert m["mixed"] is True  # 인하가 3건 중 1건(25% 이상)
+    assert m["target"] == {"해외(연준 등)": 1, "국내·한은": 2} and m["target_basis"] == "AI 분류"
+    assert m["horizon"] == {"다음 회의": 1, "중기·배경": 2}
+    props = ai_judge.classify_schema(["물가"])["properties"]["items"]["items"]["properties"]
+    assert {"target_bank", "fed_direction"} <= set(props)
+    assert "event_checks" in ai_judge.synth_schema(["물가"])["required"]

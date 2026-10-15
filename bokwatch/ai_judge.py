@@ -35,7 +35,12 @@ CLASSIFY_SYSTEM = """당신은 한국은행 통화정책을 취재하는 경제�
 - relevant: 한국 기준금리 경로 판단에 정보가 되면 true. 단순 시황, 광고, 무관한 기업 기사는 false.
 - factor: 가장 주된 요인 하나.
   '한은 커뮤니케이션'은 총재·금통위원·한은 공식 자료의 발언·문구만. 증권사·IB·연구소 등의 금리 전망 기사는 '시장·기관 전망'.
-- direction: 그 내용이 한은의 추가 인상 쪽으로 미는지(인상 압력), 동결·인하 쪽으로 미는지(인하 압력), 판단하기 어려운지(중립).
+- target_bank: 기사가 주로 다루는 중앙은행·정책. 한은 / 연준 / 기타 해외 / 해당 없음(지표·시장 일반).
+- direction: 오직 '한국은행' 기준금리에 주는 함의. 한은의 추가 인상 쪽으로 미는지(인상 압력), 동결·인하 쪽으로 미는지(인하 압력), 판단하기 어려운지(중립).
+- fed_direction: 같은 내용이 '미 연준' 정책금리에 주는 함의. 연준과 무관하면 해당 없음.
+- 한은 영향과 연준 영향을 섞지 않는다. 연준 인상 신호·미국 물가 상방은 fed_direction에 먼저 적는다.
+  한은 direction은 기사에 한국으로 이어지는 경로(원/달러 환율, 한미 금리차, 국내 물가·자금 유출)가 적혀 있을 때만 인상·인하로 두고, 경로가 없으면 중립·강도 1로 둔다.
+- 주가 급락·금융시장 불안처럼 경로가 둘 이상인 사건은 기사에 적힌 경로를 따른다(환율 급등 강조 → 인상 압력, 경기·금융안정 부담 강조 → 인하 압력). 적힌 경로가 없으면 중립.
   예) 물가 상방, 환율 급등, 가계부채·집값 급증, 총재의 매파 발언 → 인상 압력.
       성장 둔화, 수출 부진, 금융시장 불안, 비둘기 발언 → 인하 압력.
 - strength: 1(약함·간접) 2(보통) 3(강함·직접적, 예: 총재·위원의 금리 경로 직접 언급, 큰 지표 서프라이즈).
@@ -61,7 +66,11 @@ SYNTH_SYSTEM = """당신은 중앙일보 경제부 데스크에 올리는 한국
 - "이는/이러한/한편" 같은 연결어, "~할 예정/살펴볼 계획" 같은 계획형 표현을 쓰지 않는다. 짧고 단정하게.
 - drivers의 article_ids에는 입력에 있는 id만 쓴다.
 - 입력 기사는 사건별 대표 기사다. reports는 같은 사건 보도 수다. 보도 수가 많다고 근거가 강한 것은 아니다.
-- 시장 확률과 정성 판단이 엇갈리면 market_gap에 그 차이를 한 문장으로 쓴다. 엇갈리지 않으면 빈 문자열."""
+- 시장 확률과 정성 판단이 엇갈리면 market_gap에 그 차이를 한 문장으로 쓴다. 엇갈리지 않으면 빈 문자열.
+- 입력의 direction은 '한은'에 주는 함의, fed_direction은 '미 연준'에 주는 함의다. 연준 인상 신호를 한은 다음 회의 인상 신호로 쓰지 않는다. 연준 쪽 요인은 환율·금리차 경로로만 한은에 연결한다.
+- event_checks: 보도가 많은 사건(event가 있는 기사) 최대 6개에 대해, 입력의 최종 분류(event_direction, event_mix)와 내가 headline·summary에서 그 사건을 설명한 방향을 대조한다.
+  classified = 입력의 최종 분류, summary_reading = 내 요약이 그 사건을 어느 쪽으로 읽었는지(인상 압력/인하 압력/중립/엇갈림), consistent = 둘이 같으면 true.
+  다르면 note에 이유(예: 기사별 방향이 엇갈림, 다른 경로를 강조함)를 한 문장으로 쓰고, 요약을 그 차이가 드러나게 고친다."""
 
 
 GROUP_SYSTEM = """당신은 경제부 데스크의 보조 분석가다. <articles>의 기사들을 '같은 사건'끼리 묶는다.
@@ -119,8 +128,10 @@ def classify_schema(factors: list[str]) -> dict:
                 "strength": {"type": "integer", "enum": [1, 2, 3]},
                 "reason": {"type": "string"},
                 "signal": {"type": "string", "enum": ["추가 인상 신호", "높은 금리 유지", "이번 회의 동결 신호", "인하 신호", "중기 경로", "배경 요인", "해당 없음"]},
+                "target_bank": {"type": "string", "enum": ['한은', '연준', '기타 해외', '해당 없음']},
+                "fed_direction": {"type": "string", "enum": ['인상 압력', '중립', '인하 압력', '해당 없음']},
             },
-            "required": ["id", "relevant", "factor", "direction", "strength", "reason", "signal"],
+            "required": ["id", "relevant", "factor", "direction", "strength", "reason", "signal", "target_bank", "fed_direction"],
             "additionalProperties": False,
         }}},
         "required": ["items"],
@@ -150,8 +161,20 @@ def synth_schema(factors: list[str]) -> dict:
             "market_gap": {"type": "string"},
             "watch": {"type": "array", "items": {"type": "string"}},
             "confidence": {"type": "string", "enum": ["낮음", "보통", "높음"]},
+            "event_checks": {"type": "array", "items": {
+                "type": "object",
+                "properties": {
+                    "event": {"type": "string"},
+                    "classified": {"type": "string"},
+                    "summary_reading": {"type": "string", "enum": ["인상 압력", "인하 압력", "중립", "엇갈림"]},
+                    "consistent": {"type": "boolean"},
+                    "note": {"type": "string"},
+                },
+                "required": ["event", "classified", "summary_reading", "consistent", "note"],
+                "additionalProperties": False,
+            }},
         },
-        "required": ["lean", "headline", "summary", "drivers", "counterpoints", "market_gap", "watch", "confidence"],
+        "required": ["lean", "headline", "summary", "drivers", "counterpoints", "market_gap", "watch", "confidence", "event_checks"],
         "additionalProperties": False,
     }
 
@@ -342,6 +365,27 @@ def pressure_index(articles: list[dict], tags: dict, since: datetime, groups: li
     return {"index": round(num / den, 3) if den else None, "n": n_ev, "n_articles": n_art, "unit": "사건", "factors": factors}
 
 
+FED_FACTORS = {"미 연준·글로벌 금리"}
+
+
+def event_mix(ids: list[str], tags: dict) -> dict:
+    """사건 안 기사별 태그 분포: 방향·요인·다음 회의 관련 신호. 대표 방향을 하나로 줄인 근거를 보이기 위함."""
+    ts = [tags[i] for i in ids if tags.get(i, {}).get("relevant")]
+    if not ts:
+        return {}
+    cnt = lambda key: {k: sum(1 for x in ts if x.get(key) == k) for k in sorted({x.get(key) for x in ts if x.get(key)})}
+    dirs = cnt("direction")
+    top = max(dirs.values()) if dirs else 0
+    up, down = dirs.get("인상 압력", 0), dirs.get("인하 압력", 0)
+    mixed = bool(ts) and (top / len(ts) < 0.6 or min(up, down) >= 0.25 * len(ts))
+    fed = sum(1 for x in ts if ((x["target_bank"] in ("연준", "기타 해외")) if x.get("target_bank") else x.get("factor") in FED_FACTORS))
+    nxt = sum(1 for x in ts if x.get("signal") in ("추가 인상 신호", "높은 금리 유지", "이번 회의 동결 신호", "인하 신호"))
+    return {"mix": {"n": len(ts), "direction": dirs, "factor": cnt("factor"), "signal": cnt("signal"), "mixed": mixed,
+                    "fed_direction": cnt("fed_direction"), "target_basis": "AI 분류" if any(x.get("target_bank") for x in ts) else "요인 기준",
+                    "target": {"해외(연준 등)": fed, "국내·한은": len(ts) - fed},
+                    "horizon": {"다음 회의": nxt, "중기·배경": len(ts) - nxt}}}
+
+
 def update_history(day: str, idx: dict) -> list[dict]:
     rows = []
     if HIST.exists():
@@ -407,16 +451,22 @@ def synthesize(client, cfg_ai, articles, tags, since, groups=None) -> dict:
     # 같은 사건은 대표 기사 하나(강도 높고 최신)만 넣고 보도 수를 붙인다 → 많이 보도된 사건이 판단을 독차지하지 않게
     if groups:
         relset = {a["id"]: a for a in rel}
-        reps, counts = [], {}
+        reps, counts, evinfo = [], {}, {}
         for g in groups:
             ms = [relset[i] for i in g["ids"] if i in relset]
             if ms:
                 top = max(ms, key=lambda a: (tags[a["id"]]["strength"], a["published"]))
                 reps.append(top)
                 counts[top["id"]] = g.get("n_reports", len(ms))
+                if len(ms) > 1:
+                    mx = event_mix(g["ids"], tags).get("mix", {})
+                    d_g = g.get("direction")
+                    evinfo[top["id"]] = {"event": g["label"], "event_mix": {"direction": mx.get("direction"), "mixed": mx.get("mixed")},
+                                         "event_direction": ("엇갈림" if mx.get("mixed") else "인상 압력" if (d_g or 0) > 0.2
+                                                             else "인하 압력" if (d_g or 0) < -0.2 else "중립")}
         rel = reps
     else:
-        counts = {}
+        counts, evinfo = {}, {}
     rel.sort(key=lambda a: (tags[a["id"]]["strength"], a["published"]), reverse=True)
     rel = rel[:80]
     if not rel:
@@ -424,7 +474,9 @@ def synthesize(client, cfg_ai, articles, tags, since, groups=None) -> dict:
     news = [{"id": a["id"], "published": a["published"][:16], "press": a["press"], "title": a["title"],
              "reports": counts.get(a["id"], 1 + len(a.get("dup_press", []))),
              "factor": tags[a["id"]]["factor"], "direction": tags[a["id"]]["direction"],
-             "strength": tags[a["id"]]["strength"], "reason": tags[a["id"]]["reason"]} for a in rel]
+             "strength": tags[a["id"]]["strength"], "reason": tags[a["id"]]["reason"],
+             "target_bank": tags[a["id"]].get("target_bank", "미분류"), "fed_direction": tags[a["id"]].get("fed_direction", "미분류"),
+             **evinfo.get(a["id"], {})} for a in rel]
     user = ("<context>\n" + json.dumps(context_block(), ensure_ascii=False) + "\n</context>\n"
             "<news_tags>\n" + json.dumps(news, ensure_ascii=False) + "\n</news_tags>\n"
             f"오늘은 {now_kst().date().isoformat()}이다. 다음 금통위 기준으로 정성 판단을 내라.")
@@ -503,7 +555,7 @@ def build_qual(articles, tags, cfg_ai, synthesis, errors, now, groups=None, prob
         "signals": signals, "signals_window_days": 7,
         "articles": recent[:150],
         "events": sorted([{k: g.get(k) for k in ("label", "n_reports", "direction", "factor", "how")} | {"ids": g["ids"]}
-                          for g in (groups or []) if g.get("n_reports")], key=lambda g: -g["n_reports"])[:40],
+                          | event_mix(g["ids"], tags) for g in (groups or []) if g.get("n_reports")], key=lambda g: -g["n_reports"])[:40],
         "counts": {"total": len(articles), "tagged": sum(1 for a in articles if a["id"] in tags),
                    "relevant": sum(1 for a in articles if tags.get(a["id"], {}).get("relevant"))},
         "errors": [redact(e)[:300] for e in errors],
@@ -535,7 +587,7 @@ def main(argv=None, client=None) -> int:
         client = openai.OpenAI()
     if a.retag_signal:
         cut = now - timedelta(days=7)
-        stale = [x["id"] for x in articles if x["id"] in tags and "signal" not in tags[x["id"]]
+        stale = [x["id"] for x in articles if x["id"] in tags and ("signal" not in tags[x["id"]] or "target_bank" not in tags[x["id"]])
                  and datetime.fromisoformat(x["published"]) >= cut]
         for i in stale:
             tags.pop(i, None)
