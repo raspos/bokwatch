@@ -119,65 +119,82 @@
    "meetings": [
     {
      "date": "2026-01-15",
-     "expected": 2.7029,
-     "delta_bp": 20.29,
-     "p_hike": 0.8114,
-     "p_hold": 0.1886,
-     "p_cut": 0,
-     "moves": {
-      "0": 0.1886,
-      "25": 0.8114
-     },
-     "levels": {
-      "2.50": 0.1886,
-      "2.75": 0.8114
-     },
-     "method": "min_hike",
-     "in_range": true,
-     "range": {
-      "direction": "hike",
-      "min": 0.8782,
-      "max": 1.0,
-      "early": 1.0,
-      "late": 0.8782,
-      "max_expected": 2.75,
-      "max_levels": {
-       "2.75": 1.0
-      },
-      "feasible": true
-     },
-     "source": "CD 91일 모형"
-    },
-    {
-     "date": "2026-02-26",
-     "expected": 3.0,
-     "delta_bp": 29.71,
+     "expected": 3.3565,
+     "delta_bp": 85.65,
      "p_hike": 1.0,
      "p_hold": 0.0,
      "p_cut": 0,
      "moves": {
-      "25": 0.8114,
-      "50": 0.1886
+      "75": 0.574,
+      "100": 0.426
      },
      "levels": {
-      "3.00": 1.0
+      "3.25": 0.574,
+      "3.50": 0.426
      },
-     "method": "min_hike",
+     "method": "kofr_ois",
      "in_range": true,
-     "range": {
-      "direction": "hike",
-      "min": 0.6557,
-      "max": 1.0,
-      "early": 0.6557,
-      "late": 1.0,
-      "max_expected": 2.9695,
-      "max_levels": {
-       "2.75": 0.1218,
-       "3.00": 0.8782
-      },
-      "feasible": true
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0.8114,
+      "p_hold": 0.1886,
+      "p_cut": 0,
+      "expected": 2.7029,
+      "range": {
+       "direction": "hike",
+       "min": 0.8782,
+       "max": 1.0,
+       "early": 1.0,
+       "late": 0.8782,
+       "max_expected": 2.75,
+       "max_levels": {
+        "2.75": 1.0
+       },
+       "feasible": true
+      }
+     }
+    },
+    {
+     "date": "2026-02-26",
+     "expected": 1.8278,
+     "delta_bp": -152.87,
+     "p_hike": 0,
+     "p_hold": 0.0,
+     "p_cut": 1.0,
+     "moves": {
+      "-175": 0.1148,
+      "-150": 0.8852
      },
-     "source": "CD 91일 모형"
+     "levels": {
+      "1.75": 0.6888,
+      "2.00": 0.3112
+     },
+     "method": "kofr_ois",
+     "in_range": true,
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "3개월 OIS + 1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 1.0,
+      "p_hold": 0.0,
+      "p_cut": 0,
+      "expected": 3.0,
+      "range": {
+       "direction": "hike",
+       "min": 0.6557,
+       "max": 1.0,
+       "early": 0.6557,
+       "late": 1.0,
+       "max_expected": 2.9695,
+       "max_levels": {
+        "2.75": 0.1218,
+        "3.00": 0.8782
+       },
+       "feasible": true
+      }
+     }
     },
     {
      "date": "2026-04-10",
@@ -267,66 +284,83 @@
    "meetings": [
     {
      "date": "2026-01-15",
-     "expected": 2.7314,
-     "delta_bp": 23.14,
-     "p_hike": 0.9257,
-     "p_hold": 0.0743,
+     "expected": 3.3565,
+     "delta_bp": 85.65,
+     "p_hike": 1.0,
+     "p_hold": 0.0,
      "p_cut": 0,
      "moves": {
-      "0": 0.0743,
-      "25": 0.9257
+      "75": 0.574,
+      "100": 0.426
      },
      "levels": {
-      "2.50": 0.0743,
-      "2.75": 0.9257
+      "3.25": 0.574,
+      "3.50": 0.426
      },
-     "method": "min_hike",
+     "method": "kofr_ois",
      "in_range": true,
-     "range": {
-      "direction": "hike",
-      "min": 0.5982,
-      "max": 0.952,
-      "early": 0.952,
-      "late": 0.5982,
-      "max_expected": 2.738,
-      "max_levels": {
-       "2.50": 0.048,
-       "2.75": 0.952
-      },
-      "feasible": true
-     },
-     "source": "CD 91일 모형"
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0.9257,
+      "p_hold": 0.0743,
+      "p_cut": 0,
+      "expected": 2.7314,
+      "range": {
+       "direction": "hike",
+       "min": 0.5982,
+       "max": 0.952,
+       "early": 0.952,
+       "late": 0.5982,
+       "max_expected": 2.738,
+       "max_levels": {
+        "2.50": 0.048,
+        "2.75": 0.952
+       },
+       "feasible": true
+      }
+     }
     },
     {
      "date": "2026-02-26",
-     "expected": 2.75,
-     "delta_bp": 1.86,
-     "p_hike": 0.0743,
-     "p_hold": 0.9257,
-     "p_cut": 0,
+     "expected": 1.8278,
+     "delta_bp": -152.87,
+     "p_hike": 0,
+     "p_hold": 0.0,
+     "p_cut": 1.0,
      "moves": {
-      "0": 0.9257,
-      "25": 0.0743
+      "-175": 0.1148,
+      "-150": 0.8852
      },
      "levels": {
-      "2.75": 1.0
+      "1.75": 0.6888,
+      "2.00": 0.3112
      },
-     "method": "min_hike",
+     "method": "kofr_ois",
      "in_range": true,
-     "range": {
-      "direction": "hike",
-      "min": 0.0,
-      "max": 1.0,
-      "early": 0.0,
-      "late": 1.0,
-      "max_expected": 2.8995,
-      "max_levels": {
-       "2.75": 0.4018,
-       "3.00": 0.5982
-      },
-      "feasible": true
-     },
-     "source": "CD 91일 모형"
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "3개월 OIS + 1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0.0743,
+      "p_hold": 0.9257,
+      "p_cut": 0,
+      "expected": 2.75,
+      "range": {
+       "direction": "hike",
+       "min": 0.0,
+       "max": 1.0,
+       "early": 0.0,
+       "late": 1.0,
+       "max_expected": 2.8995,
+       "max_levels": {
+        "2.75": 0.4018,
+        "3.00": 0.5982
+       },
+       "feasible": true
+      }
+     }
     },
     {
      "date": "2026-04-10",
@@ -416,66 +450,83 @@
    "meetings": [
     {
      "date": "2026-01-15",
-     "expected": 2.6231,
-     "delta_bp": 12.31,
-     "p_hike": 0.4924,
-     "p_hold": 0.5076,
+     "expected": 3.3565,
+     "delta_bp": 85.65,
+     "p_hike": 1.0,
+     "p_hold": 0.0,
      "p_cut": 0,
      "moves": {
-      "0": 0.5076,
-      "25": 0.4924
+      "75": 0.574,
+      "100": 0.426
      },
      "levels": {
-      "2.50": 0.5076,
-      "2.75": 0.4924
+      "3.25": 0.574,
+      "3.50": 0.426
      },
-     "method": "min_hike",
+     "method": "kofr_ois",
      "in_range": true,
-     "range": {
-      "direction": "hike",
-      "min": 0.3182,
-      "max": 0.672,
-      "early": 0.672,
-      "late": 0.3182,
-      "max_expected": 2.668,
-      "max_levels": {
-       "2.50": 0.328,
-       "2.75": 0.672
-      },
-      "feasible": true
-     },
-     "source": "CD 91일 모형"
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0.4924,
+      "p_hold": 0.5076,
+      "p_cut": 0,
+      "expected": 2.6231,
+      "range": {
+       "direction": "hike",
+       "min": 0.3182,
+       "max": 0.672,
+       "early": 0.672,
+       "late": 0.3182,
+       "max_expected": 2.668,
+       "max_levels": {
+        "2.50": 0.328,
+        "2.75": 0.672
+       },
+       "feasible": true
+      }
+     }
     },
     {
      "date": "2026-02-26",
-     "expected": 2.75,
-     "delta_bp": 12.69,
-     "p_hike": 0.5076,
-     "p_hold": 0.4924,
-     "p_cut": 0,
+     "expected": 1.8278,
+     "delta_bp": -152.87,
+     "p_hike": 0,
+     "p_hold": 0.0,
+     "p_cut": 1.0,
      "moves": {
-      "0": 0.4924,
-      "25": 0.5076
+      "-175": 0.1148,
+      "-150": 0.8852
      },
      "levels": {
-      "2.75": 1.0
+      "1.75": 0.6888,
+      "2.00": 0.3112
      },
-     "method": "min_hike",
+     "method": "kofr_ois",
      "in_range": true,
-     "range": {
-      "direction": "hike",
-      "min": 0.0,
-      "max": 1.0,
-      "early": 0.0,
-      "late": 1.0,
-      "max_expected": 2.8295,
-      "max_levels": {
-       "2.75": 0.6818,
-       "3.00": 0.3182
-      },
-      "feasible": true
-     },
-     "source": "CD 91일 모형"
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "3개월 OIS + 1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0.5076,
+      "p_hold": 0.4924,
+      "p_cut": 0,
+      "expected": 2.75,
+      "range": {
+       "direction": "hike",
+       "min": 0.0,
+       "max": 1.0,
+       "early": 0.0,
+       "late": 1.0,
+       "max_expected": 2.8295,
+       "max_levels": {
+        "2.75": 0.6818,
+        "3.00": 0.3182
+       },
+       "feasible": true
+      }
+     }
     },
     {
      "date": "2026-04-10",

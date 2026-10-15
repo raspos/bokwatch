@@ -22,7 +22,7 @@
 <meta name="twitter:title" content="BOK워치 — 한국은행 금통위 금리 결정 모니터">
 <meta name="twitter:description" content="모형 추정 확률 · 총재 발언 · 의사록 · 전문가 전망. 매일 오전 10시 갱신.">
 <meta name="twitter:image" content="https://bokwatch.pages.dev/og.png">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20261015">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 </head>
 <body>
@@ -59,7 +59,7 @@
 <main>
   <section class="panel" id="tab-market" role="tabpanel">
     <div class="row-head">
-      <h2>회의별 인상 확률 <small>모형 추정치 · CD 91일 기준</small></h2>
+      <h2>회의별 금리 결정 전망 <small>모형 추정치 · 자체 합성 KOFR OIS 기준(풀리지 않는 회의는 CD 91일 인상 확률)</small></h2>
       <div class="seg" id="spreadToggle" role="group" aria-label="정상 스프레드 가정">
         <button data-s="-5" title="정상 스프레드를 5bp 작게 잡은 결과">−5bp</button><button data-s="0" title="추정한 정상 스프레드 그대로">기본</button><button data-s="5" title="정상 스프레드를 5bp 크게 잡은 결과">+5bp</button>
       </div>
@@ -67,9 +67,9 @@
     <p class="note stale-note" id="staleNote" hidden></p>
     <p class="note spread-note" id="spreadNote"></p>
     <div class="gauges" id="gauges"></div>
-    <h3>회의 뒤 목표금리 확률 <small>회의마다 그 회의 인상확률을 가능 범위 최고로 둔 경로 · 25bp 격자 · 인접 두 수준 · 최댓값 강조</small></h3>
+    <h3>회의 뒤 목표금리 확률 <small>KOFR OIS 기대금리 기준(CD 91일 회의는 가능 범위 최고 경로) · 25bp 격자 · 인접 두 수준 · 최댓값 강조</small></h3>
     <div class="tbl-wrap"><table class="grid" id="probTable"></table></div>
-    <h3>날짜별 확률 기록 <small>매일 10시 갱신 때 화면에 낸 값 그대로 · 기본값 CD 모형, 비고에 실험값</small></h3>
+    <h3>날짜별 확률 기록 <small>매일 10시 갱신 때 화면에 낸 값 그대로 · 2026-10-15까지 CD 91일, 이후 KOFR OIS · 비고에 실험값</small></h3>
     <div class="tbl-wrap"><table class="grid" id="logTable"></table></div>
     <p class="note" id="logNote"></p>
     <h3>투입 금리</h3>
@@ -81,7 +81,7 @@
     <div class="cons" id="indicators"></div>
     <div class="tbl-wrap" style="margin-top:10px"><table class="grid" id="eventTable"></table></div>
     <p class="note" id="eventNote"></p>
-    <h3 class="no-print">인상 확률 최근 흐름 <small>CD 모형 · 다가오는 회의만 · 과거 금리를 현재 가정으로 다시 계산</small></h3>
+    <h3 class="no-print">인상 확률 최근 흐름 <small>기본값(KOFR OIS, 계산되지 않는 날은 CD 91일) · 다가오는 회의만 · 과거 금리를 현재 가정으로 다시 계산</small></h3>
     <div id="trend"></div>
     <p class="note" id="marketNote"></p>
   </section>
@@ -144,6 +144,6 @@
 <footer class="foot">BOK워치 · 수치는 기준일·출처 표기 기준</footer>
 <div id="tip" class="tip" role="tooltip" hidden></div>
 <script src="vendor/d3.v7.9.0.min.js"></script>
-<script src="app.js"></script>
+<script src="app.js?v=20261015"></script>
 </body>
 </html>

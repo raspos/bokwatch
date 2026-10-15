@@ -119,65 +119,82 @@
    "meetings": [
     {
      "date": "2023-10-19",
-     "expected": 3.64,
-     "delta_bp": 14.0,
-     "p_hike": 0.56,
-     "p_hold": 0.44,
-     "p_cut": 0,
-     "moves": {
-      "0": 0.44,
-      "25": 0.56
-     },
-     "levels": {
-      "3.50": 0.44,
-      "3.75": 0.56
-     },
-     "method": "min_hike",
-     "in_range": true,
-     "range": {
-      "direction": "hike",
-      "min": 0.7067,
-      "max": 1.0,
-      "early": 1.0,
-      "late": 0.7067,
-      "max_expected": 3.75,
-      "max_levels": {
-       "3.75": 1.0
-      },
-      "feasible": true
-     },
-     "source": "CD 91일 모형"
-    },
-    {
-     "date": "2023-11-30",
-     "expected": 4.0,
-     "delta_bp": 36.0,
+     "expected": 4.4825,
+     "delta_bp": 98.25,
      "p_hike": 1.0,
      "p_hold": 0.0,
      "p_cut": 0,
      "moves": {
-      "25": 0.56,
-      "50": 0.44
+      "75": 0.07,
+      "100": 0.93
      },
      "levels": {
-      "4.00": 1.0
+      "4.25": 0.07,
+      "4.50": 0.93
      },
-     "method": "min_hike",
+     "method": "kofr_ois",
      "in_range": true,
-     "range": {
-      "direction": "hike",
-      "min": 0.12,
-      "max": 1.0,
-      "early": 0.12,
-      "late": 1.0,
-      "max_expected": 3.9267,
-      "max_levels": {
-       "3.75": 0.2933,
-       "4.00": 0.7067
-      },
-      "feasible": true
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0.56,
+      "p_hold": 0.44,
+      "p_cut": 0,
+      "expected": 3.64,
+      "range": {
+       "direction": "hike",
+       "min": 0.7067,
+       "max": 1.0,
+       "early": 1.0,
+       "late": 0.7067,
+       "max_expected": 3.75,
+       "max_levels": {
+        "3.75": 1.0
+       },
+       "feasible": true
+      }
+     }
+    },
+    {
+     "date": "2023-11-30",
+     "expected": 2.1919,
+     "delta_bp": -229.06,
+     "p_hike": 0,
+     "p_hold": 0.0,
+     "p_cut": 1.0,
+     "moves": {
+      "-250": 0.1624,
+      "-225": 0.8376
      },
-     "source": "CD 91일 모형"
+     "levels": {
+      "2.00": 0.2324,
+      "2.25": 0.7676
+     },
+     "method": "kofr_ois",
+     "in_range": true,
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "3개월 OIS + 1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 1.0,
+      "p_hold": 0.0,
+      "p_cut": 0,
+      "expected": 4.0,
+      "range": {
+       "direction": "hike",
+       "min": 0.12,
+       "max": 1.0,
+       "early": 0.12,
+       "late": 1.0,
+       "max_expected": 3.9267,
+       "max_levels": {
+        "3.75": 0.2933,
+        "4.00": 0.7067
+       },
+       "feasible": true
+      }
+     }
     },
     {
      "date": "2024-01-11",
@@ -501,66 +518,83 @@
    "meetings": [
     {
      "date": "2023-10-19",
-     "expected": 3.6567,
-     "delta_bp": 15.67,
-     "p_hike": 0.6267,
-     "p_hold": 0.3733,
+     "expected": 4.4825,
+     "delta_bp": 98.25,
+     "p_hike": 1.0,
+     "p_hold": 0.0,
      "p_cut": 0,
      "moves": {
-      "0": 0.3733,
-      "25": 0.6267
+      "75": 0.07,
+      "100": 0.93
      },
      "levels": {
-      "3.50": 0.3733,
-      "3.75": 0.6267
+      "4.25": 0.07,
+      "4.50": 0.93
      },
-     "method": "min_hike",
+     "method": "kofr_ois",
      "in_range": true,
-     "range": {
-      "direction": "hike",
-      "min": 0.4178,
-      "max": 0.7511,
-      "early": 0.7511,
-      "late": 0.4178,
-      "max_expected": 3.6878,
-      "max_levels": {
-       "3.50": 0.2489,
-       "3.75": 0.7511
-      },
-      "feasible": true
-     },
-     "source": "CD 91일 모형"
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0.6267,
+      "p_hold": 0.3733,
+      "p_cut": 0,
+      "expected": 3.6567,
+      "range": {
+       "direction": "hike",
+       "min": 0.4178,
+       "max": 0.7511,
+       "early": 0.7511,
+       "late": 0.4178,
+       "max_expected": 3.6878,
+       "max_levels": {
+        "3.50": 0.2489,
+        "3.75": 0.7511
+       },
+       "feasible": true
+      }
+     }
     },
     {
      "date": "2023-11-30",
-     "expected": 3.75,
-     "delta_bp": 9.33,
-     "p_hike": 0.3733,
-     "p_hold": 0.6267,
-     "p_cut": 0,
+     "expected": 2.1919,
+     "delta_bp": -229.06,
+     "p_hike": 0,
+     "p_hold": 0.0,
+     "p_cut": 1.0,
      "moves": {
-      "0": 0.6267,
-      "25": 0.3733
+      "-250": 0.1624,
+      "-225": 0.8376
      },
      "levels": {
-      "3.75": 1.0
+      "2.00": 0.2324,
+      "2.25": 0.7676
      },
-     "method": "min_hike",
+     "method": "kofr_ois",
      "in_range": true,
-     "range": {
-      "direction": "hike",
-      "min": 0.0,
-      "max": 1.0,
-      "early": 0.0,
-      "late": 1.0,
-      "max_expected": 3.8544,
-      "max_levels": {
-       "3.75": 0.5822,
-       "4.00": 0.4178
-      },
-      "feasible": true
-     },
-     "source": "CD 91일 모형"
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "3개월 OIS + 1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0.3733,
+      "p_hold": 0.6267,
+      "p_cut": 0,
+      "expected": 3.75,
+      "range": {
+       "direction": "hike",
+       "min": 0.0,
+       "max": 1.0,
+       "early": 0.0,
+       "late": 1.0,
+       "max_expected": 3.8544,
+       "max_levels": {
+        "3.75": 0.5822,
+        "4.00": 0.4178
+       },
+       "feasible": true
+      }
+     }
     },
     {
      "date": "2024-01-11",
@@ -884,66 +918,83 @@
    "meetings": [
     {
      "date": "2023-10-19",
-     "expected": 3.5483,
-     "delta_bp": 4.83,
-     "p_hike": 0.1933,
-     "p_hold": 0.8067,
+     "expected": 4.4825,
+     "delta_bp": 98.25,
+     "p_hike": 1.0,
+     "p_hold": 0.0,
      "p_cut": 0,
      "moves": {
-      "0": 0.8067,
-      "25": 0.1933
+      "75": 0.07,
+      "100": 0.93
      },
      "levels": {
-      "3.50": 0.8067,
-      "3.75": 0.1933
+      "4.25": 0.07,
+      "4.50": 0.93
      },
-     "method": "min_hike",
+     "method": "kofr_ois",
      "in_range": true,
-     "range": {
-      "direction": "hike",
-      "min": 0.1289,
-      "max": 0.4622,
-      "early": 0.4622,
-      "late": 0.1289,
-      "max_expected": 3.6156,
-      "max_levels": {
-       "3.50": 0.5378,
-       "3.75": 0.4622
-      },
-      "feasible": true
-     },
-     "source": "CD 91일 모형"
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0.1933,
+      "p_hold": 0.8067,
+      "p_cut": 0,
+      "expected": 3.5483,
+      "range": {
+       "direction": "hike",
+       "min": 0.1289,
+       "max": 0.4622,
+       "early": 0.4622,
+       "late": 0.1289,
+       "max_expected": 3.6156,
+       "max_levels": {
+        "3.50": 0.5378,
+        "3.75": 0.4622
+       },
+       "feasible": true
+      }
+     }
     },
     {
      "date": "2023-11-30",
-     "expected": 3.75,
-     "delta_bp": 20.17,
-     "p_hike": 0.8067,
-     "p_hold": 0.1933,
-     "p_cut": 0,
+     "expected": 2.1919,
+     "delta_bp": -229.06,
+     "p_hike": 0,
+     "p_hold": 0.0,
+     "p_cut": 1.0,
      "moves": {
-      "0": 0.1933,
-      "25": 0.8067
+      "-250": 0.1624,
+      "-225": 0.8376
      },
      "levels": {
-      "3.75": 1.0
+      "2.00": 0.2324,
+      "2.25": 0.7676
      },
-     "method": "min_hike",
+     "method": "kofr_ois",
      "in_range": true,
-     "range": {
-      "direction": "hike",
-      "min": 0.0,
-      "max": 1.0,
-      "early": 0.0,
-      "late": 1.0,
-      "max_expected": 3.7822,
-      "max_levels": {
-       "3.75": 0.8711,
-       "4.00": 0.1289
-      },
-      "feasible": true
-     },
-     "source": "CD 91일 모형"
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "3개월 OIS + 1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0.8067,
+      "p_hold": 0.1933,
+      "p_cut": 0,
+      "expected": 3.75,
+      "range": {
+       "direction": "hike",
+       "min": 0.0,
+       "max": 1.0,
+       "early": 0.0,
+       "late": 1.0,
+       "max_expected": 3.7822,
+       "max_levels": {
+        "3.75": 0.8711,
+        "4.00": 0.1289
+       },
+       "feasible": true
+      }
+     }
     },
     {
      "date": "2024-01-11",

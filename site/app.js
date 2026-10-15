@@ -145,10 +145,16 @@
     const c = nextDate ? cons[nextDate] : null;
     const tiles = [];
     // 시장
-    tiles.push(h("div", { class: "tile" }, h("div", { class: "k" }, `모형 추정(CD) · ${nextDate ? mon(nextDate) + " 회의" : "다음 회의"} 인상 확률${staleFrom ? ` · ${ymd(staleFrom)} 기준` : ""}`),
-      h("div", { class: "v" }, nxt ? (nxt.range && nxt.range.direction === "hike" ? `최고 ${pct(nxt.range.max)}` : pct(nxt.p_hike)) : "–"),
-      nxt && nxt.range ? h("div", { class: "s" }, `가능 범위 ${pct(nxt.range.min, 0)}~${pct(nxt.range.max, 0)} (회의 배분 가정에 따라)`) : "",
-      h("div", { class: "s" }, ms[1] ? `${mon(ms[1].date)} ${pct(ms[1].p_hike)} · 기대금리 ${fx(ms[1].expected)}%` : "")));
+    const nTop = nxt && nxt.method === "kofr_ois" ? outcomes(nxt).reduce((a, b) => (b.p > a.p ? b : a)) : null;
+    tiles.push(h("div", { class: "tile" }, h("div", { class: "k" }, nTop ? `모형 추정(KOFR OIS) · ${dmon(nextDate)} 금리 결정 전망${staleFrom ? ` · ${ymd(staleFrom)} 기준` : ""}`
+      : `모형 추정(CD) · ${nextDate ? mon(nextDate) + " 회의" : "다음 회의"} 인상 확률${staleFrom ? ` · ${ymd(staleFrom)} 기준` : ""}`),
+      h("div", { class: "v" }, nTop ? `${nTop.name} ${pct(nTop.p)}` : nxt ? (nxt.range && nxt.range.direction === "hike" ? `최고 ${pct(nxt.range.max)}` : pct(nxt.p_hike)) : "–"),
+      nTop ? h("div", { class: "s" }, outcomes(nxt).filter((o) => o.bp !== nTop.bp).map((o) => `${o.name} ${pct(o.p)}`).join(" · ")) : "",
+      nxt && nxt.range ? h("div", { class: "s" }, `가능 범위 ${pct(nxt.range.min, 0)}~${pct(nxt.range.max, 0)} (회의 배분 가정에 따라)`)
+        : nxt && nxt.cd91 && nxt.cd91.range ? h("div", { class: "s" }, `CD 91일 가능 범위 ${pct(nxt.cd91.range.min, 0)}~${pct(nxt.cd91.range.max, 0)}`) : "",
+      h("div", { class: "s" }, ms[1] ? (ms[1].method === "kofr_ois"
+        ? `${mon(ms[1].date)} ${(() => { const t = outcomes(ms[1]).reduce((a, b) => (b.p > a.p ? b : a)); return `${t.name} ${pct(t.p)}`; })()} · 인상 ${pct(ms[1].p_hike)}`
+        : `${mon(ms[1].date)} ${pct(ms[1].p_hike)} · 기대금리 ${fx(ms[1].expected)}%`) : "")));
     // 한은 점도표
     tiles.push(h("div", { class: "tile" }, h("div", { class: "k" }, `한은 · 최신 점도표(${dp ? ymd(dp.date) : "–"}) 중간값`),
       h("div", { class: "v" }, dp ? fx(dp.median) + "%" : "–"),
@@ -212,6 +218,38 @@
     return svg.node();
   }
 
+  // 회의별 결정 결과(이동폭별 확률) — 가장 높은 결정을 크게
+  function outcomes(m) {
+    const name = (bp) => bp === 0 ? "동결" : `${Math.abs(bp)}bp ${bp > 0 ? "인상" : "인하"}`;
+    const cls = (bp) => bp === 0 ? "hold" : bp > 0 ? (bp > 25 ? "hike2" : "hike") : (bp < -25 ? "cut2" : "cut");
+    const mv = m.moves && Object.keys(m.moves).length ? m.moves : { 0: m.p_hold, 25: m.p_hike, "-25": m.p_cut };
+    return Object.entries(mv).map(([k, v]) => ({ bp: +k, p: +v || 0, name: name(+k), cls: cls(+k) }))
+      .filter((o) => o.p > 0.0005).sort((a, b) => a.bp - b.bp);
+  }
+  const dmon = (s) => `${+s.slice(5, 7)}월 ${+s.slice(8, 10)}일`;
+
+  function decisionCard(m, pm, pd, snapForParts) {
+    const os = outcomes(m);
+    const top = os.reduce((a, b) => (b.p > a.p ? b : a), os[0] || { name: "동결", p: 1, cls: "hold" });
+    const rest = os.filter((o) => o !== top).sort((a, b) => b.p - a.p);
+    const ch = pm ? m.p_hike - pm.p_hike : null;
+    const cls = ch == null ? "flat" : ch > 0.0005 ? "up" : ch < -0.0005 ? "down" : "flat";
+    const cand = ["동결", ...os.filter((o) => o.bp !== 0).map((o) => o.name)].filter((x, i, a) => a.indexOf(x) === i);
+    const tailNote = (m.tail_assumed || []).length ? ` · ${m.tail_assumed.map((x) => `${+x.slice(5, 7)}월`).join("·")} 동결 가정` : "";
+    return h("div", { class: "gauge decision" },
+      h("span", { class: `badge chg ${cls}`, title: pm ? `전일(${ymd(pd)}) 대비 인상 확률 변화` : "전일 데이터 없음" }, ch == null ? "전일 –" : "인상 전일 " + pp(ch)),
+      h("h4", {}, `${dmon(m.date)} 금리 결정 전망`),
+      h("div", { class: `big ${top.bp === 0 ? "hold" : top.bp > 0 ? "hike" : "cut"}` }, `${top.name} ${pct(top.p)}`),
+      h("div", { class: "alt" }, rest.length ? rest.map((o) => `${o.name} ${pct(o.p)}`).join(" · ") : " "),
+      h("div", { class: "dbar", role: "img", "aria-label": os.map((o) => `${o.name} ${pct(o.p)}`).join(", ") },
+        ...os.map((o) => h("span", { class: o.cls, style: `width:${(o.p * 100).toFixed(2)}%`, title: `${o.name} ${pct(o.p)}` }, o.p >= 0.12 ? `${o.name} ${pct(o.p, 0)}` : ""))),
+      h("div", { class: "sub" }, `자체 합성 OIS 기반 모형 추정 · ${cand.join(" 또는 ")} 가정${tailNote}`),
+      h("div", { class: "sub" }, `회의 뒤 기대 금리 ${fx(m.expected, 3)}% (${m.ois_source})`),
+      m.cd91 && m.cd91.range ? h("div", { class: "sub range" }, `참고 — CD 91일 같은 금리로 가능한 인상 확률 범위 ${pct(m.cd91.range.min)}~${pct(m.cd91.range.max)}`) : "",
+      h("div", { class: "sub parts" }, partsLine(snapForParts, m.date)),
+      h("div", { class: "method-tag" }, m.source));
+  }
+
   // 기본 추정치가 멈춘 날이면 마지막으로 산출된 날의 스냅샷을 쓴다
   async function defaultView(snap) {
     if (!snap || snap.default_ok !== false) return { view: snap, staleFrom: null };
@@ -239,7 +277,7 @@
       : "";
     const asm = (snap.assumed_meetings || []);
     if (!staleFrom && asm.length)
-      $("#staleNote").textContent = `다음 해 금통위 일정 미공지: CD 만기 안의 ${asm.map(ymd).join("·")} 회의를 가정해 계산했다(최근 4년 1월 회의 중 가장 이른 날). 회의별 최고 확률은 이 가정과 무관하고, 최저 확률과 점추정은 영향을 받는다. 일정이 공지되면 실제 날짜로 바꾼다.`;
+      $("#staleNote").textContent = `다음 해 금통위 일정 미공지: CD 만기 안의 ${asm.map(ymd).join("·")} 회의를 가정해 계산했다(최근 4년 1월 회의 중 가장 이른 날). KOFR OIS 3개월물 계산에서는 이 회의를 변화 없음으로 둔다. CD 91일 가능 범위의 최고값은 이 가정과 무관하다. 일정이 공지되면 실제 날짜로 바꾼다.`;
     $("#staleNote").hidden = !staleFrom && !asm.length;
     const scen = snap.scenarios[S.s];
     const pd = prevDate(snap.asof);
@@ -251,11 +289,16 @@
       const top = (x) => x.range && x.range.direction === "hike" ? x.range.max : x.p_hike;
       const ch = pm ? top(m) - top(pm) : null;
       const cls = ch == null ? "flat" : ch > 0.0005 ? "up" : ch < -0.0005 ? "down" : "flat";
+      if (m.method === "kofr_ois") return decisionCard(m, pm, pd, staleFrom ? live : snap);
       return h("div", { class: "gauge" },
         h("span", { class: `badge chg ${cls}`, title: pm ? `전일(${ymd(pd)}) 대비` : "전일 데이터 없음" }, ch == null ? "전일 –" : "전일 " + pp(ch)),
         h("h4", {}, `${ymd(m.date)} 금통위`),
-        m.range && m.range.direction === "hike" ? gaugeSVG(m.range.max, m.range.min, "인상 확률 최고(가능 범위)") : gaugeSVG(m.p_hike),
-        h("div", { class: "sub" }, `점추정(최소 인상 경로): 동결 ${pct(m.p_hold)} · 인상 ${pct(m.p_hike)}` + (m.p_cut > 0 ? ` · 인하 ${pct(m.p_cut)}` : "")
+        m.range && m.range.direction === "hike" ? gaugeSVG(m.range.max, m.range.min, "인상 확률 최고(가능 범위)")
+          : gaugeSVG(m.p_hike, null, m.method === "kofr_ois" ? "인상 확률(KOFR OIS)" : "인상 확률"),
+        m.method === "kofr_ois" ? h("div", { class: "sub" }, `동결 ${pct(m.p_hold)} · 인상 ${pct(m.p_hike)}` + (m.p_cut > 0 ? ` · 인하 ${pct(m.p_cut)}` : "")
+          + ` · 회의 뒤 기대 금리 ${fx(m.expected, 3)}% (${m.ois_source})`) : "",
+        m.method === "kofr_ois" && m.cd91 && m.cd91.range ? h("div", { class: "sub range" }, `참고 — CD 91일 같은 금리로 가능한 범위: 인상 ${pct(m.cd91.range.min)}~${pct(m.cd91.range.max)}`) : "",
+        m.method === "kofr_ois" ? "" : h("div", { class: "sub" }, `점추정(최소 인상 경로): 동결 ${pct(m.p_hold)} · 인상 ${pct(m.p_hike)}` + (m.p_cut > 0 ? ` · 인하 ${pct(m.p_cut)}` : "")
           + ` · 회의 뒤 기대 금리 ${fx(m.expected, 3)}%`),
         m.range ? h("div", { class: "sub range" }, `같은 금리로 가능한 범위: ${m.range.direction === "cut" ? "인하" : "인상"} ${pct(m.range.min)}~${pct(m.range.max)}.`
           + ` 각 회의를 따로 본 최고값이라 여러 회의의 최고값이 동시에 성립하지는 않는다(가까운 회의부터 배정 ${pct(m.range.early)}, 늦은 회의부터 배정 ${pct(m.range.late)})`) : "",
@@ -267,14 +310,17 @@
     const u0 = snap.inputs.find((i) => i.used);
     if (u0) {
       const bp = Math.round(u0.spread * 100);
+      const cdc = (snap.components || {}).cd || {};
       const rng = ms.map((m) => {
-        const ps = ["-5", "0", "5"].map((k) => (snap.scenarios[k].meetings.find((x) => x.date === m.date) || {}).p_hike).filter((x) => x != null);
-        return `${md(m.date)} ${pct(Math.min(...ps))}~${pct(Math.max(...ps))}`;
-      });
-      $("#spreadNote").textContent = `모형 추정치: ${u0.label} 금리에서 역산한 값이다. 검증된 시장 내재확률이 아니다. `
+        const ps = ["-5", "0", "5"].map((k) => ((cdc[k] || {}).meetings || []).find((x) => x.date === m.date && x.range)).filter(Boolean).map((x) => x.range.max);
+        return ps.length ? `${md(m.date)} ${pct(Math.min(...ps))}~${pct(Math.max(...ps))}` : null;
+      }).filter(Boolean);
+      const oisNote = ms.some((m) => m.method === "kofr_ois")
+        ? "기본값은 자체 합성 KOFR OIS(CD에서 'CD − 실제 KOFR 복리' 스프레드를 빼 만든 값)로, 아래 버튼과 무관하다. 버튼은 참고용 CD 91일 가능 범위에만 적용된다. " : "";
+      $("#spreadNote").textContent = oisNote + `CD 91일 모형: ${u0.label} 금리에서 역산한 값이다. 검증된 시장 내재확률이 아니다. `
         + `정상 스프레드는 금리 변화 기대가 없을 때도 ${u0.label} 금리가 기준금리보다 높게 붙는 폭(은행 자금사정·신용 웃돈)이다. `
         + `기본 ${bp}bp(${u0.spread_how}), −5bp는 ${bp - 5}bp, +5bp는 ${bp + 5}bp로 계산한 결과다. 스프레드를 작게 잡을수록 인상확률이 높게 나온다. `
-        + `버튼별 인상확률 범위: ${rng.join(", ")}. 범위가 넓으면 숫자 하나로 인용하지 않는다.`;
+        + `버튼별 CD 91일 인상확률 최고값: ${rng.join(", ") || "–"}. 범위가 넓으면 숫자 하나로 인용하지 않는다.`;
     } else $("#spreadNote").textContent = "";
     if (!cards.length) {
       const kf = (snap.components || {}).kofr_futures;
@@ -327,9 +373,8 @@
     const kf = c.kofr_futures && c.kofr_futures.meetings.find((x) => x.date === date);
     const bl = c.blend_experimental && c.blend_experimental.meetings.find((x) => x.date === date);
     const qm = c.qual_mix && c.qual_mix.meeting === date ? c.qual_mix : null;
-    const ko = c.kofr_ois && (c.kofr_ois.path || []).find((x) => x.meeting === date) || null;
-    return "실험값 — " + [...(ko ? [`KOFR OIS(자체 산출) ${pct(ko.p_hike)}${ko.p_cut > 0 ? ` · 인하 ${pct(ko.p_cut)}` : ""}`] : []), kf ? `KOFR 선물 ${pct(kf.p_hike)}` : "KOFR 선물 –", bl ? `혼합 ${pct(bl.p_hike)}` : "혼합 –",
-      ...(qm ? [`AI 정성 ${pct(qm.qual.p_hike)}`, qm.w10 ? `CD+정성10% ${pct(qm.w10.p_hike)}` : ""] : [])].filter(Boolean).join(" · ");
+    return "실험값 — " + [kf ? `KOFR 선물 ${pct(kf.p_hike)}` : "KOFR 선물 –", bl ? `혼합 ${pct(bl.p_hike)}` : "혼합 –",
+      ...(qm ? [`AI 정성 ${pct(qm.qual.p_hike)}`, qm.w10 ? `기본+정성10% ${pct(qm.w10.p_hike)}` : ""] : [])].filter(Boolean).join(" · ");
   }
 
   function renderFutures(snap) {
@@ -652,7 +697,7 @@
         mk.p_cut > 0.005 ? h("span", { style: `flex:${mk.p_cut};background:var(--cut)` }, "인하") : "") : h("div", { class: "note" }, "모형 추정치 없음");
       return h("div", { class: "tile" }, h("div", { class: "k" }, `${ymd(m)} 회의`),
         h("div", { class: "s" }, `전문가 ${c.n}곳 — 인상 ${pct(c.hike_share, 0)}`), bar,
-        h("div", { class: "s" }, `모형 추정(CD) — 인상 ${mk ? (mk0.range ? "최고 " : "") + pct(mk.p_hike) : "–"}${mk ? asof : ""}`), mbar);
+        h("div", { class: "s" }, `모형 추정(${mk0 && mk0.method === "kofr_ois" ? "KOFR OIS" : "CD"}) — 인상 ${mk ? (mk0.range ? "최고 " : "") + pct(mk.p_hike) : "–"}${mk ? asof : ""}`), mbar);
     });
     const term = Object.entries(cons.terminal || {});
     cards.push(h("div", { class: "tile" }, h("div", { class: "k" }, "최종금리 전망 분포"),
@@ -807,11 +852,11 @@
       ...sec("무엇을 보여 주나",
         p("화면의 확률은 '모형 추정치'다. 시장금리에서 거꾸로 계산한 값이며, 검증된 시장 내재확률이 아니다. 숫자를 인용할 때는 기준일·기준 금리·정상 스프레드 가정을 함께 밝힌다."),
         table(["구분", "내용", "상태"], [
-          ["기본 추정치", "CD 91일 금리 모형", "화면 게이지·날짜별 기록에 쓰는 값"],
+          ["기본 추정치", "자체 산출 KOFR OIS(1개월·3개월물로 푸는 회의). 풀리지 않는 회의는 CD 91일 모형", "화면 게이지·날짜별 기록에 쓰는 값(2026-10-15 교체)"],
           ["실험값 1", "KOFR 3개월 선물 모형(한국거래소 정산가격)", "따로 표시·기록, 기본값에 섞지 않음"],
           ["실험값 2", "CD 모형과 KOFR 선물 모형 가중평균(KOFR 50%)", "따로 표시·기록, 채택 기준 충족 전까지 실험"],
         ])),
-      ...sec("1. CD 91일 모형 (기본 추정치)",
+      ...sec("1. CD 91일 모형 (OIS로 풀리지 않는 회의의 기본값·참고 범위)",
         ...sub("가정",
           h("ul", {},
             li("기준일 종가 금리는 다음 날(결제일)부터 만기까지 [시작, 시작+91일) 구간을 덮는다."),
@@ -849,10 +894,10 @@
           li("한계: 거래가 드물다. 거래가 없는 결제월의 정산가격은 체결로 확인된 가격이 아니다. 결제월이 적거나 가격이 어긋나면 회의 사이 배정이 흔들린다(예: 2026-10-13 가격은 10월 인상 100%, 11월 하락을 가리켰다). Δ가 25bp를 넘으면 인상확률이 100%가 되는 것은 변환 규칙 때문이며 불확실성이 없다는 뜻이 아니다."))),
       ...sec("3. 혼합 (실험값)",
         p("회의별로 CD 모형과 KOFR 선물 모형의 인상·동결·인하 확률과 기대금리를 가중평균한다(KOFR 50%). 두 모형이 모두 계산된 회의만 낸다.")),
-      ...sec("3-1. AI 정성 확률과 CD+정성 (실험값)",
+      ...sec("3-1. AI 정성 확률과 기본+정성 (실험값)",
         h("ul", {},
           li("하루 1회 AI(OpenAI)가 뉴스 사건 태그·점도표·한은 발언·지표만 보고 다음 금통위의 인상·동결·인하 확률을 직접 낸다. 같은 정보를 두 번 세지 않도록 시장금리로 계산한 확률은 입력에서 뺀다."),
-          li("CD+정성 10%·20% = (1 − w) × CD 모형 + w × AI 정성 확률. 다음 회의 하나만 낸다."),
+          li("기본+정성 10%·20% = (1 − w) × 화면 기본값(2026-10-15부터 KOFR OIS, 그 전 CD 91일) + w × AI 정성 확률. 다음 회의 하나만 낸다."),
           li("과거 기사로 거꾸로 만들 수 없어 백테스트가 없다. 날짜별 기록에 쌓고 '5. 기본값 교체 기준'과 같은 규칙으로 평가한다. AI 출력은 같은 입력에도 조금씩 달라 재현되지 않는다."))),
       ...sec("4. 검증",
         ...sub("백테스트 결과 요약", ...(C ? [
@@ -888,7 +933,9 @@
       ...decisionSection(sec, sub, p, li, table),
       ...sec("5. 기본값 교체 기준 (사전 고정)",
         h("ul", {},
-          li("2026-10-22 회의부터 날짜별 확률 기록(data/prob_log.csv)의 회의 3영업일 전 값으로 순차 평가한다."),
+          li("2026-10-15 교체: 기본값을 CD 91일 모형에서 자체 산출 KOFR OIS로 바꿨다. 근거: 같은 회의 백테스트 Brier 다음 회의 0.394 대 0.557(27회), 그다음 회의 0.465 대 0.665(26회). 한계: 인상 2회·인하 4회로 표본이 작고, 같은 자료로 CD 단기물 방식 3개를 먼저 시험했다. '항상 동결'과의 차이는 확실하지 않다(다음 회의 0.394 대 0.444, 그다음 0.465 대 0.462)."),
+          li("OIS로 풀리지 않는 회의(1개월물 안에 회의가 없고 3개월물 안에 회의가 둘 이상인 날 등)는 CD 91일 모형 가능 범위를 쓴다."),
+          li("2026-10-22 회의부터 날짜별 확률 기록(data/prob_log.csv)의 회의 3영업일 전 값으로 순차 평가한다. 8회 뒤 OIS의 평균 Brier가 CD 91일 모형이나 '항상 동결'보다 높으면 교체를 다시 검토한다."),
           li("금통위 8회 동안 혼합(실험)의 평균 Brier가 CD 모형보다 낮고, '항상 동결'보다도 낮을 때 기본값 교체를 검토한다."),
           li("KOFR 선물의 거래 반영 조건(최근 거래 빈도·거래량·미결제약정)은 교체 검토 때 같은 기록으로 따로 평가한다. 기준을 결과를 본 뒤 바꾸지 않는다."))),
       ...sec("6. 한계",
@@ -916,7 +963,7 @@
     const code = (s) => h("code", {}, s);
     const actK = { hike: "인상", hold: "동결", cut: "인하" };
     const kids = [
-      p("한국예탁결제원은 'KOFR OIS 추정금리'를 KOFR OIS = CD − 스프레드로 산출해 공시했으나 2025-10-24 이후 공시가 없다. 같은 산식으로 직접 계산한다(자체 산출 추정치, 실험값)."),
+      p("한국예탁결제원은 'KOFR OIS 추정금리'를 KOFR OIS = CD − 스프레드로 산출해 공시했으나 2025-10-24 이후 공시가 없다. 같은 산식으로 직접 계산한다(자체 산출 추정치). 2026-10-15부터 화면 기본값이다."),
       h("ul", {},
         li("CD: 1주(7일)·2주(15일)·1개월 = 금융투자협회 CD 시가평가수익률(AAA 5사 평균), 3개월 = CD 91일(ECOS)."),
         li("스프레드(만기별) = 과거 각 날짜의 'CD − 그 기간 실제 KOFR 일복리' 중앙값(ISDA 방식, 최대 5년). 그날까지 기간이 끝나고 KOFR가 공시된 관측만 쓴다. KOFR 이력이 2021-11부터라 아직 5년을 채우지 못했다."),
@@ -953,7 +1000,7 @@
             `${pct(r.ois.p_hike)} / ${pct(r.ois.p_cut)}`, r.cd91 ? `${pct(r.cd91.p_hike)} / ${pct(r.cd91.p_cut)}` : "–"]))] : []),
         p(h("span", { class: "note" }, "표본이 작다(인상 2회·인하 4회). 같은 자료로 CD 단기물 직접 역산 방식 3개(1-2절)를 먼저 시험한 뒤 이 방식을 시험했다. 산식은 예탁원 공시 방식을 따른 것으로 결과를 보고 고르지 않았지만, 기본값 교체는 앞으로 회의 3영업일 전 기록으로 평가한 뒤 정한다.")));
     }
-    return sec("1-1. 자체 산출 KOFR OIS (실험값)", ...kids);
+    return sec("1-1. 자체 산출 KOFR OIS (기본 추정치, 2026-10-15부터)", ...kids);
   }
 
   function cdShortSection(sec, sub, p, li, table) {

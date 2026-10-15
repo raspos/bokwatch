@@ -247,9 +247,11 @@ def run_day(rows, cfg, day: date, spreads: dict, shifts=(-5, 0, 5), fut_by_date=
     # 기본값 = CD 모형 추정치. KOFR 선물·혼합은 실험값(components)으로만 둔다.
     w = float(cfg["model"].get("blend", {}).get("experimental_kofr_weight", 0.5))
     scen = {}
+    ois_m = {x["meeting"]: x for x in ((ko or {}).get("path") or [])}
     for k in [str(x) for x in shifts]:
         ms_cd = [dict(m, source="CD 91일 모형") for m in cd[k]["meetings"]] if cd else []
-        scen[k] = {"meetings": ms_cd, "method": cd[k]["method"] if cd else "none", "notes": cd[k]["notes"] if cd else []}
+        scen[k] = {"meetings": merge_ois(ms_cd, ois_m, r0), "method": cd[k]["method"] if cd else "none",
+                   "notes": cd[k]["notes"] if cd else []}
     exp_blend = None
     if cd and kf:
         exp_blend = {"weight_kofr": w, "meetings": [m for m in blend_meetings(cd["0"]["meetings"], kf["meetings"], w)
@@ -259,7 +261,7 @@ def run_day(rows, cfg, day: date, spreads: dict, shifts=(-5, 0, 5), fut_by_date=
     if not kf:
         warns.append("KOFR 선물 가격 없음 — 실험값 없음")
     return {
-        "asof": day.isoformat(), "r0": r0, "r0_source": r0_src, "default_ok": bool(cd), "assumed_meetings": used_asm,
+        "asof": day.isoformat(), "r0": r0, "r0_source": r0_src, "default_ok": bool(cd) or bool(ois_m), "assumed_meetings": used_asm,
         "inputs": table, "warnings": warns, "scenarios": scen,
         "components": {"cd": cd, "kofr_futures": kf, "blend_experimental": exp_blend, "cd_short": cs_, "kofr_ois": ko},
     }
@@ -275,6 +277,34 @@ def cd91_meeting_at(rows, cfg, obs: date, meeting: str) -> dict | None:
     if not res:
         return None
     return next((m for m in res["scenarios"]["0"]["meetings"] if m["date"] == meeting and m["in_range"]), None)
+
+
+def merge_ois(ms_cd: list[dict], ois_m: dict, r0: float) -> list[dict]:
+    """기본값(2026-10-15 교체): 자체 산출 KOFR OIS로 풀리는 회의는 OIS 값, 나머지는 CD 91일 모형.
+    CD 91일 값과 가능 범위는 'cd91'에 남긴다."""
+    out, seen = [], set()
+    for m in ms_cd:
+        o = ois_m.get(m["date"])
+        if o and m.get("in_range"):
+            out.append(_ois_meeting(o, r0, cd91={x: m.get(x) for x in ("p_hike", "p_hold", "p_cut", "expected", "range")}))
+            seen.add(m["date"])
+        else:
+            out.append(m)
+    for d_, o in ois_m.items():
+        if d_ not in seen and d_ not in {m["date"] for m in ms_cd if m.get("in_range")}:
+            out.append(_ois_meeting(o, r0, cd91=None))
+    return sorted(out, key=lambda m: m["date"])
+
+
+def _ois_meeting(o: dict, r0: float, cd91) -> dict:
+    moves = model.move_distribution(o["delta_bp"] / 100)
+    return {"date": o["meeting"], "expected": o["expected"], "delta_bp": o["delta_bp"],
+            "p_hike": o["p_hike"], "p_hold": o["p_hold"], "p_cut": o["p_cut"],
+            "moves": {str(k): round(v, 4) for k, v in sorted(moves.items())},
+            "levels": {f"{k:.2f}": round(v, 4) for k, v in sorted(model.level_distribution(o["expected"], r0).items())},
+            "method": "kofr_ois", "in_range": True, "source": "KOFR OIS(자체 산출)", "ois_source": o.get("source"),
+            "tail_assumed": o.get("tail_assumed") or [],
+            "cd91": cd91}
 
 
 def data_dates(rows, cfg, fut_by_date=None) -> list[date]:

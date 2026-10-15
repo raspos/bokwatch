@@ -119,65 +119,82 @@
    "meetings": [
     {
      "date": "2025-05-29",
-     "expected": 2.6662,
-     "delta_bp": -8.38,
-     "p_hike": 0,
-     "p_hold": 0.6648,
-     "p_cut": 0.3352,
-     "moves": {
-      "-25": 0.3352,
-      "0": 0.6648
-     },
-     "levels": {
-      "2.50": 0.3352,
-      "2.75": 0.6648
-     },
-     "method": "min_hike",
-     "in_range": true,
-     "range": {
-      "direction": "cut",
-      "min": 0.6277,
-      "max": 1.0,
-      "early": 1.0,
-      "late": 0.6277,
-      "max_expected": 2.5,
-      "max_levels": {
-       "2.50": 1.0
-      },
-      "feasible": true
-     },
-     "source": "CD 91일 모형"
-    },
-    {
-     "date": "2025-07-10",
-     "expected": 2.25,
-     "delta_bp": -41.62,
+     "expected": 2.3735,
+     "delta_bp": -37.65,
      "p_hike": 0,
      "p_hold": 0.0,
      "p_cut": 1.0,
      "moves": {
-      "-50": 0.6648,
-      "-25": 0.3352
+      "-50": 0.506,
+      "-25": 0.494
      },
      "levels": {
-      "2.25": 1.0
+      "2.25": 0.506,
+      "2.50": 0.494
      },
-     "method": "min_hike",
+     "method": "kofr_ois",
      "in_range": true,
-     "range": {
-      "direction": "cut",
-      "min": 0.1539,
-      "max": 1.0,
-      "early": 0.1539,
-      "late": 1.0,
-      "max_expected": 2.3431,
-      "max_levels": {
-       "2.25": 0.6277,
-       "2.50": 0.3723
-      },
-      "feasible": true
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0,
+      "p_hold": 0.6648,
+      "p_cut": 0.3352,
+      "expected": 2.6662,
+      "range": {
+       "direction": "cut",
+       "min": 0.6277,
+       "max": 1.0,
+       "early": 1.0,
+       "late": 0.6277,
+       "max_expected": 2.5,
+       "max_levels": {
+        "2.50": 1.0
+       },
+       "feasible": true
+      }
+     }
+    },
+    {
+     "date": "2025-07-10",
+     "expected": 2.5552,
+     "delta_bp": 18.17,
+     "p_hike": 0.7269,
+     "p_hold": 0.2731,
+     "p_cut": 0,
+     "moves": {
+      "0": 0.2732,
+      "25": 0.7268
      },
-     "source": "CD 91일 모형"
+     "levels": {
+      "2.50": 0.7792,
+      "2.75": 0.2208
+     },
+     "method": "kofr_ois",
+     "in_range": true,
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "3개월 OIS + 1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0,
+      "p_hold": 0.0,
+      "p_cut": 1.0,
+      "expected": 2.25,
+      "range": {
+       "direction": "cut",
+       "min": 0.1539,
+       "max": 1.0,
+       "early": 0.1539,
+       "late": 1.0,
+       "max_expected": 2.3431,
+       "max_levels": {
+        "2.25": 0.6277,
+        "2.50": 0.3723
+       },
+       "feasible": true
+      }
+     }
     },
     {
      "date": "2025-08-28",
@@ -332,65 +349,82 @@
    "meetings": [
     {
      "date": "2025-05-29",
-     "expected": 2.5579,
-     "delta_bp": -19.21,
-     "p_hike": 0,
-     "p_hold": 0.2314,
-     "p_cut": 0.7686,
-     "moves": {
-      "-25": 0.7686,
-      "0": 0.2314
-     },
-     "levels": {
-      "2.50": 0.7686,
-      "2.75": 0.2314
-     },
-     "method": "min_hike",
-     "in_range": true,
-     "range": {
-      "direction": "cut",
-      "min": 0.8704,
-      "max": 1.0,
-      "early": 1.0,
-      "late": 0.8704,
-      "max_expected": 2.5,
-      "max_levels": {
-       "2.50": 1.0
-      },
-      "feasible": true
-     },
-     "source": "CD 91일 모형"
-    },
-    {
-     "date": "2025-07-10",
-     "expected": 2.25,
-     "delta_bp": -30.79,
+     "expected": 2.3735,
+     "delta_bp": -37.65,
      "p_hike": 0,
      "p_hold": 0.0,
      "p_cut": 1.0,
      "moves": {
-      "-50": 0.2314,
-      "-25": 0.7686
+      "-50": 0.506,
+      "-25": 0.494
      },
      "levels": {
-      "2.25": 1.0
+      "2.25": 0.506,
+      "2.50": 0.494
      },
-     "method": "min_hike",
+     "method": "kofr_ois",
      "in_range": true,
-     "range": {
-      "direction": "cut",
-      "min": 0.7055,
-      "max": 1.0,
-      "early": 0.7055,
-      "late": 1.0,
-      "max_expected": 2.2824,
-      "max_levels": {
-       "2.25": 0.8704,
-       "2.50": 0.1296
-      },
-      "feasible": true
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0,
+      "p_hold": 0.2314,
+      "p_cut": 0.7686,
+      "expected": 2.5579,
+      "range": {
+       "direction": "cut",
+       "min": 0.8704,
+       "max": 1.0,
+       "early": 1.0,
+       "late": 0.8704,
+       "max_expected": 2.5,
+       "max_levels": {
+        "2.50": 1.0
+       },
+       "feasible": true
+      }
+     }
+    },
+    {
+     "date": "2025-07-10",
+     "expected": 2.5552,
+     "delta_bp": 18.17,
+     "p_hike": 0.7269,
+     "p_hold": 0.2731,
+     "p_cut": 0,
+     "moves": {
+      "0": 0.2732,
+      "25": 0.7268
      },
-     "source": "CD 91일 모형"
+     "levels": {
+      "2.50": 0.7792,
+      "2.75": 0.2208
+     },
+     "method": "kofr_ois",
+     "in_range": true,
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "3개월 OIS + 1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0,
+      "p_hold": 0.0,
+      "p_cut": 1.0,
+      "expected": 2.25,
+      "range": {
+       "direction": "cut",
+       "min": 0.7055,
+       "max": 1.0,
+       "early": 0.7055,
+       "late": 1.0,
+       "max_expected": 2.2824,
+       "max_levels": {
+        "2.25": 0.8704,
+        "2.50": 0.1296
+       },
+       "feasible": true
+      }
+     }
     },
     {
      "date": "2025-08-28",
@@ -545,64 +579,81 @@
    "meetings": [
     {
      "date": "2025-05-29",
-     "expected": 2.4495,
-     "delta_bp": -30.05,
+     "expected": 2.3735,
+     "delta_bp": -37.65,
      "p_hike": 0,
      "p_hold": 0.0,
      "p_cut": 1.0,
      "moves": {
-      "-50": 0.2019,
-      "-25": 0.7981
+      "-50": 0.506,
+      "-25": 0.494
      },
      "levels": {
-      "2.25": 0.2019,
-      "2.50": 0.7981
+      "2.25": 0.506,
+      "2.50": 0.494
      },
-     "method": "min_hike",
+     "method": "kofr_ois",
      "in_range": true,
-     "range": {
-      "direction": "cut",
-      "min": 1.0,
-      "max": 1.0,
-      "early": 1.0,
-      "late": 1.0,
-      "max_expected": 2.5,
-      "max_levels": {
-       "2.50": 1.0
-      },
-      "feasible": false
-     },
-     "source": "CD 91일 모형"
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0,
+      "p_hold": 0.0,
+      "p_cut": 1.0,
+      "expected": 2.4495,
+      "range": {
+       "direction": "cut",
+       "min": 1.0,
+       "max": 1.0,
+       "early": 1.0,
+       "late": 1.0,
+       "max_expected": 2.5,
+       "max_levels": {
+        "2.50": 1.0
+       },
+       "feasible": false
+      }
+     }
     },
     {
      "date": "2025-07-10",
-     "expected": 2.25,
-     "delta_bp": -19.95,
-     "p_hike": 0,
-     "p_hold": 0.2019,
-     "p_cut": 0.7981,
+     "expected": 2.5552,
+     "delta_bp": 18.17,
+     "p_hike": 0.7269,
+     "p_hold": 0.2731,
+     "p_cut": 0,
      "moves": {
-      "-25": 0.7981,
-      "0": 0.2019
+      "0": 0.2732,
+      "25": 0.7268
      },
      "levels": {
-      "2.25": 1.0
+      "2.50": 0.7792,
+      "2.75": 0.2208
      },
-     "method": "min_hike",
+     "method": "kofr_ois",
      "in_range": true,
-     "range": {
-      "direction": "cut",
-      "min": 1.0,
-      "max": 1.0,
-      "early": 1.0,
-      "late": 1.0,
-      "max_expected": 2.25,
-      "max_levels": {
-       "2.25": 1.0
-      },
-      "feasible": false
-     },
-     "source": "CD 91일 모형"
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "3개월 OIS + 1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0,
+      "p_hold": 0.2019,
+      "p_cut": 0.7981,
+      "expected": 2.25,
+      "range": {
+       "direction": "cut",
+       "min": 1.0,
+       "max": 1.0,
+       "early": 1.0,
+       "late": 1.0,
+       "max_expected": 2.25,
+       "max_levels": {
+        "2.25": 1.0
+       },
+       "feasible": false
+      }
+     }
     },
     {
      "date": "2025-08-28",

@@ -83,14 +83,14 @@ def qual_mix(cur, qual) -> dict | None:
 
 
 def experimental_note(cur, date_s: str) -> str:
-    """기록 비고: 실험값(KOFR 선물, CD·KOFR 혼합, AI 정성 확률·CD+정성) 인상확률."""
+    """기록 비고: 실험값(KOFR 선물, CD·KOFR 혼합, AI 정성 확률·기본+정성) 인상확률."""
     comp = (cur or {}).get("components") or {}
     out = []
     kf = next((m for m in (comp.get("kofr_futures") or {}).get("meetings", []) if m["date"] == date_s), None)
     bl = next((m for m in (comp.get("blend_experimental") or {}).get("meetings", []) if m["date"] == date_s), None)
-    ko = next((x for x in (comp.get("kofr_ois") or {}).get("path", []) if x["meeting"] == date_s), None)
-    if ko:
-        out.append(f"KOFR OIS 자체(실험) {ko['p_hike'] * 100:.1f}%")
+    cdm = next((m for m in ((comp.get("cd") or {}).get("0") or {}).get("meetings", []) if m["date"] == date_s and m.get("in_range")), None)
+    if cdm and cdm.get("range"):
+        out.append(f"CD91 범위 {cdm['range']['min'] * 100:.1f}~{cdm['range']['max'] * 100:.1f}%")
     cs_ = (comp.get("cd_short") or {}).get("m1")
     if cs_ and cs_["meeting"] == date_s:
         out.append(f"CD1개월(실험) {cs_['p_hike'] * 100:.1f}%")
@@ -104,7 +104,7 @@ def experimental_note(cur, date_s: str) -> str:
         for w in QUAL_WEIGHTS:
             k = f"w{int(w * 100)}"
             if k in qm:
-                out.append(f"CD+정성{int(w * 100)}% {qm[k]['p_hike'] * 100:.1f}%")
+                out.append(f"기본+정성{int(w * 100)}% {qm[k]['p_hike'] * 100:.1f}%")
     return " · ".join(out)
 
 
@@ -124,8 +124,9 @@ def update_prob_log(cur, today, stalled: str | None, write: bool) -> list[dict]:
                 if m["in_range"]:
                     rows.append({"date": day, "asof": cur["asof"], "status": "산출", "meeting": m["date"],
                                  "p_hike": m["p_hike"], "p_hold": m["p_hold"], "p_cut": m["p_cut"],
-                                 "expected": m["expected"], "instrument": used.get("label", ""),
-                                 "spread_bp": round(used.get("spread", 0) * 100, 1),
+                                 "expected": m["expected"],
+                                 "instrument": m.get("source") if m.get("method") == "kofr_ois" else used.get("label", ""),
+                                 "spread_bp": "" if m.get("method") == "kofr_ois" else round(used.get("spread", 0) * 100, 1),
                                  "note": experimental_note(cur, m["date"])})
         else:
             exp = " / ".join(f"{d(m['date']).month}/{d(m['date']).day} {experimental_note(cur, m['date'])}"
