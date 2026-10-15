@@ -145,7 +145,7 @@
     const tiles = [];
     // 시장
     tiles.push(h("div", { class: "tile" }, h("div", { class: "k" }, `모형 추정(CD) · ${nextDate ? mon(nextDate) + " 회의" : "다음 회의"} 인상 확률${staleFrom ? ` · ${ymd(staleFrom)} 기준` : ""}`),
-      h("div", { class: "v" }, nxt ? pct(nxt.p_hike) : "–"),
+      h("div", { class: "v" }, nxt ? (nxt.range && nxt.range.direction === "hike" ? `최고 ${pct(nxt.range.max)}` : pct(nxt.p_hike)) : "–"),
       nxt && nxt.range ? h("div", { class: "s" }, `가능 범위 ${pct(nxt.range.min, 0)}~${pct(nxt.range.max, 0)} (회의 배분 가정에 따라)`) : "",
       h("div", { class: "s" }, ms[1] ? `${mon(ms[1].date)} ${pct(ms[1].p_hike)} · 기대금리 ${fx(ms[1].expected)}%` : "")));
     // 한은 점도표
@@ -188,13 +188,16 @@
   }
 
   // ------------------------------------------------------------ 탭 1 시장
-  function gaugeSVG(p) {
+  // p: 바늘 위치(가능 범위 최고값). lo가 있으면 [lo, p] 구간을 진하게, 그 아래는 옅게 칠한다.
+  function gaugeSVG(p, lo = null, label = "인상 확률") {
     const W = 250, H = 132, cx = W / 2, cy = 116, R = 92, T = 16;
     const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img").attr("aria-label", `인상 확률 ${pct(p)}`);
     const arc = d3.arc().innerRadius(R - T).outerRadius(R).cornerRadius(3);
     const a0 = -Math.PI / 2, a1 = Math.PI / 2, ap = a0 + (a1 - a0) * Math.max(0, Math.min(1, p || 0));
     svg.append("path").attr("transform", `translate(${cx},${cy})`).attr("d", arc({ startAngle: a0, endAngle: a1 })).attr("fill", "var(--surface-2)").attr("stroke", "var(--line)");
-    if (p > 0) svg.append("path").attr("transform", `translate(${cx},${cy})`).attr("d", arc({ startAngle: a0, endAngle: ap })).attr("fill", "var(--hike)");
+    const al = lo == null ? a0 : a0 + (a1 - a0) * Math.max(0, Math.min(1, lo));
+    if (lo != null && lo > 0) svg.append("path").attr("transform", `translate(${cx},${cy})`).attr("d", arc({ startAngle: a0, endAngle: al })).attr("fill", "var(--hike)").attr("opacity", 0.35);
+    if (p > 0) svg.append("path").attr("transform", `translate(${cx},${cy})`).attr("d", arc({ startAngle: al, endAngle: ap })).attr("fill", "var(--hike)");
     for (const t of [0, 25, 50, 75, 100]) {
       const a = a0 + (a1 - a0) * t / 100, s = Math.sin(a), c = -Math.cos(a);
       svg.append("line").attr("x1", cx + s * (R + 2)).attr("y1", cy + c * (R + 2)).attr("x2", cx + s * (R + 7)).attr("y2", cy + c * (R + 7)).attr("stroke", "var(--ink-3)");
@@ -204,7 +207,7 @@
     svg.append("line").attr("x1", cx).attr("y1", cy).attr("x2", cx + s * (R - 22)).attr("y2", cy + c * (R - 22)).attr("stroke", "var(--ink)").attr("stroke-width", 2.5).attr("stroke-linecap", "round");
     svg.append("circle").attr("cx", cx).attr("cy", cy).attr("r", 5).attr("fill", "var(--ink)");
     svg.append("text").attr("x", cx).attr("y", cy - 26).attr("text-anchor", "middle").attr("font-size", 26).attr("font-weight", 700).attr("fill", "var(--ink)").text(pct(p));
-    svg.append("text").attr("x", cx).attr("y", cy - 10).attr("text-anchor", "middle").attr("font-size", 10).attr("fill", "var(--ink-3)").text("인상 확률");
+    svg.append("text").attr("x", cx).attr("y", cy - 10).attr("text-anchor", "middle").attr("font-size", 10).attr("fill", "var(--ink-3)").text(label);
     return svg.node();
   }
 
@@ -245,11 +248,11 @@
       return h("div", { class: "gauge" },
         h("span", { class: `badge chg ${cls}`, title: pm ? `전일(${ymd(pd)}) 대비` : "전일 데이터 없음" }, ch == null ? "전일 –" : "전일 " + pp(ch)),
         h("h4", {}, `${ymd(m.date)} 금통위`),
-        gaugeSVG(m.p_hike),
+        m.range && m.range.direction === "hike" ? gaugeSVG(m.range.max, m.range.min, "인상 확률 최고(가능 범위)") : gaugeSVG(m.p_hike),
         h("div", { class: "sub" }, `동결 ${pct(m.p_hold)} · 인상 ${pct(m.p_hike)}` + (m.p_cut > 0 ? ` · 인하 ${pct(m.p_cut)}` : "")),
         h("div", { class: "sub" }, `회의 뒤 기대 금리 ${fx(m.expected, 3)}%`),
-        m.range ? h("div", { class: "sub range" }, `같은 금리로 가능한 범위: ${m.range.direction === "cut" ? "인하" : "인상"} ${pct(m.range.min)}~${pct(m.range.max)}`
-          + ` · 표시값은 늦은 회의부터 배정(가까운 회의부터 배정하면 ${pct(m.range.early)})`) : "",
+        m.range ? h("div", { class: "sub range" }, `같은 금리로 가능한 범위: ${m.range.direction === "cut" ? "인하" : "인상"} ${pct(m.range.min)}~${pct(m.range.max)}.`
+          + ` 각 회의를 따로 본 최고값이라 여러 회의의 최고값이 동시에 성립하지는 않는다(가까운 회의부터 배정 ${pct(m.range.early)}, 늦은 회의부터 배정 ${pct(m.range.late)})`) : "",
         h("div", { class: "sub parts" }, partsLine(staleFrom ? live : snap, m.date)),
         h("div", { class: "method-tag" }, m.source || ({ bootstrap: "부트스트래핑", min_hike: "최소 인상 경로", lsq: "비음수 최소제곱" }[m.method] || m.method)));
     });
