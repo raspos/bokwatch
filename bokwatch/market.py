@@ -4,7 +4,7 @@ from __future__ import annotations
 import statistics
 from datetime import date, timedelta
 
-from . import cd_short, futures_model, model
+from . import cd_short, futures_model, kofr_ois, model
 from .common import d
 from .fetch_rates import load_rates, manual_rows, series, value_on
 
@@ -194,7 +194,7 @@ def blend_meetings(cd, kf, w_kofr: float) -> list[dict]:
     return sorted(out, key=lambda m: m["date"])
 
 
-def run_day(rows, cfg, day: date, spreads: dict, shifts=(-5, 0, 5), fut_by_date=None, curve=None):
+def run_day(rows, cfg, day: date, spreads: dict, shifts=(-5, 0, 5), fut_by_date=None, curve=None, ois=None):
     r0, r0_src = base_rate_on(rows, day, cfg)
     insts, table, warns = instruments_on(rows, cfg, day, spreads)
     for t in table:
@@ -238,6 +238,12 @@ def run_day(rows, cfg, day: date, spreads: dict, shifts=(-5, 0, 5), fut_by_date=
     if not cd and not kf:
         return None
     cs_ = cd_short.compute(curve, series(rows, "base"), meetings_after(cfg, date(2000, 1, 1)), day, r0) if curve else None
+    ko = None
+    if ois is not None:
+        ks, ks_how = kofr_spread(rows, day, cfg)
+        ko = kofr_ois.compute(ois, day, r0, ks, meetings_after(cfg, date(2000, 1, 1)))
+        if ko:
+            ko["kofr_base_how"] = ks_how
     # 기본값 = CD 모형 추정치. KOFR 선물·혼합은 실험값(components)으로만 둔다.
     w = float(cfg["model"].get("blend", {}).get("experimental_kofr_weight", 0.5))
     scen = {}
@@ -255,7 +261,7 @@ def run_day(rows, cfg, day: date, spreads: dict, shifts=(-5, 0, 5), fut_by_date=
     return {
         "asof": day.isoformat(), "r0": r0, "r0_source": r0_src, "default_ok": bool(cd), "assumed_meetings": used_asm,
         "inputs": table, "warnings": warns, "scenarios": scen,
-        "components": {"cd": cd, "kofr_futures": kf, "blend_experimental": exp_blend, "cd_short": cs_},
+        "components": {"cd": cd, "kofr_futures": kf, "blend_experimental": exp_blend, "cd_short": cs_, "kofr_ois": ko},
     }
 
 

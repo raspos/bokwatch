@@ -10,7 +10,7 @@ import csv
 import json
 from datetime import timedelta
 
-from bokwatch import cd_short, market
+from bokwatch import cd_short, kofr_ois, market
 from bokwatch.fetch_cdcurve import load_curve
 from bokwatch.common import DATA, SITE_DATA, all_meetings, d, load_config, now_kst, read_json, write_json
 from bokwatch.fetch_futures import by_date, load_futures
@@ -27,15 +27,17 @@ def build_market(cfg, today):
     spreads = market.estimate_spreads(rows, cfg)
     fut = by_date(load_futures())
     curve = load_curve()
+    ois = kofr_ois.OIS(curve, market.series(rows, "cd91"), market.series(rows, "kofr")) if curve else None
     dates = [x for x in market.data_dates(rows, cfg, fut) if x <= today]
     SNAP.mkdir(parents=True, exist_ok=True)
-    hist, index, last_cs = [], [], None
+    hist, index, last_cs, last_ko = [], [], None, None
     for day in dates:
-        res = market.run_day(rows, cfg, day, spreads, fut_by_date=fut, curve=curve)
+        res = market.run_day(rows, cfg, day, spreads, fut_by_date=fut, curve=curve, ois=ois)
         if not res:
             continue
         res["spreads"] = spreads
         last_cs = res["components"].get("cd_short") or last_cs
+        last_ko = res["components"].get("kofr_ois") or last_ko
         write_json(SNAP / f"{day.isoformat()}.json", res)
         index.append(day.isoformat())
         for scen, r in res["scenarios"].items():
@@ -53,6 +55,8 @@ def build_market(cfg, today):
     if curve:
         cd_short.write_backtest(curve, market.series(rows, "base"), market.meetings_after(cfg, d("2000-01-01")),
                                 cfg.get("past_decisions", []), bt.get("rows", []), current=last_cs)
+        kofr_ois.write(ois, lambda x: market.kofr_spread(rows, x, cfg)[0], market.meetings_after(cfg, d("2000-01-01")),
+                       cfg.get("past_decisions", []), bt.get("rows", []), current=last_ko)
     return index
 
 
@@ -83,6 +87,9 @@ def experimental_note(cur, date_s: str) -> str:
     out = []
     kf = next((m for m in (comp.get("kofr_futures") or {}).get("meetings", []) if m["date"] == date_s), None)
     bl = next((m for m in (comp.get("blend_experimental") or {}).get("meetings", []) if m["date"] == date_s), None)
+    ko = ((comp.get("kofr_ois") or {}).get("next")) or None
+    if ko and ko["meeting"] == date_s:
+        out.append(f"KOFR OIS 자체(실험) {ko['p_hike'] * 100:.1f}%")
     cs_ = (comp.get("cd_short") or {}).get("m1")
     if cs_ and cs_["meeting"] == date_s:
         out.append(f"CD1개월(실험) {cs_['p_hike'] * 100:.1f}%")

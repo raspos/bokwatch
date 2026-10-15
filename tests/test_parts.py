@@ -309,3 +309,18 @@ def test_cd_short_solve_and_parse():
     row = parse_day(xml, "2026-10-14")
     assert row["m1"] == 3.13 and row["d7"] == 3.07 and row["y1"] == 3.70
     assert parse_day(xml.replace("당일", "x"), "2026-10-14") is None
+
+
+def test_kofr_ois_compounding_and_next_meeting():
+    from datetime import date
+    from bokwatch import kofr_ois
+    k = kofr_ois.Kofr({"2026-01-01": 3.0, "2026-01-02": 3.0})
+    # 휴일은 직전 금리(3.0%)가 이어진다: 10일 일복리 = ((1+0.03/365)^10 − 1) × 365/10
+    assert abs(k.comp(date(2026, 1, 1), 2) - ((1 + 0.03 / 365) ** 2 - 1) * 365 / 2 * 100) < 1e-9
+    assert k.comp(date(2025, 12, 31), 2) is None
+    row = {"m1": {"cd_date": "2026-10-14", "tenor_days": 30, "ois": 3.0762}}
+    n = kofr_ois.next_meeting(row, 3.00, 0.033, [date(2026, 10, 22), date(2026, 11, 26)])
+    # 30×3.0762 = 7×3.033 + 23×(E+0.033) → E = 3.0563
+    assert (n["pre_days"], n["post_days"]) == (7, 23)
+    assert abs(n["expected"] - ((30 * 3.0762 - 7 * 3.033) / 23 - 0.033)) < 1e-4
+    assert abs(n["p_hike"] - (n["expected"] - 3.0) / 0.25) < 1e-3

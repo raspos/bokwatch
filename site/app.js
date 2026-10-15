@@ -77,17 +77,17 @@
 
   // ------------------------------------------------------------ 로드
   async function load() {
-    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort] = await Promise.all([
+    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois] = await Promise.all([
       getJSON("data/meta.json"), getJSON("data/status.json"), getJSON("data/guidance.json"),
       getJSON("data/reports.json"), getJSON("data/minutes.json"), getJSON("data/news.json"),
       getJSON("data/backtest.json"), getText("data/history.csv"),
       getJSON("data/events.json"), getJSON("data/qual.json"), getJSON("data/prob_log.json"), getJSON("data/decision.json"),
-      getJSON("data/cd_short.json"),
+      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"),
     ]);
     Object.assign(D, { meta: meta || {}, status: status || {}, guidance: guidance || { meetings: [], dotplots: [], speeches: [] },
       reports: reports || { reports: [], consensus: { by_meeting: {} } }, minutes: minutes || { meetings: [] },
       news: news || { items: [], chips: [] }, backtest, hist: hist ? parseCSV(hist) : [],
-      events: events || { upcoming: [], recent: [], all: [], indicators: {} }, qual, plog: plog || [], decision, cdshort });
+      events: events || { upcoming: [], recent: [], all: [], indicators: {} }, qual, plog: plog || [], decision, cdshort, kois });
     D.snaps = {};
   }
   async function snapshot(date) {
@@ -327,8 +327,8 @@
     const kf = c.kofr_futures && c.kofr_futures.meetings.find((x) => x.date === date);
     const bl = c.blend_experimental && c.blend_experimental.meetings.find((x) => x.date === date);
     const qm = c.qual_mix && c.qual_mix.meeting === date ? c.qual_mix : null;
-    const cs = c.cd_short && c.cd_short.m1 && c.cd_short.m1.meeting === date ? c.cd_short.m1 : null;
-    return "실험값 — " + [...(cs ? [`CD 1개월 ${pct(cs.p_hike)}`] : []), kf ? `KOFR 선물 ${pct(kf.p_hike)}` : "KOFR 선물 –", bl ? `혼합 ${pct(bl.p_hike)}` : "혼합 –",
+    const ko = c.kofr_ois && c.kofr_ois.next && c.kofr_ois.next.meeting === date ? c.kofr_ois.next : null;
+    return "실험값 — " + [...(ko ? [`KOFR OIS(자체 산출) ${pct(ko.p_hike)}${ko.p_cut > 0 ? ` · 인하 ${pct(ko.p_cut)}` : ""}`] : []), kf ? `KOFR 선물 ${pct(kf.p_hike)}` : "KOFR 선물 –", bl ? `혼합 ${pct(bl.p_hike)}` : "혼합 –",
       ...(qm ? [`AI 정성 ${pct(qm.qual.p_hike)}`, qm.w10 ? `CD+정성10% ${pct(qm.w10.p_hike)}` : ""] : [])].filter(Boolean).join(" · ");
   }
 
@@ -838,6 +838,7 @@
           p(h("span", { class: "note" }, "tests/test_model.py가 이 숫자를 매번 확인한다."))),
         ...sub("정상 스프레드",
           p("기준금리가 오래 묶여 있던 기간(config.model.hold_windows, 현재 2023-02-24~2024-08-21, 3.50% 동결)의 'CD − 기준금리' 중앙값. 동결 구간별 값은 2021년 +20bp, 2023년 +25bp, 2024년 +10bp, 2025년 하반기 +6bp, 2026년 상반기 +32bp로 크게 흔들린다. 그래서 −5bp·+5bp 결과를 함께 보여 준다."))),
+      ...koisSection(sec, sub, p, li, table),
       ...cdShortSection(sec, sub, p, li, table),
       ...sec("2. KOFR 3개월 선물 모형 (실험값)",
         h("ul", {},
@@ -909,6 +910,44 @@
   }
 
   // 결정 예측 모형(실험): 회의 1건 = 표본 1개, 순서형 로지스틱
+  function koisSection(sec, sub, p, li, table) {
+    const X = D.kois;
+    const cur = X && X.current;
+    const code = (s) => h("code", {}, s);
+    const actK = { hike: "인상", hold: "동결", cut: "인하" };
+    const kids = [
+      p("한국예탁결제원은 'KOFR OIS 추정금리'를 KOFR OIS = CD − 스프레드로 산출해 공시했으나 2025-10-24 이후 공시가 없다. 같은 산식으로 직접 계산한다(자체 산출 추정치, 실험값)."),
+      h("ul", {},
+        li("CD: 1주(7일)·2주(15일)·1개월 = 금융투자협회 CD 시가평가수익률(AAA 5사 평균), 3개월 = CD 91일(ECOS)."),
+        li("스프레드(만기별) = 과거 각 날짜의 'CD − 그 기간 실제 KOFR 일복리' 중앙값(ISDA 방식, 최대 5년). 그날까지 기간이 끝나고 KOFR가 공시된 관측만 쓴다. KOFR 이력이 2021-11부터라 아직 5년을 채우지 못했다."),
+        li(code("30 × OIS(1개월) = 회의 전 일수 × (r0 + k) + 회의 뒤 일수 × (E + k)"), " — k = KOFR − 기준금리 정상 차이(60일 중앙값). 1개월 안 회의가 하나뿐이라 다음 회의 뒤 기대 기준금리 E를 바로 푼다. Δ = E − r0를 CD 91일 모형과 같은 규칙으로 확률로 바꾼다."),
+        li("예탁원 공시값(2025-04-14~2025-10-24, 129일)과 비교: 자체 산출이 평균 1주 +3.5bp, 2주 +3.6bp, 1개월 +2.5bp, 3개월 +1.6bp 높다(스프레드 관측 기간이 짧은 탓으로 보인다). 예탁원 값은 재배포 금지라 화면에 싣지 않는다."),
+        li("한계: CD 시가평가수익률은 소수 둘째 자리(버림)라 1bp 단위다. 1개월물 1bp는 회의 확률 약 5%p다. 평가금리라 체결 금리가 아니다. 공시가 18시 이후라 오전 갱신에는 전 영업일 값이 들어간다.")),
+    ];
+    if (cur && cur.curve) {
+      const C = cur.curve;
+      kids.push(table(["만기", "CD", "스프레드", "KOFR OIS(자체)"], ["w1", "w2", "m1", "m3"].filter((k) => C[k]).map((k) =>
+        [C[k].label, `${fx(C[k].cd, 2)}% (${ymd(C[k].cd_date)})`, `${(C[k].spread * 100).toFixed(1)}bp (${C[k].n_obs}일)`, `${fx(C[k].ois, 3)}%`])));
+      const n = cur.next;
+      if (n) kids.push(p(h("b", {}, `${ymd(n.meeting)} 회의: `), `회의 전 ${n.pre_days}일·뒤 ${n.post_days}일, KOFR−기준금리 ${(n.kofr_base * 100).toFixed(1)}bp → 회의 뒤 기대 ${fx(n.expected, 3)}%(Δ ${n.delta_bp.toFixed(1)}bp) → 인상 ${pct(n.p_hike)} · 동결 ${pct(n.p_hold)}${n.p_cut > 0 ? ` · 인하 ${pct(n.p_cut)}` : ""}`));
+    }
+    if (X && X.n) {
+      const S = X.summary, B = S.same_as_cd91;
+      const line = (name, s) => [name, `${s.hits}/${X.n}`, s.brier.toFixed(3), ...["hike", "cut"].map((a) => `${s.by_actual[a].hits}/${s.by_actual[a].n}`),
+        ...["hike", "hold", "cut"].map((a) => s.by_actual[a].p_actual == null ? "–" : pct(s.by_actual[a].p_actual))];
+      kids.push(h("h3", {}, `백테스트 (${X.first} 이후 ${X.n}회, ${X.rule})`),
+        table(["방식", "적중", "Brier", "인상 포착", "인하 포착", "인상 때 준 확률", "동결 때", "인하 때"],
+          [line("KOFR OIS(자체) 1개월", S.ois), line("과거 결정 빈도", S.base_rate), line("항상 동결", S.always_hold)]));
+      if (B) kids.push(p(`같은 회의 ${B.n}회: KOFR OIS ${B.ois.brier.toFixed(3)} · CD 91일 모형 ${B.cd91.brier.toFixed(3)} · 과거 빈도 ${B.base_rate.brier.toFixed(3)} · 항상 동결 ${B.always_hold.brier.toFixed(3)}.`));
+      kids.push(table(["회의", "관측일", "실제", "CD 1개월 → OIS", "Δ", "인상 / 인하", "CD 91일 인상 / 인하"],
+        X.rows.map((r) => [ymd(r.meeting), ymd(r.obs_date), `${actK[r.actual]}${r.move_bp ? ` ${r.move_bp > 0 ? "+" : ""}${r.move_bp}bp` : ""}`,
+          `${fx(r.ois.cd_1m, 2)}% → ${fx(r.ois.ois_1m, 3)}%`, `${r.ois.delta_bp.toFixed(1)}bp`, `${pct(r.ois.p_hike)} / ${pct(r.ois.p_cut)}`,
+          r.cd91 ? `${pct(r.cd91.p_hike)} / ${pct(r.cd91.p_cut)}` : "–"])),
+        p(h("span", { class: "note" }, "표본이 작다(인상 2회·인하 4회). 같은 자료로 CD 단기물 직접 역산 방식 3개(1-2절)를 먼저 시험한 뒤 이 방식을 시험했다. 산식은 예탁원 공시 방식을 따른 것으로 결과를 보고 고르지 않았지만, 기본값 교체는 앞으로 회의 3영업일 전 기록으로 평가한 뒤 정한다.")));
+    }
+    return sec("1-1. 자체 산출 KOFR OIS (실험값)", ...kids);
+  }
+
   function cdShortSection(sec, sub, p, li, table) {
     const X = D.cdshort;
     const cur = X && X.current;
@@ -943,7 +982,7 @@
         p("시험한 스프레드 방식(2026-10-15, 같은 28회): A 1년 중앙값(처음 정한 방식) 0.614 · B 최근 10일 중앙값 0.510 · D 7일물과 1개월물을 함께 풀어 그날 스프레드 추정 1.038. 과거 빈도 0.535, 항상 동결 0.429. B·D는 A 결과를 본 뒤 시험해 채택 근거로 쓰지 않는다. 화면 실험값은 처음 정한 A다."),
         p(h("span", { class: "note" }, "실험값이다. 화면 기본값(CD 91일 가능 범위)에 섞지 않고 날짜별 기록 비고에 남긴다. 2023-01-09 이전은 5사 평균 공시가 없어 평가하지 않았다.")));
     }
-    return sec("1-1. CD 단기물(1개월·15일) 모형 (실험값)", ...kids);
+    return sec("1-2. CD 단기물(1개월·15일) 직접 역산 (실험값)", ...kids);
   }
 
   function decisionSection(sec, sub, p, li, table) {
