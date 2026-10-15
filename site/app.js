@@ -246,14 +246,16 @@
     const ms = scen.meetings.filter((m) => m.in_range);
     const cards = ms.slice(0, 3).map((m) => {
       const pm = prev && prev.scenarios[S.s].meetings.find((x) => x.date === m.date && x.in_range);
-      const ch = pm ? m.p_hike - pm.p_hike : null;
+      // 전일 변화는 게이지 숫자와 같은 값(가능 범위 최고)끼리 비교한다
+      const top = (x) => x.range && x.range.direction === "hike" ? x.range.max : x.p_hike;
+      const ch = pm ? top(m) - top(pm) : null;
       const cls = ch == null ? "flat" : ch > 0.0005 ? "up" : ch < -0.0005 ? "down" : "flat";
       return h("div", { class: "gauge" },
         h("span", { class: `badge chg ${cls}`, title: pm ? `전일(${ymd(pd)}) 대비` : "전일 데이터 없음" }, ch == null ? "전일 –" : "전일 " + pp(ch)),
         h("h4", {}, `${ymd(m.date)} 금통위`),
         m.range && m.range.direction === "hike" ? gaugeSVG(m.range.max, m.range.min, "인상 확률 최고(가능 범위)") : gaugeSVG(m.p_hike),
-        h("div", { class: "sub" }, `동결 ${pct(m.p_hold)} · 인상 ${pct(m.p_hike)}` + (m.p_cut > 0 ? ` · 인하 ${pct(m.p_cut)}` : "")),
-        h("div", { class: "sub" }, `회의 뒤 기대 금리 ${fx(m.expected, 3)}%`),
+        h("div", { class: "sub" }, `점추정(최소 인상 경로): 동결 ${pct(m.p_hold)} · 인상 ${pct(m.p_hike)}` + (m.p_cut > 0 ? ` · 인하 ${pct(m.p_cut)}` : "")
+          + ` · 회의 뒤 기대 금리 ${fx(m.expected, 3)}%`),
         m.range ? h("div", { class: "sub range" }, `같은 금리로 가능한 범위: ${m.range.direction === "cut" ? "인하" : "인상"} ${pct(m.range.min)}~${pct(m.range.max)}.`
           + ` 각 회의를 따로 본 최고값이라 여러 회의의 최고값이 동시에 성립하지는 않는다(가까운 회의부터 배정 ${pct(m.range.early)}, 늦은 회의부터 배정 ${pct(m.range.late)})`) : "",
         h("div", { class: "sub parts" }, partsLine(staleFrom ? live : snap, m.date)),
