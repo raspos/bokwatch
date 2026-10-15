@@ -228,6 +228,35 @@
   }
   const dmon = (s) => `${+s.slice(5, 7)}월 ${+s.slice(8, 10)}일`;
 
+  // 반원 게이지: 왼쪽부터 인하 | 동결 | 인상 비율로 호를 나누고, 가운데에 가장 높은 결정을 크게
+  function decisionGaugeSVG(os, top, rest) {
+    const W = 250, H = 140, cx = W / 2, cy = 120, R = 98, T = 22;
+    const color = { hold: "var(--hold)", hike: "var(--hike)", hike2: "var(--hike)", cut: "var(--cut)", cut2: "var(--cut)" };
+    const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img")
+      .attr("aria-label", os.map((o) => `${o.name} ${pct(o.p)}`).join(", "));
+    const arc = d3.arc().innerRadius(R - T).outerRadius(R);
+    const a0 = -Math.PI / 2, span = Math.PI;
+    svg.append("path").attr("transform", `translate(${cx},${cy})`).attr("d", arc({ startAngle: a0, endAngle: a0 + span })).attr("fill", "var(--surface-2)");
+    let a = a0;
+    for (const o of os) {
+      const b = a + span * o.p;
+      svg.append("path").attr("transform", `translate(${cx},${cy})`).attr("d", arc({ startAngle: a, endAngle: b }))
+        .attr("fill", color[o.cls]).attr("opacity", o.cls.endsWith("2") ? 0.65 : 1).attr("stroke", "var(--surface)").attr("stroke-width", 1.5)
+        .append("title").text(`${o.name} ${pct(o.p)}`);
+      if (o.p >= 0.08) {
+        const mid = (a + b) / 2, rr = R + 10;
+        svg.append("text").attr("x", cx + Math.sin(mid) * rr).attr("y", cy - Math.cos(mid) * rr + 3)
+          .attr("text-anchor", Math.sin(mid) > 0.3 ? "start" : Math.sin(mid) < -0.3 ? "end" : "middle")
+          .attr("font-size", 10).attr("fill", "var(--ink-3)").text(pct(o.p, 0));
+      }
+      a = b;
+    }
+    const tc = top.bp === 0 ? "var(--ink)" : top.bp > 0 ? "var(--hike)" : "var(--cut)";
+    svg.append("text").attr("x", cx).attr("y", cy - 32).attr("text-anchor", "middle").attr("font-size", 15).attr("font-weight", 600).attr("fill", tc).text(top.name);
+    svg.append("text").attr("x", cx).attr("y", cy - 4).attr("text-anchor", "middle").attr("font-size", 30).attr("font-weight", 700).attr("fill", tc).text(pct(top.p));
+    return svg.node();
+  }
+
   function decisionCard(m, pm, pd, snapForParts) {
     const os = outcomes(m);
     const top = os.reduce((a, b) => (b.p > a.p ? b : a), os[0] || { name: "동결", p: 1, cls: "hold" });
@@ -239,10 +268,8 @@
     return h("div", { class: "gauge decision" },
       h("span", { class: `badge chg ${cls}`, title: pm ? `전일(${ymd(pd)}) 대비 인상 확률 변화` : "전일 데이터 없음" }, ch == null ? "전일 –" : "인상 전일 " + pp(ch)),
       h("h4", {}, `${dmon(m.date)} 금리 결정 전망`),
-      h("div", { class: `big ${top.bp === 0 ? "hold" : top.bp > 0 ? "hike" : "cut"}` }, `${top.name} ${pct(top.p)}`),
-      h("div", { class: "alt" }, rest.length ? rest.map((o) => `${o.name} ${pct(o.p)}`).join(" · ") : " "),
-      h("div", { class: "dbar", role: "img", "aria-label": os.map((o) => `${o.name} ${pct(o.p)}`).join(", ") },
-        ...os.map((o) => h("span", { class: o.cls, style: `width:${(o.p * 100).toFixed(2)}%`, title: `${o.name} ${pct(o.p)}` }, o.p >= 0.12 ? `${o.name} ${pct(o.p, 0)}` : ""))),
+      decisionGaugeSVG(os, top, rest),
+      h("div", { class: "dlegend" }, ...os.map((o) => h("span", {}, h("i", { class: o.cls }), `${o.name} ${pct(o.p)}`))),
       h("div", { class: "sub" }, `자체 합성 OIS 기반 모형 추정 · ${cand.join(" 또는 ")} 가정${tailNote}`),
       h("div", { class: "sub" }, `회의 뒤 기대 금리 ${fx(m.expected, 3)}% (${m.ois_source})`),
       m.cd91 && m.cd91.range ? h("div", { class: "sub range" }, `참고 — CD 91일 같은 금리로 가능한 인상 확률 범위 ${pct(m.cd91.range.min)}~${pct(m.cd91.range.max)}`) : "",
