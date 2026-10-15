@@ -77,16 +77,17 @@
 
   // ------------------------------------------------------------ 로드
   async function load() {
-    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision] = await Promise.all([
+    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort] = await Promise.all([
       getJSON("data/meta.json"), getJSON("data/status.json"), getJSON("data/guidance.json"),
       getJSON("data/reports.json"), getJSON("data/minutes.json"), getJSON("data/news.json"),
       getJSON("data/backtest.json"), getText("data/history.csv"),
       getJSON("data/events.json"), getJSON("data/qual.json"), getJSON("data/prob_log.json"), getJSON("data/decision.json"),
+      getJSON("data/cd_short.json"),
     ]);
     Object.assign(D, { meta: meta || {}, status: status || {}, guidance: guidance || { meetings: [], dotplots: [], speeches: [] },
       reports: reports || { reports: [], consensus: { by_meeting: {} } }, minutes: minutes || { meetings: [] },
       news: news || { items: [], chips: [] }, backtest, hist: hist ? parseCSV(hist) : [],
-      events: events || { upcoming: [], recent: [], all: [], indicators: {} }, qual, plog: plog || [], decision });
+      events: events || { upcoming: [], recent: [], all: [], indicators: {} }, qual, plog: plog || [], decision, cdshort });
     D.snaps = {};
   }
   async function snapshot(date) {
@@ -326,7 +327,8 @@
     const kf = c.kofr_futures && c.kofr_futures.meetings.find((x) => x.date === date);
     const bl = c.blend_experimental && c.blend_experimental.meetings.find((x) => x.date === date);
     const qm = c.qual_mix && c.qual_mix.meeting === date ? c.qual_mix : null;
-    return "실험값 — " + [kf ? `KOFR 선물 ${pct(kf.p_hike)}` : "KOFR 선물 –", bl ? `혼합 ${pct(bl.p_hike)}` : "혼합 –",
+    const cs = c.cd_short && c.cd_short.m1 && c.cd_short.m1.meeting === date ? c.cd_short.m1 : null;
+    return "실험값 — " + [...(cs ? [`CD 1개월 ${pct(cs.p_hike)}`] : []), kf ? `KOFR 선물 ${pct(kf.p_hike)}` : "KOFR 선물 –", bl ? `혼합 ${pct(bl.p_hike)}` : "혼합 –",
       ...(qm ? [`AI 정성 ${pct(qm.qual.p_hike)}`, qm.w10 ? `CD+정성10% ${pct(qm.w10.p_hike)}` : ""] : [])].filter(Boolean).join(" · ");
   }
 
@@ -836,6 +838,7 @@
           p(h("span", { class: "note" }, "tests/test_model.py가 이 숫자를 매번 확인한다."))),
         ...sub("정상 스프레드",
           p("기준금리가 오래 묶여 있던 기간(config.model.hold_windows, 현재 2023-02-24~2024-08-21, 3.50% 동결)의 'CD − 기준금리' 중앙값. 동결 구간별 값은 2021년 +20bp, 2023년 +25bp, 2024년 +10bp, 2025년 하반기 +6bp, 2026년 상반기 +32bp로 크게 흔들린다. 그래서 −5bp·+5bp 결과를 함께 보여 준다."))),
+      ...cdShortSection(sec, sub, p, li, table),
       ...sec("2. KOFR 3개월 선물 모형 (실험값)",
         h("ul", {},
           li("상품: 한국거래소 3개월무위험금리 선물. 정산가격 = 100 − 기준기간 KOFR 일별 복리금리. 기준기간은 결제월 셋째 수요일 3개월 전 ~ 결제월 셋째 수요일(SOFR 3개월 선물과 같은 구조로 놓음)."),
@@ -906,6 +909,43 @@
   }
 
   // 결정 예측 모형(실험): 회의 1건 = 표본 1개, 순서형 로지스틱
+  function cdShortSection(sec, sub, p, li, table) {
+    const X = D.cdshort;
+    const cur = X && X.current;
+    const code = (s) => h("code", {}, s);
+    const actK = { hike: "인상", hold: "동결", cut: "인하" };
+    const kids = [
+      p("CD 91일은 만기 안에 금통위가 둘 이상 들어가 회의 사이 배분을 가정으로 정해야 한다. 금융투자협회가 공시하는 CD 시가평가수익률(AAA, 평가사 5사 평균)의 1개월물·15일물은 만기 안 회의가 하나뿐이라 다음 회의 뒤 기대 기준금리를 바로 푼다."),
+      h("ul", {},
+        li(code("T × (y − s) = 회의 전 일수 × r0 + 회의 뒤 일수 × E"), " — T = 30일(1개월) 또는 15일, y = 그날 CD 금리, r0 = 현재 기준금리."),
+        li("s(정상 스프레드) = 그날 이전 1년 안에서 만기 안에 회의가 없던 날의 'CD − 기준금리' 중앙값. 회의가 없으면 기준금리 변화 기대가 없으므로 그 차이는 신용·기간 웃돈만 남는다. 미래 정보는 쓰지 않는다."),
+        li("Δ = E − r0를 CD 91일 모형과 같은 규칙으로 인상·동결·인하 확률로 바꾼다."),
+        li("한계: 공시값이 소수 둘째 자리(버림)라 1bp 단위다. 1개월물에서 1bp는 회의 확률 약 4~5%p다. 평가사 평가금리라 체결 금리가 아니다. 공시가 18시 이후라 오전 갱신에는 전 영업일 값이 들어간다.")),
+    ];
+    if (cur && cur.m1) {
+      const r = (x) => `${x.label} ${fx(x.rate, 2)}% − 스프레드 ${(x.spread * 100).toFixed(1)}bp(${x.spread_how}) → 회의 전 ${x.pre_days}일·뒤 ${x.post_days}일 → 기대 ${fx(x.expected, 3)}%(Δ ${x.delta_bp.toFixed(1)}bp) → ${ymd(x.meeting)} 인상 ${pct(x.p_hike)}${x.p_cut > 0 ? ` · 인하 ${pct(x.p_cut)}` : ""}`;
+      kids.push(h("p", {}, h("b", {}, `현재(${ymd(cur.curve_date)} 공시값): `), r(cur.m1)), ...(cur.d15 ? [p(r(cur.d15))] : []));
+    }
+    if (X && X.n) {
+      const S = X.summary, B = S.same_as_cd91;
+      const line = (name, s) => [name, `${s.hits}/${X.n}`, s.brier.toFixed(3), ...["hike", "cut"].map((a) => `${s.by_actual[a].hits}/${s.by_actual[a].n}`),
+        ...["hike", "hold", "cut"].map((a) => s.by_actual[a].p_actual == null ? "–" : pct(s.by_actual[a].p_actual))];
+      kids.push(h("h3", {}, `백테스트 (${X.first} 이후 ${X.n}회, ${X.rule})`),
+        table(["방식", "적중", "Brier", "인상 포착", "인하 포착", "인상 때 준 확률", "동결 때", "인하 때"],
+          [line("CD 1개월", S.m1), line("CD 15일", S.d15), line("과거 결정 빈도", S.base_rate), line("항상 동결", S.always_hold)]));
+      if (B) kids.push(p(`같은 회의 ${B.n}회만 비교: CD 1개월 Brier ${B.m1.brier.toFixed(3)} · CD 15일 ${B.d15.brier.toFixed(3)} · CD 91일 모형 ${B.cd91.brier.toFixed(3)} · 과거 빈도 ${B.base_rate.brier.toFixed(3)} · 항상 동결 ${B.always_hold.brier.toFixed(3)}.`));
+      kids.push(table(["회의", "관측일", "실제", "CD 1개월 금리·스프레드", "1개월 인상/인하", "15일 인상/인하", "CD 91일 인상"],
+        X.rows.map((r) => [ymd(r.meeting), ymd(r.obs_date), `${actK[r.actual]}${r.move_bp ? ` ${r.move_bp > 0 ? "+" : ""}${r.move_bp}bp` : ""}`,
+          `${fx(r.m1.rate, 2)}% · ${r.m1.spread_bp}bp`, `${pct(r.m1.p_hike)} / ${pct(r.m1.p_cut)}`, `${pct(r.d15.p_hike)} / ${pct(r.d15.p_cut)}`,
+          r.cd91 ? pct(r.cd91.p_hike) : "–"])));
+      kids.push(h("h3", {}, "판정"),
+        p("CD 1개월·15일 모두 '항상 동결'보다 Brier가 높다(나쁘다). 회의가 없던 기간의 'CD − 기준금리'가 −10bp~+27bp로 흔들려 25bp 결정 기대보다 크기 때문이다. 단기 CD로는 다음 회의 기대를 가려내지 못했다."),
+        p("시험한 스프레드 방식(2026-10-15, 같은 28회): A 1년 중앙값(처음 정한 방식) 0.614 · B 최근 10일 중앙값 0.510 · D 7일물과 1개월물을 함께 풀어 그날 스프레드 추정 1.038. 과거 빈도 0.535, 항상 동결 0.429. B·D는 A 결과를 본 뒤 시험해 채택 근거로 쓰지 않는다. 화면 실험값은 처음 정한 A다."),
+        p(h("span", { class: "note" }, "실험값이다. 화면 기본값(CD 91일 가능 범위)에 섞지 않고 날짜별 기록 비고에 남긴다. 2023-01-09 이전은 5사 평균 공시가 없어 평가하지 않았다.")));
+    }
+    return sec("1-1. CD 단기물(1개월·15일) 모형 (실험값)", ...kids);
+  }
+
   function decisionSection(sec, sub, p, li, table) {
     const X = D.decision;
     if (!X || !X.models) return sec("4-1. 결정 예측 모형 (실험)", p(h("span", { class: "note" }, "아직 산출 전")));

@@ -15,6 +15,7 @@ import time
 STEPS = [
     ("시장금리(ECOS)", ["-m", "bokwatch.fetch_rates"]),
     ("KOFR 선물(KRX)", ["-m", "bokwatch.fetch_futures"]),
+    ("CD 단기물(금투협)", ["-m", "bokwatch.fetch_cdcurve"]),
     ("한은 홈페이지", ["-m", "bokwatch.fetch_bok"]),
     ("연합뉴스 RSS", ["-m", "bokwatch.fetch_news"]),
     ("네이버 뉴스", ["-m", "bokwatch.fetch_naver"]),

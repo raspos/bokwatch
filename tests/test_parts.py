@@ -289,3 +289,23 @@ def test_ecos_retries_timeouts_then_succeeds(monkeypatch):
     cfg = {"ecos": {"base_url": "https://ecos.bok.or.kr/api", "key_env": "X"}}
     rows = fetch_rates.ecos_get(cfg, "StatisticSearch", ["817Y002"], key="K")
     assert len(calls) == 3 and rows[0]["DATA_VALUE"] == "3.24"
+
+
+def test_cd_short_solve_and_parse():
+    from datetime import date
+    from bokwatch import cd_short
+    from bokwatch.fetch_cdcurve import parse_day
+    # 10/14 공시: 1개월 3.13%, 스프레드 6bp, 기준 3.00%, 회의 10/22 → 결제 10/15부터 30일: 회의 전 7일·뒤 23일
+    r = cd_short.solve(date(2026, 10, 14), 3.00, 3.13, 0.06, 30, [date(2026, 10, 22), date(2026, 11, 26)])
+    assert (r["pre_days"], r["post_days"]) == (7, 23)
+    assert abs(r["expected"] - (3.00 + 30 * 0.07 / 23)) < 1e-4
+    assert abs(r["p_hike"] - (30 * 0.07 / 23) / 0.25) < 1e-3 and r["p_cut"] == 0
+    # 만기 안 회의가 없거나 둘이면 풀지 않는다
+    assert cd_short.solve(date(2026, 10, 23), 3.00, 3.05, 0.05, 15, [date(2026, 10, 22), date(2026, 11, 26)]) is None
+    xml = ("<BISComDspDatDTO><val1>AAA</val1><val2>전일</val2><val3>5사 평균</val3><val4>1</val4><val5>1</val5><val6>1</val6>"
+           "<val7>1</val7><val8>1</val8><val9>1</val9></BISComDspDatDTO><BISComDspDatDTO><val1>AAA</val1><val2>당일</val2>"
+           "<val3>5사 평균</val3><val4>3.07</val4><val5>3.10</val5><val6>3.13</val6><val7>3.25</val7><val8>3.67</val8>"
+           "<val9>3.70</val9></BISComDspDatDTO>")
+    row = parse_day(xml, "2026-10-14")
+    assert row["m1"] == 3.13 and row["d7"] == 3.07 and row["y1"] == 3.70
+    assert parse_day(xml.replace("당일", "x"), "2026-10-14") is None
