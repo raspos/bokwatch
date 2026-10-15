@@ -1373,7 +1373,7 @@
         h("button", { type: "button", "aria-label": "닫기", onclick: () => { t.hidden = true; } }, "닫기"));
       t.hidden = false;
     };
-    setInterval(check, 5 * 60e3);
+    setInterval(check, 2 * 60e3);
     document.addEventListener("visibilitychange", () => { if (!document.hidden) check(); });
     // 지난 시간 표시를 1분마다 새로 쓴다
     setInterval(() => { const el = $("#meta .fresh"); if (el) el.replaceWith(freshPill(D.meta.built)); }, 60e3);
