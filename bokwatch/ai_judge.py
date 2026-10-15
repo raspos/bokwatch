@@ -20,6 +20,8 @@ from datetime import datetime, timedelta
 from .common import DATA, SITE_DATA, load_config, now_kst, read_json, record_status, redact, write_json
 
 TAGS = DATA / "ai_tags.jsonl"
+SIGNAL_HIST = DATA / "signal_history.csv"
+SIGNALS = ("추가 인상 신호", "높은 금리 유지", "이번 회의 동결 신호", "인하 신호", "중기 경로", "배경 요인")
 QUAL = SITE_DATA / "qual.json"
 HIST = DATA / "qual_history.csv"
 DIRS = {"인상 압력": 1, "중립": 0, "인하 압력": -1}
@@ -435,10 +437,52 @@ def synthesize(client, cfg_ai, articles, tags, since, groups=None) -> dict:
 
 
 # ---------------------------------------------------------------- 실행
+def signal_summary(articles, tags, groups, since) -> dict:
+    """다음 회의와의 관계 신호를 사건 단위로 센다. 사건의 신호 = 묶음 안 기사 신호의 최빈값(동률이면 강도 높은 기사)."""
+    rel = {a["id"]: a for a in articles
+           if tags.get(a["id"], {}).get("relevant") and tags[a["id"]].get("signal")
+           and datetime.fromisoformat(a["published"]) >= since}
+    out = {s: {"events": 0, "examples": []} for s in SIGNALS}
+    for g in (groups or [{"ids": [i]} for i in rel]):
+        ms = [rel[i] for i in g["ids"] if i in rel]
+        if not ms:
+            continue
+        sig = max({tags[a["id"]]["signal"] for a in ms},
+                  key=lambda s: (sum(tags[a["id"]]["signal"] == s for a in ms),
+                                 max(tags[a["id"]]["strength"] for a in ms if tags[a["id"]]["signal"] == s)))
+        if sig not in out:
+            continue
+        top = max((a for a in ms if tags[a["id"]]["signal"] == sig), key=lambda a: (tags[a["id"]]["strength"], a["published"]))
+        out[sig]["events"] += 1
+        out[sig]["examples"].append({"title": top["title"], "link": top["link"], "press": top.get("press", ""),
+                                     "published": top["published"][:16], "reports": len(ms), "reason": tags[top["id"]]["reason"],
+                                     "strength": tags[top["id"]]["strength"]})
+    for s in out.values():
+        s["examples"] = sorted(s["examples"], key=lambda x: (x["strength"], x["reports"], x["published"]), reverse=True)[:3]
+    return out
+
+
+def update_signal_history(day: str, summ: dict) -> None:
+    """신호별 사건 수를 날짜별로 남긴다(나중에 결정 예측 모형의 변수 후보로 평가)."""
+    rows = []
+    if SIGNAL_HIST.exists():
+        with open(SIGNAL_HIST, encoding="utf-8") as f:
+            rows = [r for r in csv.DictReader(f) if r["date"] != day]
+    rows.append({"date": day, **{s: summ[s]["events"] for s in SIGNALS}})
+    rows.sort(key=lambda r: r["date"])
+    with open(SIGNAL_HIST, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, ["date", *SIGNALS])
+        w.writeheader()
+        w.writerows(rows)
+
+
 def build_qual(articles, tags, cfg_ai, synthesis, errors, now, groups=None, probs=None) -> dict:
     since = now - timedelta(hours=cfg_ai["window_hours"])
     idx = pressure_index(articles, tags, since, groups)
     ev_of = {i: g for g in (groups or []) for i in g["ids"]}
+    sig_since = now - timedelta(days=7)
+    signals = signal_summary(articles, tags, groups, sig_since)
+    update_signal_history(now.date().isoformat(), signals)
     hist = update_history(now.date().isoformat(), idx)
     recent = []
     for a in articles:
@@ -456,6 +500,7 @@ def build_qual(articles, tags, cfg_ai, synthesis, errors, now, groups=None, prob
         "synthesis": synthesis or prev.get("synthesis"),
         "synthesis_updated": now.isoformat(timespec="minutes") if synthesis else prev.get("synthesis_updated"),
         "probs": probs or prev.get("probs"),
+        "signals": signals, "signals_window_days": 7,
         "articles": recent[:150],
         "events": sorted([{k: g.get(k) for k in ("label", "n_reports", "direction", "factor", "how")} | {"ids": g["ids"]}
                           for g in (groups or []) if g.get("n_reports")], key=lambda g: -g["n_reports"])[:40],
@@ -469,6 +514,7 @@ def main(argv=None, client=None) -> int:
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-synth", action="store_true", help="태깅·지수만 (종합 판단 생략)")
+    ap.add_argument("--retag-signal", action="store_true", help="최근 7일 기사 중 신호(signal) 없는 태그를 다시 태깅")
     a = ap.parse_args(argv)
     cfg_ai = load_config()["ai"]
     now = now_kst()
@@ -487,6 +533,14 @@ def main(argv=None, client=None) -> int:
             return 1
         import openai
         client = openai.OpenAI()
+    if a.retag_signal:
+        cut = now - timedelta(days=7)
+        stale = [x["id"] for x in articles if x["id"] in tags and "signal" not in tags[x["id"]]
+                 and datetime.fromisoformat(x["published"]) >= cut]
+        for i in stale:
+            tags.pop(i, None)
+        cfg_ai = {**cfg_ai, "max_new_per_run": max(cfg_ai["max_new_per_run"], len(stale) + 200)}
+        print(f"다시 태깅 대상 {len(stale)}건")
     n, errs = classify(client, cfg_ai, articles, tags)
     errors += errs
     save_tags(tags, {x["id"] for x in articles})

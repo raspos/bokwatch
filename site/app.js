@@ -672,6 +672,21 @@
         (S_.watch || []).length ? [h("h4", {}, "관전 포인트"), h("ul", {}, ...S_.watch.map((c) => h("li", {}, c)))] : ""));
     } else kids.push(h("p", { class: "note" }, "종합 판단 없음 (하루 1회 daily.yml에서 생성)"));
 
+    // 다음 회의 관련 신호(사건 단위, 근거 기사)
+    if (Q.signals) {
+      const order = ["추가 인상 신호", "높은 금리 유지", "이번 회의 동결 신호", "인하 신호", "중기 경로", "배경 요인"];
+      kids.push(h("h3", {}, "다음 회의 관련 신호 ", h("small", {}, `최근 ${Q.signals_window_days}일 · 같은 사건은 한 번 · AI 분류라 근거 기사 원문 확인`)));
+      kids.push(h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },
+        h("thead", {}, h("tr", {}, h("th", {}, "신호"), h("th", {}, "사건 수"), h("th", { class: "l" }, "대표 근거"))),
+        h("tbody", {}, ...order.map((s) => {
+          const x = Q.signals[s] || { events: 0, examples: [] };
+          return h("tr", {}, h("td", {}, s), h("td", {}, x.events),
+            h("td", { class: "l" }, ...(x.examples.length ? x.examples.map((e, i) => h("div", {}, `${e.published.slice(5, 10)} ${e.press} `, ext(e.link, e.title),
+              e.reports > 1 ? ` (보도 ${e.reports}건)` : "", h("small", {}, ` — ${e.reason}`))) : ["–"])));
+        })))));
+      kids.push(h("p", { class: "note" }, "'높은 금리 유지'(긴축 기조 유지)는 이번 회의 동결과도 양립한다. '중기 경로'는 다음 회의가 아닌 시점(예: 6개월 뒤 점도표)에 관한 신호다."));
+    }
+
     // 압력지수 + 요인
     kids.push(h("h3", {}, `뉴스 태그 압력지수 `, h("small", {}, P.unit === "사건"
       ? `최근 ${Q.window_hours}시간 관련 기사 ${P.n_articles}건 → 같은 사건끼리 묶어 ${P.n}건으로 계산 · +1 인상 압력 ~ −1 인하 압력`

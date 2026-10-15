@@ -203,3 +203,14 @@ def test_bls_api_parse_skips_missing():
     pts = parse_bls_api(j)["CUUR0000SA0"]
     assert pts == [("2025-09", 324.8), ("2026-09", 336.94)]
     assert yoy_from_series(pts)["yoy"] == 3.7
+
+
+def test_signal_summary_counts_events_once():
+    arts = [{"id": f"a{i}", "title": f"총재 긴축 유지 {i}", "link": f"L{i}", "press": "p", "published": "2026-10-14T10:00+09:00"} for i in range(3)]
+    arts.append({"id": "b0", "title": "효과 점검 관망", "link": "Lb", "press": "q", "published": "2026-10-14T11:00+09:00"})
+    t = lambda s, st=2: {"relevant": True, "factor": "한은 커뮤니케이션", "direction": "중립", "strength": st, "reason": "r", "signal": s}
+    tags = {"a0": t("높은 금리 유지"), "a1": t("높은 금리 유지"), "a2": t("추가 인상 신호", 1), "b0": t("이번 회의 동결 신호")}
+    groups = [{"ids": ["a0", "a1", "a2"]}, {"ids": ["b0"]}]
+    s = ai_judge.signal_summary(arts, tags, groups, NOW - timedelta(days=7))
+    assert s["높은 금리 유지"]["events"] == 1 and s["추가 인상 신호"]["events"] == 0
+    assert s["이번 회의 동결 신호"]["events"] == 1 and s["높은 금리 유지"]["examples"][0]["reports"] == 3
