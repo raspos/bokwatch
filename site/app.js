@@ -122,7 +122,7 @@
     const failed = Object.values(st).some((v) => v && v.ok === false);
     const lines = Object.entries(SRC_NAMES).filter(([k]) => st[k]).map(([k, n]) =>
       `${st[k].ok === false ? "✕" : "✓"} ${n}: ${st[k].last_success ? stamp(st[k].last_success) : "성공 기록 없음"}${st[k].ok === false ? " (최근 시도 실패)" : ""}`);
-    return h("span", { class: "fresh", title: `매일 오전 10시 자동 갱신\n${lines.join("\n")}`, tabindex: 0 },
+    return h("span", { class: "fresh", title: `매일 오전(10시 전후) 자동 갱신\n${lines.join("\n")}`, tabindex: 0 },
       h("i", { class: `fdot ${freshCls(built, failed)}` }), "갱신 ", h("b", {}, stamp(built)), h("span", { class: "rel" }, rel(built)),
       failed ? h("span", { class: "badge warn" }, "일부 실패") : "");
   }
@@ -807,12 +807,13 @@
     reps = reps.slice().sort((a, b) => { const x = val(a, sk), y = val(b, sk); return (x > y ? 1 : x < y ? -1 : 0) * (sd === "asc" ? 1 : -1); });
     const thead = h("thead", {}, h("tr", {}, ...cols.map((c) => h("th", { class: c.l ? "l" : null, "aria-sort": c.k === sk ? (sd === "asc" ? "ascending" : "descending") : null,
       onclick: () => setS({ sort: `${c.k}:${c.k === sk && sd === "desc" ? "asc" : "desc"}` }) }, c.t))));
-    const tb = reps.map((r) => h("tr", { class: r.in_window === false ? "out" : null, title: r.in_window === false ? "최근 5영업일보다 오래돼 전망 집계에서 뺌" : null }, ...cols.map((c) => {
+    const tb = reps.map((r) => h("tr", { class: r.in_window === false || r.superseded ? "out" : null,
+      title: r.superseded ? "같은 기관의 새 전망이 있어 집계에서 뺌" : r.in_window === false ? "최근 5영업일보다 오래돼 전망 집계에서 뺌" : null }, ...cols.map((c) => {
       if (c.k.startsWith("call:")) { const x = (r.calls || {})[c.k.slice(5)]; return h("td", { class: x ? "call-" + x.call : null, title: x && x.note || null }, x ? x.call + (x.size ? ` ${Math.round(x.size * 100)}bp` : "") + (x.note ? "*" : "") : "–"); }
       if (c.k === "terminal") return h("td", {}, r.terminal != null ? fx(r.terminal) + "%" : "–");
       if (c.k === "source") return h("td", { class: "l" }, r.link ? ext(r.link, r.source) : r.source || "–");
       if (c.k === "published") return h("td", {}, ymd(r.published), (D.reports.new || []).includes(r.institution) ? h("span", { class: "badge new" }, "새") : "",
-        r.in_window === false ? h("span", { class: "badge" }, "집계 제외") : "");
+        r.superseded ? h("span", { class: "badge" }, "이전 전망") : r.in_window === false ? h("span", { class: "badge" }, "집계 제외") : "");
       return h("td", { class: c.l ? "l" : null }, r[c.k] || "–");
     })));
     $("#repTable").replaceChildren(thead, h("tbody", {}, tb));

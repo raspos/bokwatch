@@ -151,11 +151,14 @@ def experimental_note(cur, date_s: str) -> str:
 
 def update_prob_log(cur, today, stalled: str | None, write: bool) -> list[dict]:
     """매일 화면에 낸 확률을 날짜별로 고정 저장한다(재계산으로 바뀌지 않는 기록).
-    write=True(일일 실행)일 때만 오늘 줄을 새로 쓰고, 같은 날 다시 돌리면 오늘 줄만 바꾼다."""
+    write=True(일일 실행)일 때만 오늘 줄을 쓴다. 오늘 '산출' 줄이 이미 있으면 그대로 둔다(그날 처음 산출한 값 고정).
+    오늘 줄이 '중단'뿐이면 새로 산출한 값으로 바꾼다."""
     rows = []
     if PROB_LOG.exists():
         with open(PROB_LOG, encoding="utf-8") as f:
             rows = list(csv.DictReader(f))
+    if write and any(r["date"] == today.isoformat() and r["status"] == "산출" for r in rows):
+        write = False
     if write:
         day = today.isoformat()
         rows = [r for r in rows if r["date"] != day]

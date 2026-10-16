@@ -59,8 +59,12 @@ def build_reports(meetings: list[str], today: date) -> dict:
     r = load_reports()
     reps = sorted(r["reports"], key=lambda x: x["published"], reverse=True)
     since = window_start(today).isoformat()
+    newest = {}
+    for x in sorted(reps, key=lambda z: z["published"]):
+        newest[x["institution"]] = id(x)
     for x in reps:
         x["in_window"] = x["published"] >= since
+        x["superseded"] = newest[x["institution"]] != id(x)
     return {
         "asof": r.get("asof"),
         "reports": reps,
