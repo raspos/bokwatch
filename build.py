@@ -290,8 +290,8 @@ def main(argv=None):
                 {"name": "BLS·연준·FRED", "what": "미국 CPI·고용 일정, FOMC 일정, 미국 CPI 실제치", "url": "https://www.bls.gov/schedule/"},
                 {"name": "네이버 뉴스 검색 API(NAVER API HUB)", "what": "제목·검색 요약·링크(기사 탭 최근 7일·AI 정성 판단 입력)", "url": "https://api.ncloud-docs.com/docs/naver-api-hub-search-news"},
                 {"name": "OpenAI API", "what": "기사 태깅(한은·연준 영향 구분)·사건 묶기·정성 종합 판단(자동, 참고용)", "url": None},
-                {"name": "data/reports.yaml", "what": "증권사·IB 전망(수기, 보도 인용)", "url": None},
-                {"name": "data/guidance.yaml", "what": "결정·표결·점도표(한은 공보 대조), 발언(보도 인용)", "url": None},
+                {"name": "수기 입력", "what": "증권사·IB 전망(보도 인용)", "url": None},
+                {"name": "수기 입력", "what": "결정·표결·점도표(한은 공보 대조), 총재 발언(보도 인용)", "url": None},
             ],
         })
     meta["new_main_news"] = new_main
