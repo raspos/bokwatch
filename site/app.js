@@ -807,11 +807,12 @@
     reps = reps.slice().sort((a, b) => { const x = val(a, sk), y = val(b, sk); return (x > y ? 1 : x < y ? -1 : 0) * (sd === "asc" ? 1 : -1); });
     const thead = h("thead", {}, h("tr", {}, ...cols.map((c) => h("th", { class: c.l ? "l" : null, "aria-sort": c.k === sk ? (sd === "asc" ? "ascending" : "descending") : null,
       onclick: () => setS({ sort: `${c.k}:${c.k === sk && sd === "desc" ? "asc" : "desc"}` }) }, c.t))));
-    const tb = reps.map((r) => h("tr", {}, ...cols.map((c) => {
+    const tb = reps.map((r) => h("tr", { class: r.in_window === false ? "out" : null, title: r.in_window === false ? "최근 5영업일보다 오래돼 전망 집계에서 뺌" : null }, ...cols.map((c) => {
       if (c.k.startsWith("call:")) { const x = (r.calls || {})[c.k.slice(5)]; return h("td", { class: x ? "call-" + x.call : null, title: x && x.note || null }, x ? x.call + (x.size ? ` ${Math.round(x.size * 100)}bp` : "") + (x.note ? "*" : "") : "–"); }
       if (c.k === "terminal") return h("td", {}, r.terminal != null ? fx(r.terminal) + "%" : "–");
       if (c.k === "source") return h("td", { class: "l" }, r.link ? ext(r.link, r.source) : r.source || "–");
-      if (c.k === "published") return h("td", {}, ymd(r.published), (D.reports.new || []).includes(r.institution) ? h("span", { class: "badge new" }, "새") : "");
+      if (c.k === "published") return h("td", {}, ymd(r.published), (D.reports.new || []).includes(r.institution) ? h("span", { class: "badge new" }, "새") : "",
+        r.in_window === false ? h("span", { class: "badge" }, "집계 제외") : "");
       return h("td", { class: c.l ? "l" : null }, r[c.k] || "–");
     })));
     $("#repTable").replaceChildren(thead, h("tbody", {}, tb));
@@ -854,7 +855,7 @@
     const term = Object.entries(cons.terminal || {});
     cards.push(h("div", { class: "tile" }, h("div", { class: "k" }, "최종금리 전망 분포"),
       term.length ? h("div", {}, ...term.map(([k, n]) => h("div", { class: "s" }, `${k}% — ${n}곳`))) : h("div", { class: "s" }, "입력 없음"),
-      h("div", { class: "note" }, `기관 ${cons.institutions}곳(기관별 최신 보고서 기준)`)));
+      h("div", { class: "note" }, `기관 ${cons.institutions}곳(${cons.since ? md(cons.since) + " 이후 " : ""}최근 ${cons.window_bd || 5}영업일 보고서, 기관별 최신)`)));
     $("#consensus").replaceChildren(...cards);
   }
 

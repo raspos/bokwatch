@@ -339,3 +339,14 @@ def test_kofr_ois_bootstrap_second_meeting():
     assert abs(91 * 3.1284 - (7 * 3.033 + 35 * (e1 + 0.033) + 49 * (e2 + 0.033))) < 0.01
     assert path[1]["tail_assumed"] == ["2027-01-11"]
     assert abs(path[1]["delta_bp"] - (e2 - e1) * 100) < 0.01
+
+
+def test_consensus_window_five_business_days():
+    from datetime import date
+    from bokwatch.reports import consensus, window_start
+    assert window_start(date(2026, 10, 16)) == date(2026, 10, 12)   # 금 → 월(주말 제외 5영업일)
+    assert window_start(date(2026, 10, 19)) == date(2026, 10, 13)   # 월 → 화
+    reps = [{"institution": "A", "published": "2026-10-14", "calls": {"2026-10-22": {"call": "동결"}}},
+            {"institution": "B", "published": "2026-08-27", "calls": {"2026-10-22": {"call": "인상"}}}]
+    c = consensus(reps, ["2026-10-22"], date(2026, 10, 16))
+    assert c["by_meeting"]["2026-10-22"]["counts"] == {"동결": 1} and c["institutions"] == 1
