@@ -223,13 +223,18 @@ def test_prob_log_fixed_daily_record(monkeypatch):
         rows = build.update_prob_log(cur, date(2026, 10, 14), None, write=True)
         assert [(r["date"], r["meeting"], float(r["p_hike"])) for r in rows] == [
             ("2026-10-14", "2026-10-22", 0.0), ("2026-10-14", "2026-11-26", 0.455)]
-        # 같은 날 다시 돌리면 그날 줄만 바뀐다. 중단이면 수치 없이 사유만 남긴다
+        # 같은 날 다시 돌려도 그날 처음 산출한 값은 그대로 둔다(뒤 실행이 중단이어도 덮어쓰지 않음)
         rows = build.update_prob_log(cur, date(2026, 10, 14), "만기가 확정 일정 밖", write=True)
-        assert len(rows) == 1 and rows[0]["status"] == "중단" and rows[0]["p_hike"] == ""
+        assert len(rows) == 2 and all(r["status"] == "산출" for r in rows)
+        # 그날 첫 실행이 중단이면 사유만 남고, 뒤에 산출되면 그 값으로 바뀐다
+        rows = build.update_prob_log(cur, date(2026, 10, 13), "만기가 확정 일정 밖", write=True)
+        assert [r["status"] for r in rows if r["date"] == "2026-10-13"] == ["중단"]
+        rows = build.update_prob_log(cur, date(2026, 10, 13), None, write=True)
+        assert [r["status"] for r in rows if r["date"] == "2026-10-13"] == ["산출", "산출"]
         # 다음 날 기록이 앞날 기록을 지우지 않는다. write=False면 읽기만
         build.update_prob_log(cur, date(2026, 10, 15), None, write=True)
         rows = build.update_prob_log(None, date(2026, 10, 16), None, write=False)
-        assert sorted({r["date"] for r in rows}) == ["2026-10-14", "2026-10-15"]
+        assert sorted({r["date"] for r in rows}) == ["2026-10-13", "2026-10-14", "2026-10-15"]
     finally:
         f.unlink(missing_ok=True)
 
