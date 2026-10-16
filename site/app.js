@@ -426,7 +426,7 @@
       const os = outcomes(m);
       const r = h("tr", {}, h("td", {}, ymd(m.date)), h("td", {}, fx(ex, 3) + "%"), h("td", {}, bp(ex - snap.r0)), h("td", {}, bp(ex - prevE)),
         h("td", {}, os.map((o) => `${o.name} ${pct(o.p)}`).join(" · ")),
-        h("td", { class: "l" }, m.method === "kofr_ois" ? m.ois_source.replace(" OIS", "").replace(" + ", "·") + " OIS" : "CD 91일"));
+        h("td", { class: "l" }, m.method === "kofr_ois" ? m.ois_source.replace(" OIS + ", "·") : "CD 91일"));
       prevE = ex;
       return r;
     });
@@ -812,7 +812,7 @@
       if (c.k.startsWith("call:")) { const x = (r.calls || {})[c.k.slice(5)]; return h("td", { class: x ? "call-" + x.call : null, title: x && x.note || null }, x ? x.call + (x.size ? ` ${Math.round(x.size * 100)}bp` : "") + (x.note ? "*" : "") : "–"); }
       if (c.k === "terminal") return h("td", {}, r.terminal != null ? fx(r.terminal) + "%" : "–");
       if (c.k === "source") return h("td", { class: "l" }, r.link ? ext(r.link, r.source) : r.source || "–");
-      if (c.k === "published") return h("td", {}, ymd(r.published), (D.reports.new || []).includes(r.institution) ? h("span", { class: "badge new" }, "새") : "",
+      if (c.k === "published") return h("td", {}, ymd(r.published), (D.reports.new || []).includes(r.institution) && !r.superseded ? h("span", { class: "badge new" }, "새") : "",
         r.superseded ? h("span", { class: "badge" }, "이전 전망") : r.in_window === false ? h("span", { class: "badge" }, "집계 제외") : "");
       return h("td", { class: c.l ? "l" : null }, r[c.k] || "–");
     })));
