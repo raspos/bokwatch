@@ -1,20 +1,21 @@
 # 기관 전망 (수기 입력). verify: true = 언론 보도 인용 초기값, 원문 대조 필요.
 # calls: 회의별 전망  {회의일: {call: 동결|인상|인하, size: 0.25}}
 # dissent: 소수의견 전망 문자열, terminal: 최종금리(%), path: 경로 설명
-asof: "2026-10-16"
+asof: "2026-10-17"
 
 reports:
   - institution: BNP파리바
     author: 윤지호
     published: "2026-10-16"
     calls:
-      "2026-10-22": {call: 동결}
-    dissent: 인상 소수의견 1명
+      "2026-10-22": {call: 동결, note: 만장일치}
+      "2026-11-26": {call: 인상, size: 0.25}
+    dissent: "만장일치(같은 날 이투데이 금통위폴에는 1인 소수의견)"
     terminal: 3.25
-    path: null
-    rationale: 10월 동결, 1인 소수의견
-    source: 이투데이 10/16 [금통위폴] (보고서 원문 미확인)
-    link: "https://www.etoday.co.kr/news/view/2636304"
+    path: "11월 3.25%, 성장·소득이 물가를 더 밀면 2027년 상반기 추가 인상 가능"
+    rationale: 연속 인상으로 정책 효과 점검할 시간 여유, 근원물가 흐름이 핵심 변수
+    source: 연합인포맥스 10/16 인터뷰 (보고서 원문 미확인)
+    link: "https://news.einfomax.co.kr/news/articleView.html?idxno=4439678"
     verify: true
 
   - institution: 메리츠증권
