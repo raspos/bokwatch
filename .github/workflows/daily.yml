@@ -32,6 +32,9 @@ jobs:
         with: { python-version: "3.12", cache: pip }
       - run: pip install -r requirements.txt
       - name: 전체 갱신(단계별 실패는 건너뛰고 직전 값 유지)
+        env:
+          # 예약 실행만: 오늘 기록이 이미 있으면 건너뜀. 수동 실행(workflow_dispatch)은 항상 돈다.
+          SKIP_IF_DONE_TODAY: ${{ github.event_name == 'schedule' && '1' || '0' }}
         run: python run_daily.py
       - name: 커밋
         run: |

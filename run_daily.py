@@ -27,7 +27,25 @@ STEPS = [
 ]
 
 
+def already_done_today() -> bool:
+    """오늘 날짜별 확률 기록에 '산출' 줄이 있으면 True(그날 정기 갱신을 이미 마침)."""
+    import csv
+    from datetime import datetime, timedelta, timezone
+    from pathlib import Path
+    log = Path(__file__).parent / "data" / "prob_log.csv"
+    if not log.exists():
+        return False
+    today = datetime.now(timezone(timedelta(hours=9))).date().isoformat()
+    with open(log, encoding="utf-8") as f:
+        return any(r["date"] == today and r["status"] == "산출" for r in csv.DictReader(f))
+
+
 def main() -> int:
+    import os
+    # 예약 실행은 같은 날 두 번 이상 돌지 않는다(AI 비용·기록 보호). 수동 실행은 이 값을 주지 않으면 그대로 돈다.
+    if os.environ.get("SKIP_IF_DONE_TODAY") == "1" and already_done_today():
+        print("오늘 정기 갱신 기록이 이미 있어 건너뜀")
+        return 0
     failed = []
     for label, args in STEPS:
         t = time.time()
