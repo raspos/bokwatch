@@ -317,16 +317,28 @@
     return svg.node();
   }
 
+  // 날짜별 확률 기록에서 오늘 기록 전 마지막 '산출' 값(정기 기록만)
+  function prevRecord(meeting) {
+    const L = (D.plog || []).filter((r) => r.status === "산출" && r.meeting === meeting && r.date.length === 10);
+    const today = todayKST();
+    const past = L.filter((r) => r.date < today).sort((a, b) => a.date.localeCompare(b.date));
+    const r = past[past.length - 1];
+    return r && r.p_hike !== "" ? { date: r.date, p: +r.p_hike } : null;
+  }
+
   function decisionCard(m, pm, pd, snapForParts) {
     const os = outcomes(m);
     const top = os.reduce((a, b) => (b.p > a.p ? b : a), os[0] || { name: "동결", p: 1, cls: "hold" });
     const rest = os.filter((o) => o !== top).sort((a, b) => b.p - a.p);
-    const ch = pm ? m.p_hike - pm.p_hike : null;
+    // 전일 대비: 전날 화면에 실제로 낸 값(날짜별 확률 기록)과 비교한다. 기록이 없으면 다시 계산한 전날 값과 비교
+    const rec = S.d === D.meta.latest ? prevRecord(m.date) : null;  // 지난 날짜를 볼 때는 다시 계산한 값끼리 비교
+    const ch = rec ? m.p_hike - rec.p : pm ? m.p_hike - pm.p_hike : null;
+    const chTitle = rec ? `${ymd(rec.date)} 기록(${pct(rec.p)}) 대비 인상 확률 변화` : pm ? `전일(${ymd(pd)}) 다시 계산한 값 대비` : "전일 데이터 없음";
     const cls = ch == null ? "flat" : ch > 0.0005 ? "up" : ch < -0.0005 ? "down" : "flat";
     const cand = ["동결", ...os.filter((o) => o.bp !== 0).map((o) => o.name)].filter((x, i, a) => a.indexOf(x) === i);
     const tailNote = "";
     return h("div", { class: "gauge decision" },
-      h("span", { class: `badge chg ${cls}`, title: pm ? `전일(${ymd(pd)}) 대비 인상 확률 변화` : "전일 데이터 없음" }, ch == null ? "전일 –" : "인상 전일 " + pp(ch)),
+      h("span", { class: `badge chg ${cls}`, title: chTitle }, ch == null ? "전일 –" : "인상 전일 " + pp(ch)),
       h("h4", {}, `${dmon(m.date)} 금리 결정 전망`),
       decisionGaugeSVG(os, top, rest),
       h("div", { class: "dlegend" }, ...os.map((o) => h("span", {}, h("i", { class: o.cls }), `${o.name} ${pct(o.p)}`))),
