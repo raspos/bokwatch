@@ -252,7 +252,7 @@ def classify(client, cfg_ai: dict, articles: list[dict], tags: dict) -> tuple[in
                     "published": a["published"]} for a in batch]
         user = "<articles>\n" + json.dumps(payload, ensure_ascii=False) + "\n</articles>"
         try:
-            res = call_json(client, cfg_ai["model"], CLASSIFY_SYSTEM, user, schema, cfg_ai.get("classify_effort"), name="tags")
+            res = call_json(client, cfg_ai.get("classify_model") or cfg_ai["model"], CLASSIFY_SYSTEM, user, schema, cfg_ai.get("classify_effort"), name="tags")
         except Exception as e:
             errors.append(f"태깅: {type(e).__name__}: {e}")
             continue
@@ -260,7 +260,7 @@ def classify(client, cfg_ai: dict, articles: list[dict], tags: dict) -> tuple[in
         t = now_kst().isoformat(timespec="minutes")
         for r in res.get("items", []):
             if r["id"] in valid:
-                tags[r["id"]] = {**r, "model": cfg_ai["model"], "tagged": t}
+                tags[r["id"]] = {**r, "model": cfg_ai.get("classify_model") or cfg_ai["model"], "tagged": t}
                 n += 1
     return n, errors
 
@@ -306,7 +306,7 @@ def group_events(client, cfg_ai: dict, arts: list[dict]) -> tuple[list[dict], st
         payload = [{"id": a["id"], "published": a["published"][:16], "press": a.get("press", ""),
                     "title": a["title"], "summary": (a.get("summary") or "")[:120]} for a in arts]
         try:
-            res = call_json(client, cfg_ai["model"], GROUP_SYSTEM,
+            res = call_json(client, cfg_ai.get("group_model") or cfg_ai["model"], GROUP_SYSTEM,
                             "<articles>\n" + json.dumps(payload, ensure_ascii=False) + "\n</articles>",
                             group_schema(), cfg_ai.get("classify_effort"), max_tokens=16000, name="groups")
             valid, seen, groups = {a["id"] for a in arts}, set(), []
@@ -547,7 +547,7 @@ def build_qual(articles, tags, cfg_ai, synthesis, errors, now, groups=None, prob
     prev = read_json(QUAL, {}) or {}
     return {
         "updated": now.isoformat(timespec="minutes"),
-        "model": cfg_ai["model"], "window_hours": cfg_ai["window_hours"],
+        "model": cfg_ai["model"], "classify_model": cfg_ai.get("classify_model") or cfg_ai["model"], "window_hours": cfg_ai["window_hours"],
         "pressure": idx, "history": hist,
         "synthesis": synthesis or prev.get("synthesis"),
         "synthesis_updated": now.isoformat(timespec="minutes") if synthesis else prev.get("synthesis_updated"),

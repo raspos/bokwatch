@@ -235,7 +235,11 @@ ai:
   # gpt-5.5 날짜 고정판(2026-10-14 결정). 별칭(gpt-5.5) 대신 고정판을 써서 같은 입력에 같은 모델이 돌게 한다.
   model: gpt-5.5-2026-04-23
   # reasoning_effort: 추론 모델일 때만 보낸다. 비추론 모델이면 null.
-  classify_effort: low       # 기사 태깅
+  # 기사 태깅은 소형 모델(비용 절감, 2026-10-17). 같은 80건 비교에서 gpt-5.5 재태깅과 일치율이 비슷했다
+  # (방향 82% 대 78%, 중앙은행 80% 대 82%, 신호 78% 대 92%). nano는 관련성 일치 55%라 쓰지 않음.
+  classify_model: gpt-5.4-mini-2026-03-17
+  classify_effort: medium    # 기사 태깅(mini는 low면 신호 일치 54%로 떨어짐)
+  group_model: null          # 사건 묶기는 종합 판단 모델(gpt-5.5) 그대로
   synth_effort: medium       # 종합 판단
   batch_size: 40
   max_new_per_run: 800       # 실행당 태깅 상한(비용 상한). 하루 1회 실행이라 하루치 기사(약 600건)를 한 번에 태깅
