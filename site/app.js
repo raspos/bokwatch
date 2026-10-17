@@ -338,7 +338,9 @@
     const cand = ["동결", ...os.filter((o) => o.bp !== 0).map((o) => o.name)].filter((x, i, a) => a.indexOf(x) === i);
     const tailNote = "";
     return h("div", { class: "gauge decision" },
-      h("span", { class: `badge chg ${cls}`, title: chTitle }, ch == null ? "전일 –" : "인상 전일 " + pp(ch)),
+      h("span", { class: `badge chg ${cls}`, title: chTitle }, ch == null ? "전일 –"
+        : [h("span", { class: "full" }, "인상 전일 " + pp(ch)),
+          h("span", { class: "short" }, (ch > 0.0005 ? "▲" : ch < -0.0005 ? "▼" : "") + Math.abs(ch * 100).toFixed(1) + "%p")]),
       h("h4", {}, `${dmon(m.date)} 금리 결정 전망`),
       decisionGaugeSVG(os, top, rest),
       h("div", { class: "dlegend" }, ...os.map((o) => h("span", {}, h("i", { class: o.cls }), `${o.name} ${pct(o.p)}`))),
