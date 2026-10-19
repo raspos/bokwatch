@@ -1,10 +1,93 @@
 # 기관 전망 (수기 입력). verify: true = 언론 보도 인용 초기값, 원문 대조 필요.
 # calls: 회의별 전망  {회의일: {call: 동결|인상|인하, size: 0.25}}
 # dissent: 소수의견 전망 문자열, terminal: 최종금리(%), path: 경로 설명
-asof: "2026-10-18"
+asof: "2026-10-19"
 
 reports:
+  - institution: JP모건
+    author: 박석길
+    published: "2026-10-19"
+    calls:
+      "2026-10-22": {call: 동결}
+      "2026-11-26": {call: 인상, size: 0.25}
+    dissent: null
+    terminal: 3.75
+    path: "11월, 2027년 1·2분기 각 0.25%p"
+    rationale: 11월 0.25%p 인상 뒤 2027년 1·2분기 추가 인상
+    source: CBC뉴스 10/19 전문가 6인 설문 (보고서 원문 미확인)
+    link: "https://www.cbci.co.kr/news/articleView.html?idxno=616766"
+    verify: true
+
   - institution: NH금융연구소
+    author: 조영무
+    published: "2026-10-19"
+    calls:
+      "2026-10-22": {call: 동결}
+      "2026-11-26": {call: 열어둠, note: 11월 인상 가능성}
+    dissent: null
+    terminal: null
+    path: "3.75% 충분히 가능"
+    rationale: 10월 동결, 11월 인상 가능성(같은 연구소 한준희 책임연구원은 10/18 10월 인상 전망)
+    source: CBC뉴스 10/19 전문가 6인 설문 (보고서 원문 미확인)
+    link: "https://www.cbci.co.kr/news/articleView.html?idxno=616766"
+    verify: true
+
+  - institution: 현대경제연구원
+    author: 주원
+    published: "2026-10-19"
+    calls:
+      "2026-10-22": {call: 동결}
+      "2026-11-26": {call: 동결, note: 올해 인상 중단}
+    dissent: null
+    terminal: null
+    path: "최종 3.25~3.50%"
+    rationale: 올해 인상 중단, 2027년 상반기 상황 보고 판단
+    source: CBC뉴스 10/19 전문가 6인 설문 (보고서 원문 미확인)
+    link: "https://www.cbci.co.kr/news/articleView.html?idxno=616766"
+    verify: true
+
+  - institution: 한국투자증권
+    author: 안재균
+    published: "2026-10-19"
+    calls:
+      "2026-10-22": {call: 동결}
+      "2026-11-26": {call: 열어둠, note: 10월 근원물가가 예상 웃돌면 인상}
+    dissent: null
+    terminal: 3.50
+    path: "2027년 1분기까지 3.50%"
+    rationale: 10월 동결, 근원물가에 따라 11월 인상 가능
+    source: CBC뉴스 10/19 전문가 6인 설문 (보고서 원문 미확인)
+    link: "https://www.cbci.co.kr/news/articleView.html?idxno=616766"
+    verify: true
+
+  - institution: 노무라
+    author: 박정우
+    published: "2026-10-19"
+    calls:
+      "2026-10-22": {call: 동결}
+      "2026-11-26": {call: 인상, size: 0.25}
+    dissent: null
+    terminal: 3.50
+    path: "11월·2027년 2월 인상"
+    rationale: 11월 0.25%p, 2027년 2월 추가 인상
+    source: CBC뉴스 10/19 전문가 6인 설문 (보고서 원문 미확인)
+    link: "https://www.cbci.co.kr/news/articleView.html?idxno=616766"
+    verify: true
+
+  - institution: 유진투자증권
+    author: 김지나
+    published: "2026-10-19"
+    calls:
+      "2026-10-22": {call: 동결}
+    dissent: null
+    terminal: null
+    path: "최종 3.75%까지 열어둠"
+    rationale: 연속 인상 뒤 쉼표, 최종금리 3.75%까지 열어놓을 수 있음
+    source: 이데일리 10/19 [금통위 폴] (보고서 원문 미확인)
+    link: "https://www.edaily.co.kr/News/Read?newsId=01331686645614560&mediaCodeNo=257"
+    verify: true
+
+  - institution: NH금융연구소(한준희)
     author: 한준희
     published: "2026-10-18"
     calls:

@@ -240,8 +240,9 @@ ai:
   classify_model: gpt-5.4-mini-2026-03-17
   classify_effort: medium    # 기사 태깅(mini는 low면 신호 일치 54%로 떨어짐)
   group_model: null          # 사건 묶기는 종합 판단 모델(gpt-5.5) 그대로
+  group_effort: low          # 사건 묶기 추론 강도(태깅과 따로. 2026-10-19 태깅을 medium으로 올리며 묶기가 깨져 분리)
   synth_effort: medium       # 종합 판단
-  batch_size: 40
+  batch_size: 20             # mini 중간 추론은 출력이 길어 40건이면 한도를 넘는다(2026-10-19)
   max_new_per_run: 800       # 실행당 태깅 상한(비용 상한). 하루 1회 실행이라 하루치 기사(약 600건)를 한 번에 태깅
   window_hours: 72           # 종합 판단에 쓰는 기사 범위
   factors: [물가, 환율, 부동산·가계부채, 성장·경기, 미 연준·글로벌 금리, 금융안정·시장, 한은 커뮤니케이션, 시장·기관 전망, 정부·정치, 기타]

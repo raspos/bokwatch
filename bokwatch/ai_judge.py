@@ -85,6 +85,8 @@ GROUP_SYSTEM = """당신은 경제부 데스크의 보조 분석가다. <article
 - 입력의 모든 id를 정확히 한 묶음에 넣는다. 혼자인 기사는 혼자 한 묶음이다.
 - 주제가 같다는 이유만으로 묶지 않는다(예: 집값 기사들, 금통위 전망 기사들, 시황 기사들은 각각 다른 사건).
 - '기타', '개별', '일반' 같은 모음 묶음을 만들지 않는다.
+- 한 묶음은 48시간 안에 보도된 같은 사건 하나다. 같은 주제가 며칠 이어지면 날짜·자리별로 나눈다.
+- 다른 기사와 묶일 사건이 없으면 그 기사 혼자 한 묶음으로 둔다. 묶음 수가 많아져도 괜찮다.
 - label: 사건을 15자 안팎 한국어로(예: '총재 CNN 패널토론 10/14')."""
 
 
@@ -308,7 +310,7 @@ def group_events(client, cfg_ai: dict, arts: list[dict]) -> tuple[list[dict], st
         try:
             res = call_json(client, cfg_ai.get("group_model") or cfg_ai["model"], GROUP_SYSTEM,
                             "<articles>\n" + json.dumps(payload, ensure_ascii=False) + "\n</articles>",
-                            group_schema(), cfg_ai.get("classify_effort"), max_tokens=16000, name="groups")
+                            group_schema(), cfg_ai.get("group_effort", "low"), max_tokens=16000, name="groups")
             valid, seen, groups = {a["id"] for a in arts}, set(), []
             when = {a["id"]: datetime.fromisoformat(a["published"]) for a in arts}
             for g in res.get("groups", []):
@@ -318,8 +320,9 @@ def group_events(client, cfg_ai: dict, arts: list[dict]) -> tuple[list[dict], st
                     continue
                 span = (max(when[i] for i in ids) - min(when[i] for i in ids)).total_seconds() / 3600
                 if len(ids) > 1 and (_re.search(r"기타|개별|일반|모음|미분류|논쟁|동향|전반|종합", g["label"]) or span > 48):
-                    groups += [{"label": next(a["title"] for a in arts if a["id"] == i)[:30], "ids": [i], "how": "AI 모음 묶음→단독"}
-                               for i in ids]
+                    # 모음 묶음·48시간 넘는 묶음은 그 안에서 제목 유사도로 다시 나눈다(통째로 단독 처리하면 같은 사건도 흩어짐)
+                    sub = group_by_title([a for a in arts if a["id"] in set(ids)])
+                    groups += [{**x, "how": "AI 모음 묶음→제목 유사도"} for x in sub]
                     continue
                 groups.append({"label": g["label"][:40], "ids": ids, "how": "AI"})
             groups += [{"label": a["title"][:30], "ids": [a["id"]], "how": "AI 누락→단독"} for a in arts if a["id"] not in seen]
