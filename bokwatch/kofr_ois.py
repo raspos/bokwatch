@@ -128,9 +128,10 @@ def _probs(delta: float) -> dict:
     return {f"p_{k}": round(v, 4) for k, v in p.items()}
 
 
-def solve_path(c: dict, r0: float, k_spread: float, meetings: list[date]) -> list[dict]:
+def solve_path(c: dict, r0: float, k_spread: float, meetings: list[date], assumed: set[date] | None = None) -> list[dict]:
     """1개월 OIS로 다음 회의, 3개월 OIS로 그다음 회의를 차례로 푼다(부트스트래핑).
-    회의별 확률은 Δ_k = E_k − E_(k−1)로 CD 91일 모형과 같은 규칙. 미지수가 둘 이상 남으면 풀지 않는다."""
+    회의별 확률은 Δ_k = E_k − E_(k−1)로 CD 91일 모형과 같은 규칙. 미지수가 둘 이상 남으면 풀지 않는다.
+    assumed(일정 공지 전 가정 회의)는 만기 안 남은 일수와 상관없이 변화 없음 꼬리로 둔다."""
     known: dict[date, float] = {}
     out = []
     first = next_meeting(c, r0, k_spread, meetings)
@@ -147,7 +148,7 @@ def solve_path(c: dict, r0: float, k_spread: float, meetings: list[date]) -> lis
     if not ms:
         return out
     unknown = [m for m in ms if m not in known]
-    tail = [m for m in unknown[1:] if (end - m).days <= TAIL_DAYS]
+    tail = [m for m in unknown[1:] if (end - m).days <= TAIL_DAYS or m in (assumed or ())]
     core = [m for m in unknown if m not in tail]
     if len(core) != 1:
         return out
@@ -177,11 +178,12 @@ def solve_path(c: dict, r0: float, k_spread: float, meetings: list[date]) -> lis
     return out
 
 
-def compute(o: OIS, day: date, r0: float, k_spread: float, meetings: list[date], max_stale: int = 5) -> dict | None:
+def compute(o: OIS, day: date, r0: float, k_spread: float, meetings: list[date], max_stale: int = 5,
+            assumed: set[date] | None = None) -> dict | None:
     c = o.curve_on(day, max_stale)
     if not c:
         return None
-    path = solve_path(c, r0, k_spread, meetings)
+    path = solve_path(c, r0, k_spread, meetings, assumed)
     return {"curve": c, "next": next_meeting(c, r0, k_spread, meetings), "path": path}
 
 

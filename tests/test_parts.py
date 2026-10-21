@@ -346,6 +346,19 @@ def test_kofr_ois_bootstrap_second_meeting():
     assert abs(path[1]["delta_bp"] - (e2 - e1) * 100) < 0.01
 
 
+def test_kofr_ois_assumed_meeting_is_tail_even_when_long():
+    from datetime import date
+    from bokwatch import kofr_ois
+    c = {"m1": {"cd_date": "2026-10-20", "tenor_days": 30, "ois": 3.0762},
+         "m3": {"cd_date": "2026-10-20", "tenor_days": 91, "ois": 3.1389}}
+    ms = [date(2026, 10, 22), date(2026, 11, 26), date(2027, 1, 11)]
+    # 만기 1/20, 1/11 뒤 9일(> TAIL_DAYS): 가정 회의 표시가 없으면 풀지 못한다
+    assert [x["meeting"] for x in kofr_ois.solve_path(c, 3.00, 0.05, ms)] == ["2026-10-22"]
+    path = kofr_ois.solve_path(c, 3.00, 0.05, ms, {date(2027, 1, 11)})
+    assert [x["meeting"] for x in path] == ["2026-10-22", "2026-11-26"]
+    assert path[1]["tail_assumed"] == ["2027-01-11"]
+
+
 def test_consensus_window_five_business_days():
     from datetime import date
     from bokwatch.reports import consensus, window_start
