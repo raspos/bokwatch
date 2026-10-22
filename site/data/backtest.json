@@ -1,11 +1,11 @@
 {
- "n": 45,
+ "n": 46,
  "rule": "회의 3영업일 전 종가, 그 시점까지 자료로 정한 스프레드. CD 91일 모형(2026-10-15 전 기본값)·KOFR 선물·혼합(KOFR 50%)·자체 합성 KOFR OIS(현재 기본값, 2023-05부터)",
  "excluded": [],
- "hit_rate": 0.6222,
- "brier": 0.5715,
+ "hit_rate": 0.6304,
+ "brier": 0.559,
  "compare": {
-  "n": 36,
+  "n": 37,
   "first": "2022-04-14",
   "excluded_before": [
    "2021-02-25",
@@ -19,38 +19,38 @@
    "2022-02-24"
   ],
   "cd": {
-   "hit_rate": 0.5833,
-   "brier": 0.6031
+   "hit_rate": 0.5946,
+   "brier": 0.5868
   },
   "kofr": {
-   "hit_rate": 0.5556,
-   "brier": 0.6627
+   "hit_rate": 0.5405,
+   "brier": 0.6989
   },
   "blend": {
-   "hit_rate": 0.6111,
-   "brier": 0.4119
+   "hit_rate": 0.5946,
+   "brier": 0.4143
   },
   "base_rate": {
-   "hit_rate": 0.5833,
-   "brier": 0.5404
+   "hit_rate": 0.5946,
+   "brier": 0.5318
   },
   "always_hold": {
-   "hit_rate": 0.6389,
-   "brier": 0.7222
+   "hit_rate": 0.6486,
+   "brier": 0.7027
   },
   "walk_forward": {
    "start_after": 12,
-   "n": 24,
+   "n": 25,
    "mix": {
     "hits": 13,
-    "brier": 0.545
+    "brier": 0.5432
    },
    "cd": {
-    "hits": 13,
-    "brier": 0.6272
+    "hits": 14,
+    "brier": 0.6021
    },
    "always_hold": {
-    "hits": 18
+    "hits": 19
    },
    "rows": [
     {
@@ -268,17 +268,26 @@
      "cd_hit": false,
      "cd_brier": 1.886,
      "actual": "hike"
+    },
+    {
+     "meeting": "2026-10-22",
+     "w": 0.5,
+     "hit": false,
+     "brier": 0.5,
+     "cd_hit": true,
+     "cd_brier": 0.0,
+     "actual": "hold"
     }
    ]
   },
   "hits_by_actual": {
    "hold": {
-    "n": 23,
-    "cd": 17,
+    "n": 24,
+    "cd": 18,
     "kofr": 7,
     "blend": 14,
-    "base_rate": 18,
-    "always_hold": 23
+    "base_rate": 19,
+    "always_hold": 24
    },
    "hike": {
     "n": 9,
@@ -299,18 +308,18 @@
   },
   "by_outcome": {
    "n_change": 13,
-   "n_hold": 23,
+   "n_hold": 24,
    "cd": {
     "change": 0.3454,
-    "hold": 0.7533
+    "hold": 0.7636
    },
    "kofr": {
     "change": 1.0,
-    "hold": 0.3454
+    "hold": 0.331
    },
    "blend": {
     "change": 0.6727,
-    "hold": 0.5494
+    "hold": 0.5473
    }
   }
  },
@@ -1807,6 +1816,42 @@
     "p_cut": 0.0303,
     "hit": true,
     "brier": 0.4715
+   }
+  },
+  {
+   "meeting": "2026-10-22",
+   "obs_date": "2026-10-19",
+   "p_hike": 0,
+   "p_hold": 1.0,
+   "p_cut": 0,
+   "pred": "hold",
+   "actual": "hold",
+   "move_bp": 0,
+   "hit": true,
+   "brier": 0.0,
+   "source": "CD 91일 모형",
+   "spread_bp": 31.0,
+   "spread_how": "당시까지 자료",
+   "base_rate": {
+    "p_hike": 0.2708,
+    "p_hold": 0.625,
+    "p_cut": 0.1042,
+    "hit": true,
+    "brier": 0.2248
+   },
+   "kofr": {
+    "p_hike": 1.0,
+    "p_hold": 0.0,
+    "p_cut": 0,
+    "hit": false,
+    "brier": 2.0
+   },
+   "blend": {
+    "p_hike": 0.5,
+    "p_hold": 0.5,
+    "p_cut": 0.0,
+    "hit": false,
+    "brier": 0.5
    }
   }
  ],
