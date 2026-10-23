@@ -575,17 +575,24 @@
       return;
     }
     const head = h("thead", {}, h("tr", {}, h("th", {}, "기록일"), h("th", {}, "금리 기준일"),
-      ...meets.map((m) => h("th", {}, `${md(m)} 인상`)), h("th", {}, "기준"), h("th", { class: "l" }, "비고")));
+      ...meets.map((m) => h("th", {}, `${md(m)} 인상`)), h("th", {}, "기준")));
     const body = days.map((dd) => {
       const rs = L.filter((r) => r.date === dd);
       const r0 = rs[0];
       const stop = r0.status !== "산출";
       return h("tr", { class: dd.length > 10 ? "extra" : null }, h("td", {}, ymd(dd) + (dd.length > 10 ? ` ${dd.slice(11, 16)} 추가` : "")), h("td", {}, ymd(r0.asof)),
         ...meets.map((m) => { const r = rs.find((x) => x.meeting === m); return h("td", {}, r && r.p_hike !== "" ? pct(+r.p_hike) : "–"); }),
-        h("td", {}, stop ? "–" : r0.instrument),
-        h("td", { class: "l" }, stop ? "산출 중단: " + r0.note : rs.map((r) => `${md(r.meeting)} ${r.note}`).filter((x) => x.trim()).join(" / ")));
+        h("td", {}, stop ? "–" : r0.instrument));
     });
     $("#logTable").replaceChildren(head, h("tbody", {}, body));
+    // 비고는 표에서 빼고 접어 둔다(모바일 가로 스크롤 줄이기)
+    const notes = days.map((dd) => {
+      const rs = L.filter((r) => r.date === dd);
+      const txt = rs[0].status !== "산출" ? "산출 중단: " + rs[0].note : rs.map((r) => `${md(r.meeting)} ${r.note}`).filter((x) => x.trim()).join(" / ");
+      return txt.trim() ? h("p", { class: "note" }, h("b", {}, ymd(dd) + (dd.length > 10 ? ` ${dd.slice(11, 16)} 추가` : "") + " "), txt) : null;
+    }).filter(Boolean);
+    $("#logMemoBody").replaceChildren(...notes);
+    $("#logMemo").hidden = !notes.length;
     $("#logNote").textContent = "기록일 아침 10시에 그 전 영업일 종가로 계산해 화면에 낸 값이다. 이후 가정이 바뀌어도 고치지 않는다. '추가' 줄은 정기 기록 밖에서 모형을 바꾼 시점의 값이다.";
   }
 
