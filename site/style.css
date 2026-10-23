@@ -337,3 +337,36 @@ a.brand:hover h1 { opacity: .8; }
   .chg .full { display: none; }
   .chg .short { display: inline; }
 }
+
+/* ---- 화면용 레이아웃 정리(2026-10-23, oil-ui 원칙: 상자·선 덜기, 글자 위계, 여백) ---- */
+@media screen {
+  /* 상단 요약: 카드 상자를 걷고 가는 선으로 나눈다. AI 칸은 점선 대신 옅은 바탕으로 '참고' 표시 */
+  .strip { gap: 0; margin-top: 14px; }
+  .strip .tile:not(.skel) { background: transparent; border: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); border-radius: 0; padding: 16px 18px 14px; }
+  .strip .tile + .tile { border-left: 1px solid var(--line); }
+  .strip .tile.ref:not(.skel) { background: var(--surface-2); border-style: solid; }
+  .strip .tile .tgt { background: none; border-radius: 0; padding: 0; margin-bottom: 6px; font-size: 12px; font-weight: 600; color: var(--ink-3); letter-spacing: .01em; }
+  .strip .tile .k { margin-top: 0; font-size: 12px; color: var(--ink-3); }
+  .strip .tile .v { margin-top: 6px; font-size: clamp(20px, 2.1vw, 28px); letter-spacing: -0.03em; }
+  .strip .tile.ref .v { font-size: clamp(18px, 1.7vw, 22px); padding-top: 4px; }
+  .strip .tile .s { margin-top: 2px; }
+  .strip .tile .asof { margin-top: 12px; }
+  .strip .tile.diverge:not(.skel) { border-color: var(--line); box-shadow: inset 3px 0 0 var(--hike); }
+  /* 게이지·지난 회의 결과: 바깥 상자 제거 */
+  .gauges { gap: 24px; }
+  .gauge:not(.skel) { background: transparent; border: 0; border-radius: 0; padding: 6px 0 10px; }
+  .review { border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 14px 0 2px; margin: 0 0 22px; }
+  /* 표: 가로선만, 바깥 상자·머리 칸 색 제거 */
+  .tbl-wrap { background: transparent; border: 0; border-radius: 0; }
+  .grid th, .grid td { padding: 9px 10px; border-bottom: 1px solid var(--line); }
+  .grid thead th { background: var(--bg); color: var(--ink-3); font-size: 12px; font-weight: 600; border-bottom: 1px solid var(--ink-3); }
+  .grid tr:last-child td { border-bottom: 0; }
+  h2 { margin-top: 34px; }
+}
+@media screen and (max-width: 760px) {
+  .strip .tile + .tile { border-left: 0; }
+  .strip .tile:not(.skel) { border-bottom: 0; padding: 14px 4px 12px; }
+  .strip .tile:last-child:not(.skel) { border-bottom: 1px solid var(--line); }
+  .strip .tile.ref:not(.skel) { padding-left: 12px; padding-right: 12px; }
+  .strip .tile .v { font-size: 24px; }
+}
