@@ -94,17 +94,17 @@
 
   // ------------------------------------------------------------ 로드
   async function load() {
-    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois] = await Promise.all([
+    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review] = await Promise.all([
       getJSON("data/meta.json"), getJSON("data/status.json"), getJSON("data/guidance.json"),
       getJSON("data/reports.json"), getJSON("data/minutes.json"), getJSON("data/news.json"),
       getJSON("data/backtest.json"), getText("data/history.csv"),
       getJSON("data/events.json"), getJSON("data/qual.json"), getJSON("data/prob_log.json"), getJSON("data/decision.json"),
-      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"),
+      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"),
     ]);
     Object.assign(D, { meta: meta || {}, status: status || {}, guidance: guidance || { meetings: [], dotplots: [], speeches: [] },
       reports: reports || { reports: [], consensus: { by_meeting: {} } }, minutes: minutes || { meetings: [] },
       news: news || { items: [], chips: [] }, backtest, hist: hist ? parseCSV(hist) : [],
-      events: events || { upcoming: [], recent: [], all: [], indicators: {} }, qual, plog: plog || [], decision, cdshort, kois });
+      events: events || { upcoming: [], recent: [], all: [], indicators: {} }, qual, plog: plog || [], decision, cdshort, kois, review });
     D.snaps = {};
   }
   async function snapshot(date) {
@@ -361,7 +361,39 @@
     return { view: snap, staleFrom: null };
   }
 
+  // 가장 최근에 끝난 회의의 결과와 예측 적중도(review.json)
+  function renderReview() {
+    const R = D.review, el = $("#review");
+    if (!R || !R.meeting) { el.replaceChildren(); return; }
+    const kd = { hike: "인상", hold: "동결", cut: "인하" };
+    const says = (p) => ["hold", "hike", "cut"].filter((k) => k === "hold" || p[k] > 0).map((k) => `${kd[k]} ${pct(p[k])}`).join(" · ");
+    const verdict = (hit) => h("span", { class: hit ? "hit" : "miss" }, hit ? "적중" : "빗나감");
+    const v = R.vote || {};
+    const voteTxt = v.for ? ((v.dissent || []).length ? `${v.for}명 찬성 · 소수의견 ${v.dissent.length}명` : `${v.for}명 만장일치`) : "";
+    const rows = [];
+    const M = R.model;
+    if (M && M.final) rows.push(["모형 (KOFR OIS) · 회의 당일 아침", says(M.final.p), verdict(M.final.hit)]);
+    if (M && M.d3) rows.push([`모형 · 3영업일 전(${md(M.d3_day)} 종가)`, says(M.d3.p), verdict(M.d3.hit)]);
+    if (R.experts) rows.push([`전문가 전망 (${R.experts.n}곳)`, ["동결", "인상", "인하"].filter((k) => R.experts.counts[k]).map((k) => `${k} ${R.experts.counts[k]}곳`).join(" · "), verdict(R.experts.hit)]);
+    if (R.kofia) rows.push([`금투협 설문${R.kofia.respondents ? ` (${R.kofia.respondents}명)` : ""}`, says({ hold: R.kofia.hold / 100, hike: R.kofia.hike / 100, cut: (R.kofia.cut || 0) / 100 }), verdict(R.kofia.hit)]);
+    const bpTxt = (x) => `${x > 0 ? "+" : ""}${x.toFixed(1)}bp`;
+    let change = "";
+    if (M && M.final && M.predicted_change_bp != null) {
+      const first = M.path[0], last = M.path[M.path.length - 1];
+      change = `예측한 변화: 회의 뒤 기대 기준금리 ${bpTxt(M.predicted_change_bp)}(인상 ${pct(M.final.p.hike)}), 실제 변화 ${bpTxt(R.change_bp)}(${R.decision}).`
+        + (M.path.length > 1 ? ` 인상 확률은 ${md(first[0])} ${pct(first[1])}에서 ${md(last[0])} ${pct(last[1])}로 ${last[1] < first[1] ? "낮아졌다" : "높아졌다"}.` : "");
+    }
+    el.replaceChildren(h("div", { class: "review" },
+      h("h3", {}, `지난 회의 결과 · ${ymd(R.meeting)} `, h("small", {}, `${R.decision} ${(+R.rate).toFixed(2)}%${voteTxt ? " · " + voteTxt : ""}`)),
+      rows.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },
+        h("thead", {}, h("tr", {}, h("th", { class: "l" }, "예측"), h("th", { class: "l" }, "당시 전망"), h("th", {}, "결과"))),
+        h("tbody", {}, rows.map((r) => h("tr", {}, h("td", { class: "l" }, r[0]), h("td", { class: "l" }, r[1]), h("td", {}, r[2])))))) : "",
+      change ? h("p", { class: "note" }, change) : "",
+      h("p", { class: "note" }, "적중: 가장 높은 확률을 준 결과가 실제와 같음. 최고 확률이 같으면 적중으로 치지 않는다.")));
+  }
+
   async function renderMarket(snap) {
+    renderReview();
     document.querySelectorAll("#spreadToggle button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.s === S.s));
     if (!snap) {
       $("#gauges").replaceChildren(h("div", { class: "empty" }, "시장금리 데이터가 없습니다."));

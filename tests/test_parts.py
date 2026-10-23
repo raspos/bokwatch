@@ -359,6 +359,28 @@ def test_kofr_ois_assumed_meeting_is_tail_even_when_long():
     assert path[1]["tail_assumed"] == ["2027-01-11"]
 
 
+def test_review_hits_and_ties():
+    from datetime import date
+    from bokwatch.review import build_review, business_days_before, top_kind
+    assert business_days_before(date(2026, 10, 22), 3) == date(2026, 10, 19)
+    assert top_kind({"hike": 0.5, "hold": 0.5, "cut": 0}) is None
+    g = {"meetings": [{"date": "2026-10-22", "rate": 3.0, "prev_rate": 3.0, "decision": "동결", "vote": {"for": 7, "dissent": []}}]}
+    row = lambda dt, asof, h: {"date": dt, "asof": asof, "status": "산출", "meeting": "2026-10-22", "p_hike": str(h), "p_hold": str(1 - h),
+                               "p_cut": "0", "expected": "3.0265", "instrument": "KOFR OIS"}
+    plog = [row("2026-10-20", "2026-10-19", 0.117), row("2026-10-22", "2026-10-21", 0.106), row("2026-10-23", "2026-10-22", 0.9)]
+    reps = [{"institution": "A", "published": "2026-10-20", "calls": {"2026-10-22": {"call": "동결"}}},
+            {"institution": "B", "published": "2026-10-21", "calls": {"2026-10-22": {"call": "인상"}}},
+            {"institution": "C", "published": "2026-10-21", "calls": {"2026-10-22": {"call": "동결"}}}]
+    kofia = [{"month": "2026-11", "status": "발표", "hold": 93, "hike": 7, "cut": 0, "respondents": 100}]
+    r = build_review(g, plog, reps, kofia, date(2026, 10, 23))
+    assert r["actual"] == "hold" and r["change_bp"] == 0
+    assert r["model"]["final"]["date"] == "2026-10-22" and r["model"]["final"]["hit"]      # 회의 뒤 기록은 쓰지 않는다
+    assert r["model"]["d3"]["date"] == "2026-10-20" and abs(r["model"]["predicted_change_bp"] - 2.65) < 0.1
+    assert r["experts"]["counts"] == {"동결": 2, "인상": 1} and r["experts"]["hit"]
+    assert r["kofia"]["hit"] and r["kofia"]["hold"] == 93
+    assert build_review({"meetings": []}, [], [], [], date(2026, 10, 23)) is None
+
+
 def test_memo_lint_skips_direct_quotes():
     from bokwatch.memo import lint
     body = "\n".join(f"- 문단 {i}" for i in range(5))

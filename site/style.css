@@ -119,6 +119,11 @@ details.msec > summary { cursor: pointer; font-size: 17px; font-weight: 700; lis
 details.msec > summary::-webkit-details-marker { display: none; }
 details.msec > summary::before { content: "▸ "; color: var(--ink-3); } details.msec[open] > summary::before { content: "▾ "; }
 details.msec[open] > summary { margin-bottom: 8px; }
+.review { margin: 0 0 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
+.review h3 { margin: 0 0 6px; }
+.review .hit { font-weight: 700; color: #1a7f4b; } .review .miss { font-weight: 700; color: #c0392b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .review .hit { color: #4cc98a; } :root:not([data-theme="light"]) .review .miss { color: #ff8a7a; } }
+:root[data-theme="dark"] .review .hit { color: #4cc98a; } :root[data-theme="dark"] .review .miss { color: #ff8a7a; }
 .cdref { margin: 18px 0 6px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; background: var(--surface); }
 .cdref > summary { cursor: pointer; font-weight: 700; font-size: 15px; padding: 4px 0; }
 .cdref > summary small { font-weight: 400; color: var(--ink-3); margin-left: 6px; }

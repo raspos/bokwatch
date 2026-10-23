@@ -259,7 +259,12 @@ def main(argv=None):
             lines.insert(2, f"- 산출 중단: {stalled}.")
             memo["text"] = "\n".join(lines)
         write_json(SITE_DATA / "memo.json", memo)
-        write_json(SITE_DATA / "prob_log.json", update_prob_log(cur, today, stalled, a.log))
+        plog = update_prob_log(cur, today, stalled, a.log)
+        write_json(SITE_DATA / "prob_log.json", plog)
+        from bokwatch.reports import load_reports
+        from bokwatch.review import build_review
+        raw = load_reports()
+        write_json(SITE_DATA / "review.json", build_review(guidance, plog, raw["reports"], raw["kofia_survey"], today) or {})
 
         warnings = [stalled] if stalled else []
         for y, ds in cfg["meetings"].items():
