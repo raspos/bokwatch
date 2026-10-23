@@ -359,6 +359,13 @@ def test_kofr_ois_assumed_meeting_is_tail_even_when_long():
     assert path[1]["tail_assumed"] == ["2027-01-11"]
 
 
+def test_memo_lint_skips_direct_quotes():
+    from bokwatch.memo import lint
+    body = "\n".join(f"- 문단 {i}" for i in range(5))
+    assert not any("이는" in x for x in lint("제목\n" + body + '\n- 총재 "그렇게 보이는 만큼 대응" 발언'))
+    assert any("이는" in x for x in lint("제목\n" + body + "\n- 이는 문제다"))
+
+
 def test_consensus_window_five_business_days():
     from datetime import date
     from bokwatch.reports import consensus, window_start

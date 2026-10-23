@@ -238,7 +238,8 @@ def build_memo(now: datetime, cur: dict | None, prev: dict | None, week: dict | 
 
 def lint(text: str) -> list[str]:
     """문체 규칙 위반 점검."""
-    probs = [f"금지 표현 '{w}'" for w in BANNED if w in text]
+    prose = re.sub(r'"[^"\n]*"|“[^”\n]*”', "", text)  # 직접 인용은 고칠 수 없어 제외(예: "보이는 만큼"의 '이는')
+    probs = [f"금지 표현 '{w}'" for w in BANNED if w in prose]
     body = text.splitlines()[1:]
     if not (5 <= len(body) <= 7):
         probs.append(f"문단 수 {len(body)}개(5~7개 필요)")

@@ -174,7 +174,8 @@ def solve_path(c: dict, r0: float, k_spread: float, meetings: list[date], assume
     prev = known[prev_m] if prev_m else r0
     out.append({"meeting": target.isoformat(), "source": "3개월 OIS" + (" + 1개월 OIS" if known else ""), "post_days": coef, "tenor_days": T,
                 "kofr_base": round(k_spread, 4), "expected": round(e, 4), "delta_bp": round((e - prev) * 100, 2),
-                "tail_assumed": [m.isoformat() for m in tail], **_probs(e - prev)})
+                "tail_assumed": [m.isoformat() for m in tail],
+                "tail_unscheduled": [m.isoformat() for m in tail if m in (assumed or ())], **_probs(e - prev)})
     return out
 
 
