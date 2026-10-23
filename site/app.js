@@ -174,6 +174,8 @@
     const c = nextDate ? cons[nextDate] : null;
     const tiles = [];
     // 시장
+    const janA = ((((snap || {}).components || {}).kofr_ois || {}).jan_est || {}).assumed;
+    const janLine = janA && janA[0] ? h("div", { class: "s" }, `1월 중 인상 ${pct(janA[0].p_hike[0])}~${pct(janA[0].p_hike[1])} (참고)`) : "";
     const nTop = nxt && nxt.method === "kofr_ois" ? outcomes(nxt).reduce((a, b) => (b.p > a.p ? b : a)) : null;
     tiles.push(h("div", { class: "tile" }, h("div", { class: "tgt" }, nextDate ? `대상: ${dmon(nextDate)} 회의` : "대상: 다음 회의"),
       h("div", { class: "k" }, nTop ? `모형 추정(KOFR OIS)${staleFrom ? ` · ${ymd(staleFrom)} 기준` : ""}`
@@ -183,7 +185,8 @@
       nxt && nxt.range ? h("div", { class: "s" }, `가능 범위 ${pct(nxt.range.min, 0)}~${pct(nxt.range.max, 0)}`) : "",
       h("div", { class: "s" }, ms[1] ? (ms[1].method === "kofr_ois"
         ? `${mon(ms[1].date)} ${(() => { const t = outcomes(ms[1]).reduce((a, b) => (b.p > a.p ? b : a)); return `${t.name} ${pct(t.p)}`; })()} · 인상 ${pct(ms[1].p_hike)}`
-        : `${mon(ms[1].date)} ${pct(ms[1].p_hike)} · 기대금리 ${fx(ms[1].expected)}%`) : "")));
+        : `${mon(ms[1].date)} ${pct(ms[1].p_hike)} · 기대금리 ${fx(ms[1].expected)}%`) : ""),
+      janLine));
     // 한은 점도표
     tiles.push(h("div", { class: "tile" }, h("div", { class: "tgt" }, "대상: 6개월 뒤"),
       h("div", { class: "k" }, `한은 점도표 중간값(${dp ? md(dp.date) : "–"})`),
