@@ -1,4 +1,4 @@
-// 조회수 카운터(Cloudflare Pages Functions + KV). Pages 프로젝트 설정에서 KV 네임스페이스를 변수 이름 VIEWS로 연결해야 동작한다.
+// 조회수 카운터(Cloudflare Pages Functions + KV). Pages 프로젝트(bokwatch) 설정 → Bindings에서 KV 네임스페이스를 변수 이름 VIEWS로 Production에 연결해야 동작한다. 바인딩은 새 배포부터 적용된다.
 // GET  /api/views → {total, today}
 // POST /api/views → 1 올린 뒤 {total, today}. 같은 브라우저 세션에서는 화면이 한 번만 POST 한다.
 // KV는 원자적 증가가 아니라 동시에 들어온 요청은 일부 빠질 수 있다(대략치).
