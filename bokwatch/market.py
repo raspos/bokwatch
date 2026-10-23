@@ -241,7 +241,8 @@ def run_day(rows, cfg, day: date, spreads: dict, shifts=(-5, 0, 5), fut_by_date=
     ko = None
     if ois is not None:
         ks, ks_how = kofr_spread(rows, day, cfg)
-        ko = kofr_ois.compute(ois, day, r0, ks, meetings_after(cfg, date(2000, 1, 1)), assumed=assumed_meetings(cfg))
+        ko = kofr_ois.compute(ois, day, r0, ks, meetings_after(cfg, date(2000, 1, 1)), assumed=assumed_meetings(cfg),
+                              late={d(a): d(b) for a, b in (cfg.get("assumed_latest") or {}).items()})
         if ko:
             ko["kofr_base_how"] = ks_how
     # 기본값 = CD 모형 추정치. KOFR 선물·혼합은 실험값(components)으로만 둔다.

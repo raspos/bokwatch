@@ -480,8 +480,11 @@
     if (janAsm) {
       const cj = (D.reports.consensus.by_meeting || {})["2027-01"];
       const ex = cj && cj.n ? ["동결", "인상", "열어둠", "인하"].filter((k) => cj.counts[k]).map((k) => `${k} ${cj.counts[k]}곳`).join(" · ") : "";
+      const ja = (((snap.components || {}).kofr_ois || {}).jan_est || {}).assumed;
+      const est = ja && ja[0] ? `동결 ${pct(1 - ja[0].p_hike[1])}~${pct(1 - ja[0].p_hike[0])} · 25bp 인상 ${pct(ja[0].p_hike[0])}~${pct(ja[0].p_hike[1])} (참고 추정)` : "시장 가격으로 정해지지 않음";
       rows.push(h("tr", {}, h("td", {}, "2027년 1월 중(날짜 미정)"), h("td", {}, "–"), h("td", {}, "–"), h("td", {}, "–"),
-        h("td", {}, "시장 가격으로 정해지지 않음" + (ex ? ` · 전문가 ${ex}` : "")), h("td", { class: "l" }, "3개월물이 1월 하순까지만 걸림")));
+        h("td", {}, est + (ex ? ` · 전문가 ${ex}` : "")),
+        h("td", { class: "l" }, ja && ja[0] ? "3개월 OIS 한 식, 회의별 변화폭 최소 가정(1월 11~16일). 같은 가격이 인상 0~100%와 모두 맞아 정해진 값이 아님" : "3개월물이 1월 하순까지만 걸림")));
     }
     $("#probTable").replaceChildren(thead, h("tbody", {}, rows));
     // 두 회의 누적 결과: 회의별 확률(동결·같은 방향 25bp)만 주어지면 '두 번 모두 변경' 확률은 [max(0, p1+p2−1), min(p1, p2)] 사이 어디든 가능하다

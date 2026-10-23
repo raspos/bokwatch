@@ -179,13 +179,61 @@ def solve_path(c: dict, r0: float, k_spread: float, meetings: list[date], assume
     return out
 
 
+def min_change_estimate(c: dict, r0: float, k_spread: float, meetings: list[date], assumed: set[date] | None,
+                        late: dict[date, date] | None = None) -> dict | None:
+    """참고 추정(실험): 3개월 OIS 한 식에 미지수 회의가 둘 이상일 때(일정 미정인 가정 회의가 만기 안에 든 경우),
+    회의별 변화폭의 제곱합이 가장 작은 해를 쓴다. 같은 가격이 가정 회의의 인상 확률 0~100%와 모두 맞아서 값이 정해지지는 않는다.
+    가정 회의 날짜는 가정 일정(early)과 늦은 쪽 날짜(late) 두 경우로 풀어 범위로 낸다."""
+    x = c.get("m3")
+    if not x or not assumed:
+        return None
+    start = model.settlement_start(d(x["cd_date"]))
+    T = x["tenor_days"]
+    end = start + timedelta(days=T)
+    first = next_meeting(c, r0, k_spread, meetings)
+    known = {d(first["meeting"]): first["expected"]} if first else {}
+
+    def solve(cand: list[date]) -> list[tuple[date, float]] | None:
+        ms = sorted(m for m in cand if start <= m < end)
+        unknown = [m for m in ms if m not in known]
+        if len(unknown) < 2:
+            return None
+        bounds = ms + [end]
+        days = {m: (bounds[i + 1] - m).days for i, m in enumerate(ms)}
+        rhs, level = T * (x["ois"] - (r0 + k_spread)), r0
+        for m in ms:
+            if m in known:
+                rhs -= days[m] * (known[m] - r0)
+                level = known[m]
+            else:
+                rhs -= days[m] * (level - r0)
+        coef = {m: sum(days[n] for n in ms if n >= m) for m in unknown}
+        norm = sum(v * v for v in coef.values())
+        return [(m, v * rhs / norm) for m, v in coef.items()]
+
+    variants = [meetings] + ([[late.get(m, m) for m in meetings]] if late else [])
+    res = [r for r in (solve(v) for v in variants) if r]
+    if not res or len({len(r) for r in res}) != 1:
+        return None
+    out = {"assumed": [], "targets": [], "basis": "3개월 OIS 한 식, 회의별 변화폭 최소(참고 추정·가정 의존)"}
+    for col in zip(*res):
+        deltas = [v for _, v in col]
+        ps = [_probs(v)["p_hike"] for v in deltas]
+        it = {"date": col[0][0].isoformat(), "late": col[-1][0].isoformat(),
+              "delta_bp": [round(min(deltas) * 100, 1), round(max(deltas) * 100, 1)],
+              "p_hike": [round(min(ps), 4), round(max(ps), 4)]}
+        (out["assumed"] if col[0][0] in assumed else out["targets"]).append(it)
+    return out if out["assumed"] else None
+
+
 def compute(o: OIS, day: date, r0: float, k_spread: float, meetings: list[date], max_stale: int = 5,
-            assumed: set[date] | None = None) -> dict | None:
+            assumed: set[date] | None = None, late: dict[date, date] | None = None) -> dict | None:
     c = o.curve_on(day, max_stale)
     if not c:
         return None
     path = solve_path(c, r0, k_spread, meetings, assumed)
-    return {"curve": c, "next": next_meeting(c, r0, k_spread, meetings), "path": path}
+    return {"curve": c, "next": next_meeting(c, r0, k_spread, meetings), "path": path,
+            "jan_est": min_change_estimate(c, r0, k_spread, meetings, assumed, late)}
 
 
 # ---------------------------------------------------------------- 백테스트

@@ -381,6 +381,19 @@ def test_review_hits_and_ties():
     assert build_review({"meetings": []}, [], [], [], date(2026, 10, 23)) is None
 
 
+def test_kofr_ois_min_change_estimate_for_unscheduled_meeting():
+    from datetime import date
+    from bokwatch import kofr_ois
+    c = {"m3": {"cd_date": "2026-10-22", "tenor_days": 91, "ois": 3.1391}}
+    ms = [date(2026, 11, 26), date(2027, 1, 11)]
+    est = kofr_ois.min_change_estimate(c, 3.00, 0.05, ms, {date(2027, 1, 11)}, {date(2027, 1, 11): date(2027, 1, 16)})
+    a, n = est["assumed"][0], est["targets"][0]
+    assert a["date"] == "2027-01-11" and a["late"] == "2027-01-16" and n["date"] == "2026-11-26"
+    assert 0.05 < a["p_hike"][0] < a["p_hike"][1] < 0.12           # 가정 회의의 변화폭은 11월보다 훨씬 작게 배정된다
+    assert 0.5 < n["p_hike"][0] <= n["p_hike"][1] < 0.6
+    assert kofr_ois.min_change_estimate({"m3": c["m3"]}, 3.0, 0.05, [date(2026, 11, 26)], set()) is None
+
+
 def test_memo_lint_skips_direct_quotes():
     from bokwatch.memo import lint
     body = "\n".join(f"- 문단 {i}" for i in range(5))
