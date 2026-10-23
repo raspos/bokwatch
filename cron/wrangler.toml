@@ -1,0 +1,7 @@
+name = "bokwatch-cron"
+main = "worker.js"
+compatibility_date = "2024-09-01"
+
+# UTC 기준. 09:40 KST 호출, 10:30 KST 재호출(첫 호출이 실패했을 때만 일하고, 이미 했으면 건너뜀)
+[triggers]
+crons = ["40 0 * * *", "30 1 * * *"]

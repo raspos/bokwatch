@@ -4,7 +4,7 @@
 
 ## A. 자동 갱신 확인
 
-1. **자동 갱신 성공** — GitHub Actions `daily`가 성공했는지, 단계별 실패가 없는지.
+1. **자동 갱신 성공** — GitHub Actions `daily`가 성공했는지, 단계별 실패가 없는지. 09:40 KST 전후에 `workflow_dispatch`로 시작했는지(Cloudflare 크론 `bokwatch-cron`) 본다. 14시 넘어 `schedule`로만 시작했다면 크론 호출이 실패한 것이다.
 2. **수집 기준일** — 화면 머리말 '갱신' 점에 마우스를 올려 9곳을 본다.
    - ECOS 시장금리·CD 91일: 전 영업일
    - 금투협 CD 시가평가(자체 합성 OIS 입력): 전 영업일. 해외 서버에서 막히면 OIS가 멈춘다
