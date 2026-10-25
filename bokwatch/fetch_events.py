@@ -347,11 +347,14 @@ def main(argv=None) -> int:
                                     "source": "BLS PPI 최종수요 WPUFD4·WPUFD49116(식품·에너지 제외), 전년동월비 계절조정 전·전월비 계절조정",
                                     "label": "미국 PPI"}
     except Exception as e:
-        errors.append(f"BLS API: {type(e).__name__}: {e} → FRED로 대체")
+        bls_err = f"BLS API: {type(e).__name__}: {e}"
         try:
             us, core = yoy_from_series(fred("CPIAUCNS")), yoy_from_series(fred("CPILFENS"))
             src = "FRED CPIAUCNS·CPILFENS (BLS 원계열, 전년동월비)"
+            # CPI는 같은 BLS 원계열을 FRED에서 받아 값이 같다. PPI는 BLS에서만 받아 복구 전까지 직전 값을 쓴다.
+            soft.append(bls_err + " → CPI는 FRED로 대체, PPI는 BLS 복구 때까지 직전 값")
         except Exception as e2:
+            errors.append(bls_err + " → FRED 대체도 실패")
             errors.append(f"FRED: {type(e2).__name__}: {e2}")
     if us:
         indicators["us_cpi"] = {**us, "core_yoy": core["yoy"] if core and core["month"] == us["month"] else None,
@@ -373,7 +376,7 @@ def main(argv=None) -> int:
     minutes = read_json(SITE_DATA / "minutes.json", {}) or {}
     write_json(EVENTS_JSON, build_events(cfg, scraped, indicators, minutes, now_kst().date()))
     record_status("events", not errors, "; ".join(errors) if errors else
-                  ("일부 실패·기존 일정 사용 — " + "; ".join(soft)) if soft else "정상")
+                  ("대체·기존 값 사용 — " + "; ".join(soft)) if soft else "정상")
     if errors:
         print("일부 실패:", errors, file=sys.stderr)
     return 0
