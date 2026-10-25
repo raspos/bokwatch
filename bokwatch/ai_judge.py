@@ -186,6 +186,27 @@ class AIError(RuntimeError):
     pass
 
 
+USAGE: dict[str, dict] = {}  # 모델별 이번 실행의 호출 수·입력·출력(추론 포함)·추론 토큰
+
+
+def save_usage(now: datetime) -> str:
+    """이번 실행의 토큰 사용량을 data/ai_usage.csv에 한 줄씩 남기고 상태 메시지용 요약을 돌려준다."""
+    import csv
+    if not USAGE:
+        return ""
+    path = DATA / "ai_usage.csv"
+    new = not path.exists()
+    with open(path, "a", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        if new:
+            w.writerow(["time", "model", "calls", "input", "output", "reasoning"])
+        for m, r in sorted(USAGE.items()):
+            w.writerow([now.isoformat(timespec="minutes"), m, r["calls"], r["input"], r["output"], r["reasoning"]])
+    tin = sum(r["input"] for r in USAGE.values())
+    tout = sum(r["output"] for r in USAGE.values())
+    return f" · 토큰 입력 {tin:,}·출력 {tout:,}"
+
+
 def call_json(client, model: str, system: str, user: str, schema: dict, effort: str | None,
               max_tokens: int = 16000, name: str = "result") -> dict:
     """OpenAI Chat Completions 구조화 출력(JSON 스키마 strict). effort는 추론 모델에서만 쓴다(없으면 보내지 않음)."""
@@ -198,6 +219,13 @@ def call_json(client, model: str, system: str, user: str, schema: dict, effort: 
     if effort:
         kw["reasoning_effort"] = effort
     resp = client.chat.completions.create(**kw)
+    u = getattr(resp, "usage", None)
+    if u:
+        row = USAGE.setdefault(model, {"calls": 0, "input": 0, "output": 0, "reasoning": 0})
+        row["calls"] += 1
+        row["input"] += getattr(u, "prompt_tokens", 0) or 0
+        row["output"] += getattr(u, "completion_tokens", 0) or 0  # 추론 토큰 포함
+        row["reasoning"] += getattr(getattr(u, "completion_tokens_details", None), "reasoning_tokens", 0) or 0
     ch = resp.choices[0]
     if getattr(ch.message, "refusal", None):
         raise AIError(f"모델 거절: {ch.message.refusal}")
@@ -618,7 +646,8 @@ def main(argv=None, client=None) -> int:
             except Exception as e:
                 errors.append(f"정성 확률: {type(e).__name__}: {e}")
     write_json(QUAL, build_qual(articles, tags, cfg_ai, synthesis, errors, now, groups, probs))
-    record_status("ai", not errors, "; ".join(errors) or f"새 태깅 {n}건" + ("" if a.no_synth else ", 종합 갱신"))
+    used = save_usage(now)
+    record_status("ai", not errors, ("; ".join(errors) or f"새 태깅 {n}건" + ("" if a.no_synth else ", 종합 갱신")) + used)
     return 0
 
 
