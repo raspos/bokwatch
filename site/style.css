@@ -381,3 +381,11 @@ a.brand:hover h1 { opacity: .8; }
   .cons .tile, .qgrid .tile { background: transparent; border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 14px 2px 10px; }
   .cons .tile .tgt, .qgrid .tile .tgt { background: none; border-radius: 0; padding: 0; margin-bottom: 6px; font-size: 12px; font-weight: 600; color: var(--ink-3); }
 }
+
+/* 서비스 전환 띠 (BOK워치 ↔ FX 오즈) */
+.svc { max-width: 1180px; margin: 0 auto; padding: 6px 16px; display: flex; align-items: center; gap: 6px; font-size: 12px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+.svc-l { color: var(--ink-3); margin-right: 2px; }
+.svc a { color: var(--ink-2); text-decoration: none; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); }
+.svc a:hover { color: var(--ink); border-color: var(--ink-3); }
+.svc a.svc-on { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 700; }
+@media print { .svc { display: none !important; } }
