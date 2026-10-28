@@ -110,6 +110,8 @@ def next_meeting(ois_row: dict, r0: float, k_spread: float, meetings: list[date]
         return None
     pre = (ms[0] - start).days
     post = T - pre
+    if post < MIN_POST_DAYS:  # 회의 뒤 구간이 짧으면 오차가 T/post배로 커져(1일이면 30배) 1개월물로 풀지 않는다. 3개월물이 대신 푼다.
+        return None
     e = (T * x["ois"] - pre * (r0 + k_spread)) / post - k_spread
     dist = model.move_distribution(e - r0)
     p = {"hike": sum(v for k, v in dist.items() if k > 0), "cut": sum(v for k, v in dist.items() if k < 0)}
@@ -118,6 +120,7 @@ def next_meeting(ois_row: dict, r0: float, k_spread: float, meetings: list[date]
             "expected": round(e, 4), "delta_bp": round((e - r0) * 100, 2), **{f"p_{k}": round(v, 4) for k, v in p.items()}}
 
 
+MIN_POST_DAYS = 15  # 1개월물로 다음 회의를 풀려면 회의 뒤 구간이 이 일수 이상이어야 한다(오차 확대 ≤ 2배)
 TAIL_DAYS = 7  # 3개월 만기 직전 회의의 뒤 구간이 이 일수 이하면 그 회의는 변화 없음으로 둔다(영향이 작아 풀 수 없음)
 
 

@@ -331,6 +331,18 @@ def test_kofr_ois_compounding_and_next_meeting():
     assert abs(n["p_hike"] - (n["expected"] - 3.0) / 0.25) < 1e-3
 
 
+def test_kofr_ois_next_meeting_needs_enough_days_after_meeting():
+    from datetime import date
+    from bokwatch import kofr_ois
+    # 1개월물(30일) 맨 끝날에 회의가 걸리면(뒤 1일) 풀지 않는다: 오차가 30배로 커져 인상 100% 같은 값이 나온다
+    row = {"m1": {"cd_date": "2026-10-27", "tenor_days": 30, "ois": 3.0759}}
+    assert kofr_ois.next_meeting(row, 3.00, 0.0515, [date(2026, 11, 26)]) is None
+    c = {**row, "m3": {"cd_date": "2026-10-27", "tenor_days": 91, "ois": 3.1391}}
+    path = kofr_ois.solve_path(c, 3.00, 0.0515, [date(2026, 11, 26), date(2027, 1, 11)], {date(2027, 1, 11)})
+    assert [x["meeting"] for x in path] == ["2026-11-26"] and path[0]["source"] == "3개월 OIS"
+    assert 0.3 < path[0]["p_hike"] < 0.8
+
+
 def test_kofr_ois_bootstrap_second_meeting():
     from datetime import date
     from bokwatch import kofr_ois
