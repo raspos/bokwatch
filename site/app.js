@@ -176,7 +176,7 @@
     // 시장
     // 3개월 OIS 한 식으로 풀 수 없는 뒤 회의(예: 1월 회의)의 참고 추정. 날짜가 미정이면 'N월 중', 확정이면 날짜로 쓴다.
     const laterOf = (s) => (((((s || {}).components || {}).kofr_ois || {}).later_est || {}).later || []);
-    const laterLbl = (it) => (it.late !== it.date ? `${+it.date.slice(5, 7)}월 중` : mon(it.date));
+    const laterLbl = (it) => (it.late !== it.date ? `${+it.date.slice(5, 7)}월 중` : `${+it.date.slice(5, 7)}월 ${+it.date.slice(8, 10)}일`);
     const laterPct = (it) => (it.p_hike[0] === it.p_hike[1] ? pct(it.p_hike[0]) : `${pct(it.p_hike[0])}~${pct(it.p_hike[1])}`);
     const janLine = laterOf(snap).length ? h("div", { class: "s" }, `${laterLbl(laterOf(snap)[0])} 인상 ${laterPct(laterOf(snap)[0])} (참고)`) : "";
     const nTop = nxt && nxt.method === "kofr_ois" ? outcomes(nxt).reduce((a, b) => (b.p > a.p ? b : a)) : null;
@@ -357,6 +357,26 @@
         h("div", { class: "sub parts" }, partsLine(snapForParts, m.date))));
   }
 
+  // 3개월 OIS 한 식으로 풀 수 없는 뒤 회의(예: 2027년 1월 14일)의 참고 추정 게이지
+  function laterCard(it, prevE) {
+    const lo = it.p_hike[0], hi = it.p_hike[1], p = (lo + hi) / 2;
+    const m = { p_hike: p, p_hold: 1 - p, p_cut: 0, moves: { 0: 1 - p, 25: p } };
+    const os = outcomes(m);
+    const top = os.reduce((a, b) => (b.p > a.p ? b : a), os[0]);
+    const unsched = it.late !== it.date;
+    const exp = prevE != null && it.delta_bp ? prevE + (it.delta_bp[0] + it.delta_bp[1]) / 200 : null;
+    return h("div", { class: "gauge decision" },
+      h("span", { class: "badge warn", title: "같은 가격이 인상 0~100%와 모두 맞아 정해진 값이 아니다" }, "참고 추정"),
+      h("h4", {}, unsched ? `${+it.date.slice(5, 7)}월 중(날짜 미정) 금리 결정 전망` : `${dmon(it.date)} 금리 결정 전망`),
+      decisionGaugeSVG(os, top, []),
+      h("div", { class: "dlegend" }, ...os.map((o) => h("span", {}, h("i", { class: o.cls }), `${o.name} ${pct(o.p)}`))),
+      exp != null ? h("div", { class: "sub" }, `회의 뒤 기대 금리 ${fx(exp, 3)}%(앞 회의 뒤 수준에서 변화폭 최소 가정)`) : "",
+      more("근거",
+        h("div", { class: "sub" }, "3개월 OIS는 식이 하나라 11월 회의와 이 회의를 함께 나눌 수 없다. 회의별 변화폭이 가장 작다고 두고 낸 참고 추정이며, 같은 가격이 인상 0~100%와 모두 맞는다."),
+        h("div", { class: "sub" }, "6개월·1년 CD 금리가 3개월보다 높게 형성돼 이후 추가 인상 기대를 시사할 수 있으나 기간 프리미엄과 구분되지 않아 반영하지 않았다."),
+        h("div", { class: "sub parts" }, "전문가 전망은 보고서 탭의 1월 칸 참조")));
+  }
+
   // 기본 추정치가 멈춘 날이면 마지막으로 산출된 날의 스냅샷을 쓴다
   async function defaultView(snap) {
     if (!snap || snap.default_ok !== false) return { view: snap, staleFrom: null };
@@ -445,6 +465,8 @@
           h("div", { class: "sub parts" }, partsLine(staleFrom ? live : snap, m.date))),
         h("div", { class: "method-tag" }, m.source || ({ bootstrap: "부트스트래핑", min_hike: "최소 인상 경로", lsq: "비음수 최소제곱" }[m.method] || m.method)));
     });
+    const lastE = ms.length ? ms[ms.length - 1].expected : snap.r0;
+    for (const it of ((((snap.components || {}).kofr_ois || {}).later_est || {}).later || [])) cards.push(laterCard(it, lastE));
     const out = scen.meetings.filter((m) => !m.in_range).map((m) => md(m.date));
     // 정상 스프레드 버튼 설명: 그날 실제 가정값과 회의별 확률 범위
     const u0 = snap.inputs.find((i) => i.used);
