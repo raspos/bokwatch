@@ -223,7 +223,7 @@
       : `모형 추정(CD) · ${nextDate ? mon(nextDate) + " 회의" : "다음 회의"} 인상 확률${staleFrom ? ` · ${ymd(staleFrom)} 기준` : ""}`),
       h("div", { class: "v" }, nTop ? `${nTop.name} ${pct(nTop.p)}` : nxt ? (nxt.range && nxt.range.direction === "hike" ? `최고 ${pct(nxt.range.max)}` : pct(nxt.p_hike)) : "–"),
       nTop ? h("div", { class: "s" }, outcomes(nxt).filter((o) => o.bp !== nTop.bp).map((o) => `${o.name} ${pct(o.p)}`).join(" · ")) : "",
-      nxt && nxt.rep ? h("div", { class: "s" }, `합성 KOFR OIS와 통안채 91일물의 예측 확률을 각각 50% 반영한 통계적 결합모형 · ${repKind(nxt.rep.kind)}`) : "",
+      nxt && nxt.rep ? h("div", { class: "s" }, `OIS·통안채 91일 50:50 결합 · ${repKind(nxt.rep.kind)}`) : "",
       nxt && nxt.range ? h("div", { class: "s" }, `가능 범위 ${pct(nxt.range.min, 0)}~${pct(nxt.range.max, 0)}`) : "",
       h("div", { class: "s" }, ms[1] ? (ms[1].method === "kofr_ois"
         ? `${mon(ms[1].date)} ${(() => { const t = outcomes(ms[1]).reduce((a, b) => (b.p > a.p ? b : a)); return `${t.name} ${pct(t.p)}`; })()} · 인상 ${pct(ms[1].p_hike)}`
@@ -374,8 +374,8 @@
   // 종합 예측 설명: 이름·구성·표시 구분(사후 재계산/당시 저장 예측)·구성 확률
   function repTip(m) {
     const o = m.rep.ois, s = m.rep.msb91;
-    return `BOK WATCH 종합 예측 — 합성 KOFR OIS와 통안채 91일물의 예측 확률을 각각 50% 반영한 통계적 결합모형 · ${repKind(m.rep.kind)}`
-      + (o && s ? ` · 합성 OIS 단독 인상 ${pct(o.hike)} · 통안채 91일 인상 ${pct(s.hike)}` : "") + ". 시장에서 직접 거래되는 확률이 아니다.";
+    return `종합 예측: 합성 OIS·통안채 91일 각 50% 결합 · ${repKind(m.rep.kind)}`
+      + (o && s ? ` · OIS 단독 인상 ${pct(o.hike)} · 통안채 인상 ${pct(s.hike)}` : "") + ". 시장 거래 확률은 아니다.";
   }
   function decisionCard(m, pm, pd, snapForParts) {
     const os = outcomes(m);
@@ -700,8 +700,8 @@
       const r0 = rs[0];
       const stop = r0.status !== "산출";
       return h("tr", { class: dd.length > 10 ? "extra" : null }, h("td", {}, ymd(dd) + (dd.length > 10 ? ` ${dd.slice(11, 16)} 추가` : "")), h("td", {}, ymd(r0.asof)),
-        ...meets.map((m) => { const r = rs.find((x) => x.meeting === m); return h("td", {}, r && r.p_hike !== "" ? pct(+r.p_hike) : "–"); }),
-        h("td", {}, stop ? "–" : r0.instrument));
+        ...meets.map((m) => { const r = rs.find((x) => x.meeting === m); const e = r && !stop ? repEntry(m, r.asof) : null; return h("td", {}, e ? pct(e.m5.hike) : r && r.p_hike !== "" ? pct(+r.p_hike) : "–"); }),
+        h("td", {}, stop ? "–" : (() => { const e = meets.map((m) => { const r = rs.find((x) => x.meeting === m); return r ? repEntry(m, r.asof) : null; }).find(Boolean); return e ? `종합 예측 · ${repKind(e.kind)}` : r0.instrument; })()));
     });
     // 최근 10줄만 보이고 나머지는 접어 둔다
     $("#logTable").replaceChildren(head, h("tbody", {}, body.slice(0, 10)));
@@ -717,7 +717,7 @@
     }).filter(Boolean);
     $("#logMemoBody").replaceChildren(...notes);
     $("#logMemo").hidden = !notes.length;
-    $("#logNote").textContent = "기록일 아침 10시에 그 전 영업일 종가로 계산해 화면에 낸 값이다. 이후 가정이 바뀌어도 고치지 않는다. '추가' 줄은 정기 기록 밖에서 모형을 바꾼 시점의 값이다." + (REP.mode === "m5" ? " 이 표는 당시 저장한 KOFR OIS 값이며, 종합 예측 값은 위 카드와 추이에서 확인한다." : "");
+    $("#logNote").textContent = "기록일 아침 10시에 그 전 영업일 종가로 계산해 화면에 낸 값이다. 이후 가정이 바뀌어도 고치지 않는다. '추가' 줄은 정기 기록 밖에서 모형을 바꾼 시점의 값이다." + (REP.mode === "m5" ? " 종합 예측은 당시 저장한 값이 아니라 같은 기준일 자료로 다시 계산한 값(사후 재계산)이다. 당시 저장한 OIS 값은 주소 끝에 ?model=ois를 붙여 본다. 1월은 OIS 기준 참고 추정." : "");
   }
 
   function renderEvents() {
@@ -1240,7 +1240,10 @@
       ...sec("무엇을 보여 주나",
         p("화면의 확률은 '모형 추정치'다. 시장금리에서 거꾸로 계산한 값이며, 검증된 시장 내재확률이 아니다. 숫자를 인용할 때는 기준일·기준 금리·정상 스프레드 가정을 함께 밝힌다."),
         table(["구분", "내용", "상태"], [
-          ["기본 추정치", "자체 산출 KOFR OIS(1개월·3개월물로 푸는 회의). 풀리지 않는 회의는 CD 91일 모형", "화면 게이지·날짜별 기록에 쓰는 값(2026-10-15 교체)"],
+          ...(REP.mode === "m5" ? [
+            ["대표 확률(종합 예측)", "합성 KOFR OIS와 통안채 91일물 확률을 각각 50% 섞은 통계적 결합모형(M5)", "화면 카드·추이·지난 회의 결과에 쓰는 값. 시장 거래 확률이 아니며 과거 날짜는 사후 재계산"],
+            ["합성 KOFR OIS 단독", "1개월·3개월물로 푸는 회의. 풀리지 않는 회의는 CD 91일 모형", "종합 예측의 한 요소. 기록 파일에는 당시 저장 값이 남아 있음(2026-10-15 교체)"],
+          ] : [["기본 추정치", "자체 산출 KOFR OIS(1개월·3개월물로 푸는 회의). 풀리지 않는 회의는 CD 91일 모형", "화면 게이지·날짜별 기록에 쓰는 값(2026-10-15 교체)"]]),
           ["실험값 1", "KOFR 3개월 선물 모형(한국거래소 정산가격)", "따로 표시·기록, 기본값에 섞지 않음"],
           ["실험값 2", "CD 모형과 KOFR 선물 모형 가중평균(KOFR 50%)", "따로 표시·기록, 채택 기준 충족 전까지 실험"],
         ]),
