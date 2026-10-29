@@ -259,9 +259,8 @@
     // 카드마다 '무엇을, 언제 기준으로' 보여 주는지
     const st = D.status || {};
     const ko = snap && snap.components && snap.components.kofr_ois;
-    const cdDate = ko && ko.curve && ko.curve.m1 ? ko.curve.m1.cd_date : snap && snap.asof;
     const marks = [
-      [nxt && nxt.method === "kofr_ois" ? `CD ${md(cdDate)} 공시값 · 갱신 ${stamp(D.meta.built)}` : `시장금리 ${md(snap ? snap.asof : D.meta.latest)} · 갱신 ${stamp(D.meta.built)}`,
+      [nxt && nxt.method === "kofr_ois" ? null : `시장금리 ${md(snap ? snap.asof : D.meta.latest)} · 갱신 ${stamp(D.meta.built)}`,
         D.meta.built, st.ecos && st.ecos.ok === false || st.cdcurve && st.cdcurve.ok === false],
       [dp ? `${md(dp.date)} 회의 점도표` + (D.guidance.next_dotplot ? ` · 다음 ${md(D.guidance.next_dotplot)}` : "") : "점도표 없음", null, false],
       [`보고서 ${D.reports.asof ? md(D.reports.asof) : "–"} 기준 · 기사 수집 ${stamp((st.naver || {}).last_success)}`, (st.naver || {}).last_success, st.naver && st.naver.ok === false],
