@@ -149,6 +149,21 @@ def experimental_note(cur, date_s: str) -> str:
     return " · ".join(out)
 
 
+LATER_TAG = "참고 추정(뒤 회의)"
+
+
+def later_rows(cur, day: str) -> list[dict]:
+    """다음 회의 뒤 회의(예: 1월)의 참고 추정을 기록 줄로 만든다. 회의별 변화를 가장 작게 본 값이라 낮게 나올 수 있다."""
+    out = []
+    for it in (((cur.get("components") or {}).get("kofr_ois") or {}).get("later_est") or {}).get("later") or []:
+        lo, hi = it["p_hike"]
+        p = round((lo + hi) / 2, 4)
+        out.append({"date": day, "asof": cur["asof"], "status": "산출", "meeting": it["date"],
+                    "p_hike": p, "p_hold": round(1 - p, 4), "p_cut": 0, "expected": "", "instrument": LATER_TAG, "spread_bp": "",
+                    "note": "참고 추정: 회의별 변화를 가장 작게 본 값" + ("" if lo == hi else f" ({lo * 100:.1f}~{hi * 100:.1f}%)")})
+    return out
+
+
 def update_prob_log(cur, today, stalled: str | None, write: bool) -> list[dict]:
     """매일 화면에 낸 확률을 날짜별로 고정 저장한다(재계산으로 바뀌지 않는 기록).
     write=True(일일 실행)일 때만 오늘 줄을 쓴다. 오늘 '산출' 줄이 이미 있으면 그대로 둔다(그날 처음 산출한 값 고정).
@@ -157,7 +172,17 @@ def update_prob_log(cur, today, stalled: str | None, write: bool) -> list[dict]:
     if PROB_LOG.exists():
         with open(PROB_LOG, encoding="utf-8") as f:
             rows = list(csv.DictReader(f))
-    if write and any(r["date"] == today.isoformat() and r["status"] == "산출" for r in rows):
+    day0 = today.isoformat()
+    if write and any(r["date"] == day0 and r["status"] == "산출" for r in rows):
+        # 오늘 줄은 고정. 뒤 회의 참고 추정 줄만 빠져 있으면 그것만 덧붙인다(기존 줄은 건드리지 않는다)
+        if cur and not stalled and not any(r["date"] == day0 and r["instrument"] == LATER_TAG for r in rows):
+            add = later_rows(cur, day0)
+            if add:
+                rows = sorted(rows + add, key=lambda r: (r["date"], r["meeting"]))
+                with open(PROB_LOG, "w", encoding="utf-8", newline="") as f:
+                    w = csv.DictWriter(f, LOG_FIELDS)
+                    w.writeheader()
+                    w.writerows(rows)
         write = False
     if write:
         day = today.isoformat()
@@ -178,6 +203,8 @@ def update_prob_log(cur, today, stalled: str | None, write: bool) -> list[dict]:
             rows.append({"date": day, "asof": cur["asof"] if cur else "", "status": "중단", "meeting": "",
                          "p_hike": "", "p_hold": "", "p_cut": "", "expected": "", "instrument": "", "spread_bp": "",
                          "note": (stalled or "시장금리 없음") + (f" | 실험값 {exp}" if exp else "")})
+        if cur and not stalled:
+            rows += later_rows(cur, day)
         rows.sort(key=lambda r: (r["date"], r["meeting"]))
         with open(PROB_LOG, "w", encoding="utf-8", newline="") as f:
             w = csv.DictWriter(f, LOG_FIELDS)
