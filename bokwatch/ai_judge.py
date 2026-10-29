@@ -66,6 +66,7 @@ SYNTH_SYSTEM = """당신은 중앙일보 경제부 데스크에 올리는 한국
 - "이는/이러한/한편" 같은 연결어, "~할 예정/살펴볼 계획" 같은 계획형 표현을 쓰지 않는다. 짧고 단정하게.
 - drivers의 article_ids에는 입력에 있는 id만 쓴다.
 - 입력 기사는 사건별 대표 기사다. reports는 같은 사건 보도 수다. 보도 수가 많다고 근거가 강한 것은 아니다.
+- 입력의 시장_* 값은 합성 KOFR OIS 모형 추정 또는 그 결합값이다. '선물시장'·'시장 가격'으로 쓰지 않고 '합성 KOFR OIS 추정'·'종합 예측'으로 쓴다.
 - 시장 확률과 정성 판단이 엇갈리면 market_gap에 그 차이를 한 문장으로 쓴다. 엇갈리지 않으면 빈 문자열.
 - 입력의 direction은 '한은'에 주는 함의, fed_direction은 '미 연준'에 주는 함의다. 연준 인상 신호를 한은 다음 회의 인상 신호로 쓰지 않는다. 연준 쪽 요인은 환율·금리차 경로로만 한은에 연결한다.
 - event_checks: 보도가 많은 사건(event가 있는 기사) 최대 6개에 대해, 입력의 최종 분류(event_direction, event_mix)와 내가 headline·summary에서 그 사건을 설명한 방향을 대조한다.
@@ -441,8 +442,12 @@ def context_block() -> dict:
     ev = read_json(SITE_DATA / "events.json", {}) or {}
     ctx = {"기준금리": meta.get("r0")}
     if snap:
-        ctx["시장_인상확률"] = {m["date"]: round(m["p_hike"], 3) for m in snap["scenarios"]["0"]["meetings"] if m["in_range"]}
+        ctx["시장_합성OIS_인상확률(모형 추정, 거래 가격 아님)"] = {m["date"]: round(m["p_hike"], 3) for m in snap["scenarios"]["0"]["meetings"] if m["in_range"]}
         ctx["시장_기준일"] = snap["asof"]
+        ser = (read_json(SITE_DATA / "awm_series.json", {}) or {}).get("meetings") or {}
+        m5 = {mt: round(days[snap["asof"]]["m5"]["hike"], 3) for mt, days in ser.items() if (days.get(snap["asof"]) or {}).get("m5")}
+        if m5:
+            ctx["시장_종합예측_인상확률(합성 OIS·통안채 91일 50:50 결합, 거래 가격 아님)"] = m5
     if g.get("dotplots"):
         dp = g["dotplots"][0]
         ctx["최신점도표"] = {"date": dp["date"], "median": dp["median"], "시점": "6개월 뒤 조건부 전망",
