@@ -240,7 +240,7 @@ def manual_events() -> list[dict]:
         out.append({"date": str(e["date"]), "time": e.get("time"), "label": e["label"],
                     "country": e.get("country", "KR"), "kind": e.get("kind", "custom"),
                     "importance": int(e.get("importance", 2)), "source": e.get("source", "수기 입력"),
-                    "verify": bool(e.get("verify", False)), "link": e.get("link")})
+                    "verify": bool(e.get("verify", False)), "link": e.get("link"), "overrides": e.get("overrides")})
     return out
 
 
@@ -251,6 +251,10 @@ def build_events(cfg, scraped: dict, indicators: dict, minutes: dict, today: dat
     uniq = {}
     for e in evs:
         uniq[(e["date"], e["label"])] = e
+    # 수기 입력의 overrides: "<자동 라벨>"은 같은 날짜의 그 자동 일정을 결과가 적힌 수기 줄로 바꾼다(예: FOMC 결정 → 결정 결과)
+    for e in evs:
+        if e.get("overrides"):
+            uniq.pop((e["date"], e["overrides"]), None)
     evs = sorted(uniq.values(), key=lambda e: (e["date"], e.get("time") or "99"))
     lookahead = cfg["events"].get("lookahead_days", 45)
     lookback = cfg["events"].get("lookback_days", 30)

@@ -423,3 +423,16 @@ def test_consensus_window_five_business_days():
             {"institution": "B", "published": "2026-08-27", "calls": {"2026-10-22": {"call": "인상"}}}]
     c = consensus(reps, ["2026-10-22"], date(2026, 10, 16))
     assert c["by_meeting"]["2026-10-22"]["counts"] == {"동결": 1} and c["institutions"] == 1
+
+
+def test_manual_event_overrides_auto_schedule(monkeypatch):
+    from datetime import date
+    from bokwatch import fetch_events as fe
+    auto = {"date": "2026-10-29", "time": "03:00", "label": "FOMC 결정", "country": "US", "kind": "fomc", "importance": 3, "source": "Fed"}
+    man = {"date": "2026-10-29", "time": "03:00", "label": "FOMC 결정: 동결", "country": "US", "kind": "fomc", "importance": 3,
+           "source": "수기", "verify": False, "link": None, "overrides": "FOMC 결정"}
+    monkeypatch.setattr(fe, "manual_events", lambda: [man])
+    monkeypatch.setattr(fe, "internal_events", lambda cfg, minutes: [])
+    out = fe.build_events({"events": {}}, {"fomc": [auto]}, {}, {}, date(2026, 10, 29))
+    labels = [e["label"] for e in out["upcoming"]]
+    assert labels == ["FOMC 결정: 동결"]
