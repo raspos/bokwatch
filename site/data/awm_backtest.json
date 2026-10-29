@@ -1,0 +1,7777 @@
+{
+ "generated": "2026-10-29",
+ "primary_burn_in": 6,
+ "sample": {
+  "n_cells": 180,
+  "n_meetings": 30,
+  "first": "2023-02-23",
+  "last": "2026-10-22",
+  "actuals": {
+   "hike": 2,
+   "hold": 24,
+   "cut": 4
+  }
+ },
+ "sample_long": {
+  "n_cells": 240,
+  "n_meetings": 40,
+  "first": "2021-11-25",
+  "last": "2026-10-22",
+  "actuals": {
+   "hike": 11,
+   "hold": 25,
+   "cut": 4
+  }
+ },
+ "kind": {
+  "formal": "금통위 순서의 확장 창 walk-forward(학습에 그 회의 이후 자료 없음)",
+  "post_hoc": "모형 후보·burn-in·구간 나누기는 자료를 본 뒤 정했다. 정식 표본 밖 검증이 아니다",
+  "exploratory": [
+   "M8b",
+   "M9b",
+   "국면별·급변별 표",
+   "OIS는 합성 추정(실제 OIS 호가 아님)"
+  ]
+ },
+ "table": {
+  "M0 항상 동결": {
+   "n_cells": 180,
+   "n_meetings": 30,
+   "n_change_meetings": 6,
+   "hit_rate": 0.8,
+   "brier": 0.4,
+   "logloss": 2.7631,
+   "hit_rate_change": 0.0,
+   "hit_rate_hold": 1.0,
+   "alert_0.3": {
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "false_alarm_rate": 0.0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 36,
+    "tn": 144
+   },
+   "alert_0.5": {
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "false_alarm_rate": 0.0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 36,
+    "tn": 144
+   },
+   "direction_acc_given_alert": null,
+   "direction_n": 0,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 180,
+     "mean_p": 0.0,
+     "observed": 0.2
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 0,
+     "mean_p": null,
+     "observed": null
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 0,
+     "mean_p": null,
+     "observed": null
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 0,
+     "mean_p": null,
+     "observed": null
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.4,
+    "20": 0.4,
+    "10": 0.4,
+    "5": 0.4,
+    "3": 0.4,
+    "1": 0.4
+   }
+  },
+  "M1 과거 결정 빈도": {
+   "n_cells": 180,
+   "n_meetings": 30,
+   "n_change_meetings": 6,
+   "hit_rate": 0.6333,
+   "brier": 0.531,
+   "logloss": 0.938,
+   "hit_rate_change": 0.0,
+   "hit_rate_hold": 0.7917,
+   "alert_0.3": {
+    "precision": 0.2,
+    "recall": 1.0,
+    "f1": 0.3333,
+    "false_alarm_rate": 1.0,
+    "tp": 36,
+    "fp": 144,
+    "fn": 0,
+    "tn": 0
+   },
+   "alert_0.5": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "false_alarm_rate": 0.2083,
+    "tp": 0,
+    "fp": 30,
+    "fn": 36,
+    "tn": 114
+   },
+   "direction_acc_given_alert": 0.3333,
+   "direction_n": 36,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 0,
+     "mean_p": null,
+     "observed": null
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 0,
+     "mean_p": null,
+     "observed": null
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 168,
+     "mean_p": 0.419,
+     "observed": 0.214
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 12,
+     "mean_p": 0.616,
+     "observed": 0.0
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.531,
+    "20": 0.531,
+    "10": 0.531,
+    "5": 0.531,
+    "3": 0.531,
+    "1": 0.531
+   }
+  },
+  "M2 합성 OIS 단독": {
+   "n_cells": 180,
+   "n_meetings": 30,
+   "n_change_meetings": 6,
+   "hit_rate": 0.6611,
+   "brier": 0.542,
+   "logloss": 1.6887,
+   "hit_rate_change": 0.5833,
+   "hit_rate_hold": 0.6806,
+   "alert_0.3": {
+    "precision": 0.2017,
+    "recall": 0.6667,
+    "f1": 0.3097,
+    "false_alarm_rate": 0.6597,
+    "tp": 24,
+    "fp": 95,
+    "fn": 12,
+    "tn": 49
+   },
+   "alert_0.5": {
+    "precision": 0.3134,
+    "recall": 0.5833,
+    "f1": 0.4078,
+    "false_alarm_rate": 0.3194,
+    "tp": 21,
+    "fp": 46,
+    "fn": 15,
+    "tn": 98
+   },
+   "direction_acc_given_alert": 1.0,
+   "direction_n": 24,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 18,
+     "mean_p": 0.057,
+     "observed": 0.167
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 43,
+     "mean_p": 0.19,
+     "observed": 0.209
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 65,
+     "mean_p": 0.429,
+     "observed": 0.062
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 54,
+     "mean_p": 0.83,
+     "observed": 0.37
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.9078,
+    "20": 0.7301,
+    "10": 0.5018,
+    "5": 0.4042,
+    "3": 0.3664,
+    "1": 0.342
+   }
+  },
+  "M3 통안채 91일 단독": {
+   "n_cells": 180,
+   "n_meetings": 30,
+   "n_change_meetings": 6,
+   "hit_rate": 0.7889,
+   "brier": 0.2847,
+   "logloss": 0.5996,
+   "hit_rate_change": 0.5278,
+   "hit_rate_hold": 0.8542,
+   "alert_0.3": {
+    "precision": 0.4068,
+    "recall": 0.6667,
+    "f1": 0.5053,
+    "false_alarm_rate": 0.2431,
+    "tp": 24,
+    "fp": 35,
+    "fn": 12,
+    "tn": 109
+   },
+   "alert_0.5": {
+    "precision": 0.475,
+    "recall": 0.5278,
+    "f1": 0.5,
+    "false_alarm_rate": 0.1458,
+    "tp": 19,
+    "fp": 21,
+    "fn": 17,
+    "tn": 123
+   },
+   "direction_acc_given_alert": 1.0,
+   "direction_n": 24,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 102,
+     "mean_p": 0.01,
+     "observed": 0.059
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 19,
+     "mean_p": 0.204,
+     "observed": 0.316
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 29,
+     "mean_p": 0.448,
+     "observed": 0.31
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 30,
+     "mean_p": 0.778,
+     "observed": 0.5
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.2904,
+    "20": 0.3464,
+    "10": 0.3317,
+    "5": 0.2478,
+    "3": 0.2554,
+    "1": 0.2366
+   }
+  },
+  "M4 CD91 단독": {
+   "n_cells": 180,
+   "n_meetings": 30,
+   "n_change_meetings": 6,
+   "hit_rate": 0.65,
+   "brier": 0.5217,
+   "logloss": 1.8646,
+   "hit_rate_change": 0.3333,
+   "hit_rate_hold": 0.7292,
+   "alert_0.3": {
+    "precision": 0.2326,
+    "recall": 0.5556,
+    "f1": 0.3279,
+    "false_alarm_rate": 0.4583,
+    "tp": 20,
+    "fp": 66,
+    "fn": 16,
+    "tn": 78
+   },
+   "alert_0.5": {
+    "precision": 0.25,
+    "recall": 0.3611,
+    "f1": 0.2955,
+    "false_alarm_rate": 0.2708,
+    "tp": 13,
+    "fp": 39,
+    "fn": 23,
+    "tn": 105
+   },
+   "direction_acc_given_alert": 0.85,
+   "direction_n": 20,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 74,
+     "mean_p": 0.01,
+     "observed": 0.176
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 20,
+     "mean_p": 0.2,
+     "observed": 0.15
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 42,
+     "mean_p": 0.433,
+     "observed": 0.214
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 44,
+     "mean_p": 0.781,
+     "observed": 0.25
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.6924,
+    "20": 0.5357,
+    "10": 0.4324,
+    "5": 0.5262,
+    "3": 0.4975,
+    "1": 0.4461
+   }
+  },
+  "M5 OIS+통안채 50:50": {
+   "n_cells": 180,
+   "n_meetings": 30,
+   "n_change_meetings": 6,
+   "hit_rate": 0.7444,
+   "brier": 0.3024,
+   "logloss": 0.4899,
+   "hit_rate_change": 0.5,
+   "hit_rate_hold": 0.8056,
+   "alert_0.3": {
+    "precision": 0.3488,
+    "recall": 0.8333,
+    "f1": 0.4918,
+    "false_alarm_rate": 0.3889,
+    "tp": 30,
+    "fp": 56,
+    "fn": 6,
+    "tn": 88
+   },
+   "alert_0.5": {
+    "precision": 0.4167,
+    "recall": 0.5556,
+    "f1": 0.4762,
+    "false_alarm_rate": 0.1944,
+    "tp": 20,
+    "fp": 28,
+    "fn": 16,
+    "tn": 116
+   },
+   "direction_acc_given_alert": 1.0,
+   "direction_n": 30,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 19,
+     "mean_p": 0.068,
+     "observed": 0.053
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 75,
+     "mean_p": 0.192,
+     "observed": 0.067
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 60,
+     "mean_p": 0.447,
+     "observed": 0.267
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 26,
+     "mean_p": 0.733,
+     "observed": 0.538
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.4173,
+    "20": 0.3715,
+    "10": 0.3124,
+    "5": 0.2502,
+    "3": 0.2346,
+    "1": 0.2287
+   }
+  },
+  "M6 기간별 고정 가중치": {
+   "n_cells": 180,
+   "n_meetings": 30,
+   "n_change_meetings": 6,
+   "hit_rate": 0.7278,
+   "brier": 0.3252,
+   "logloss": 0.5192,
+   "hit_rate_change": 0.4444,
+   "hit_rate_hold": 0.7986,
+   "alert_0.3": {
+    "precision": 0.3222,
+    "recall": 0.8056,
+    "f1": 0.4603,
+    "false_alarm_rate": 0.4236,
+    "tp": 29,
+    "fp": 61,
+    "fn": 7,
+    "tn": 83
+   },
+   "alert_0.5": {
+    "precision": 0.383,
+    "recall": 0.5,
+    "f1": 0.4337,
+    "false_alarm_rate": 0.2014,
+    "tp": 18,
+    "fp": 29,
+    "fn": 18,
+    "tn": 115
+   },
+   "direction_acc_given_alert": 1.0,
+   "direction_n": 29,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 15,
+     "mean_p": 0.067,
+     "observed": 0.067
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 75,
+     "mean_p": 0.205,
+     "observed": 0.08
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 64,
+     "mean_p": 0.455,
+     "observed": 0.234
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 26,
+     "mean_p": 0.721,
+     "observed": 0.538
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.4213,
+    "20": 0.3669,
+    "10": 0.3411,
+    "5": 0.2804,
+    "3": 0.2762,
+    "1": 0.2654
+   }
+  },
+  "M6c 기간 연속형 가중치": {
+   "n_cells": 180,
+   "n_meetings": 30,
+   "n_change_meetings": 6,
+   "hit_rate": 0.7611,
+   "brier": 0.3045,
+   "logloss": 0.4929,
+   "hit_rate_change": 0.5,
+   "hit_rate_hold": 0.8264,
+   "alert_0.3": {
+    "precision": 0.3448,
+    "recall": 0.8333,
+    "f1": 0.4878,
+    "false_alarm_rate": 0.3958,
+    "tp": 30,
+    "fp": 57,
+    "fn": 6,
+    "tn": 87
+   },
+   "alert_0.5": {
+    "precision": 0.4444,
+    "recall": 0.5556,
+    "f1": 0.4938,
+    "false_alarm_rate": 0.1736,
+    "tp": 20,
+    "fp": 25,
+    "fn": 16,
+    "tn": 119
+   },
+   "direction_acc_given_alert": 1.0,
+   "direction_n": 30,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 18,
+     "mean_p": 0.068,
+     "observed": 0.056
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 75,
+     "mean_p": 0.193,
+     "observed": 0.067
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 61,
+     "mean_p": 0.447,
+     "observed": 0.262
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 26,
+     "mean_p": 0.732,
+     "observed": 0.538
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.4199,
+    "20": 0.3727,
+    "10": 0.3144,
+    "5": 0.2522,
+    "3": 0.2368,
+    "1": 0.2311
+   }
+  },
+  "M7 최근 오차 반영(EWA)": {
+   "n_cells": 180,
+   "n_meetings": 30,
+   "n_change_meetings": 6,
+   "hit_rate": 0.7611,
+   "brier": 0.3281,
+   "logloss": 0.5219,
+   "hit_rate_change": 0.4722,
+   "hit_rate_hold": 0.8333,
+   "alert_0.3": {
+    "precision": 0.3,
+    "recall": 0.6667,
+    "f1": 0.4138,
+    "false_alarm_rate": 0.3889,
+    "tp": 24,
+    "fp": 56,
+    "fn": 12,
+    "tn": 88
+   },
+   "alert_0.5": {
+    "precision": 0.4048,
+    "recall": 0.4722,
+    "f1": 0.4359,
+    "false_alarm_rate": 0.1736,
+    "tp": 17,
+    "fp": 25,
+    "fn": 19,
+    "tn": 119
+   },
+   "direction_acc_given_alert": 1.0,
+   "direction_n": 24,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 19,
+     "mean_p": 0.067,
+     "observed": 0.053
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 81,
+     "mean_p": 0.187,
+     "observed": 0.136
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 56,
+     "mean_p": 0.441,
+     "observed": 0.214
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 24,
+     "mean_p": 0.727,
+     "observed": 0.5
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.4211,
+    "20": 0.3759,
+    "10": 0.3367,
+    "5": 0.2835,
+    "3": 0.2831,
+    "1": 0.2682
+   }
+  },
+  "M8 기간+전환 신호 가중치": {
+   "n_cells": 180,
+   "n_meetings": 30,
+   "n_change_meetings": 6,
+   "hit_rate": 0.7611,
+   "brier": 0.3052,
+   "logloss": 0.4936,
+   "hit_rate_change": 0.5,
+   "hit_rate_hold": 0.8264,
+   "alert_0.3": {
+    "precision": 0.3409,
+    "recall": 0.8333,
+    "f1": 0.4839,
+    "false_alarm_rate": 0.4028,
+    "tp": 30,
+    "fp": 58,
+    "fn": 6,
+    "tn": 86
+   },
+   "alert_0.5": {
+    "precision": 0.4348,
+    "recall": 0.5556,
+    "f1": 0.4878,
+    "false_alarm_rate": 0.1806,
+    "tp": 20,
+    "fp": 26,
+    "fn": 16,
+    "tn": 118
+   },
+   "direction_acc_given_alert": 1.0,
+   "direction_n": 30,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 18,
+     "mean_p": 0.069,
+     "observed": 0.056
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 74,
+     "mean_p": 0.192,
+     "observed": 0.068
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 62,
+     "mean_p": 0.445,
+     "observed": 0.258
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 26,
+     "mean_p": 0.731,
+     "observed": 0.538
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.4212,
+    "20": 0.3741,
+    "10": 0.3153,
+    "5": 0.2525,
+    "3": 0.237,
+    "1": 0.2311
+   }
+  },
+  "M8b 기간+직전 결정 맥락 가중치(탐색적)": {
+   "n_cells": 180,
+   "n_meetings": 30,
+   "n_change_meetings": 6,
+   "hit_rate": 0.7778,
+   "brier": 0.2999,
+   "logloss": 0.4856,
+   "hit_rate_change": 0.5278,
+   "hit_rate_hold": 0.8403,
+   "alert_0.3": {
+    "precision": 0.3571,
+    "recall": 0.8333,
+    "f1": 0.5,
+    "false_alarm_rate": 0.375,
+    "tp": 30,
+    "fp": 54,
+    "fn": 6,
+    "tn": 90
+   },
+   "alert_0.5": {
+    "precision": 0.4524,
+    "recall": 0.5278,
+    "f1": 0.4872,
+    "false_alarm_rate": 0.1597,
+    "tp": 19,
+    "fp": 23,
+    "fn": 17,
+    "tn": 121
+   },
+   "direction_acc_given_alert": 1.0,
+   "direction_n": 30,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 18,
+     "mean_p": 0.067,
+     "observed": 0.056
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 78,
+     "mean_p": 0.19,
+     "observed": 0.064
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 60,
+     "mean_p": 0.445,
+     "observed": 0.283
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 24,
+     "mean_p": 0.733,
+     "observed": 0.542
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.3973,
+    "20": 0.3579,
+    "10": 0.3133,
+    "5": 0.2528,
+    "3": 0.2429,
+    "1": 0.2354
+   }
+  },
+  "M9 기간+전환 신호+신뢰도 가중치": {
+   "n_cells": 180,
+   "n_meetings": 30,
+   "n_change_meetings": 6,
+   "hit_rate": 0.7389,
+   "brier": 0.305,
+   "logloss": 0.4928,
+   "hit_rate_change": 0.5,
+   "hit_rate_hold": 0.7986,
+   "alert_0.3": {
+    "precision": 0.3448,
+    "recall": 0.8333,
+    "f1": 0.4878,
+    "false_alarm_rate": 0.3958,
+    "tp": 30,
+    "fp": 57,
+    "fn": 6,
+    "tn": 87
+   },
+   "alert_0.5": {
+    "precision": 0.4,
+    "recall": 0.5556,
+    "f1": 0.4651,
+    "false_alarm_rate": 0.2083,
+    "tp": 20,
+    "fp": 30,
+    "fn": 16,
+    "tn": 114
+   },
+   "direction_acc_given_alert": 1.0,
+   "direction_n": 30,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 19,
+     "mean_p": 0.068,
+     "observed": 0.053
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 74,
+     "mean_p": 0.192,
+     "observed": 0.068
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 61,
+     "mean_p": 0.448,
+     "observed": 0.262
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 26,
+     "mean_p": 0.732,
+     "observed": 0.538
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.4234,
+    "20": 0.3758,
+    "10": 0.3141,
+    "5": 0.2512,
+    "3": 0.2358,
+    "1": 0.2298
+   }
+  },
+  "M9b 신호+결정 맥락+신뢰도(탐색적)": {
+   "n_cells": 180,
+   "n_meetings": 30,
+   "n_change_meetings": 6,
+   "hit_rate": 0.7611,
+   "brier": 0.303,
+   "logloss": 0.488,
+   "hit_rate_change": 0.5278,
+   "hit_rate_hold": 0.8194,
+   "alert_0.3": {
+    "precision": 0.3448,
+    "recall": 0.8333,
+    "f1": 0.4878,
+    "false_alarm_rate": 0.3958,
+    "tp": 30,
+    "fp": 57,
+    "fn": 6,
+    "tn": 87
+   },
+   "alert_0.5": {
+    "precision": 0.413,
+    "recall": 0.5278,
+    "f1": 0.4634,
+    "false_alarm_rate": 0.1875,
+    "tp": 19,
+    "fp": 27,
+    "fn": 17,
+    "tn": 117
+   },
+   "direction_acc_given_alert": 1.0,
+   "direction_n": 30,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 20,
+     "mean_p": 0.067,
+     "observed": 0.05
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 73,
+     "mean_p": 0.186,
+     "observed": 0.068
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 62,
+     "mean_p": 0.441,
+     "observed": 0.274
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 25,
+     "mean_p": 0.727,
+     "observed": 0.52
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.4108,
+    "20": 0.3673,
+    "10": 0.3135,
+    "5": 0.2518,
+    "3": 0.2414,
+    "1": 0.233
+   }
+  },
+  "M10 변경·방향 2단계": {
+   "n_cells": 180,
+   "n_meetings": 30,
+   "n_change_meetings": 6,
+   "hit_rate": 0.7167,
+   "brier": 0.4514,
+   "logloss": 0.8609,
+   "hit_rate_change": 0.0,
+   "hit_rate_hold": 0.8958,
+   "alert_0.3": {
+    "precision": 0.2074,
+    "recall": 0.7778,
+    "f1": 0.3275,
+    "false_alarm_rate": 0.7431,
+    "tp": 28,
+    "fp": 107,
+    "fn": 8,
+    "tn": 37
+   },
+   "alert_0.5": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "false_alarm_rate": 0.1111,
+    "tp": 0,
+    "fp": 16,
+    "fn": 36,
+    "tn": 128
+   },
+   "direction_acc_given_alert": 0.3571,
+   "direction_n": 28,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 1,
+     "mean_p": 0.072,
+     "observed": 0.0
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 44,
+     "mean_p": 0.265,
+     "observed": 0.182
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 129,
+     "mean_p": 0.39,
+     "observed": 0.217
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 6,
+     "mean_p": 0.659,
+     "observed": 0.0
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.4794,
+    "20": 0.4646,
+    "10": 0.4646,
+    "5": 0.4372,
+    "3": 0.4305,
+    "1": 0.4322
+   }
+  }
+ },
+ "table_long": {
+  "M0 항상 동결": {
+   "n_cells": 240,
+   "n_meetings": 40,
+   "n_change_meetings": 15,
+   "hit_rate": 0.625,
+   "brier": 0.75,
+   "logloss": 5.1808,
+   "hit_rate_change": 0.0,
+   "hit_rate_hold": 1.0,
+   "alert_0.3": {
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "false_alarm_rate": 0.0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 90,
+    "tn": 150
+   },
+   "alert_0.5": {
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "false_alarm_rate": 0.0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 90,
+    "tn": 150
+   },
+   "direction_acc_given_alert": null,
+   "direction_n": 0,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 240,
+     "mean_p": 0.0,
+     "observed": 0.375
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 0,
+     "mean_p": null,
+     "observed": null
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 0,
+     "mean_p": null,
+     "observed": null
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 0,
+     "mean_p": null,
+     "observed": null
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.75,
+    "20": 0.75,
+    "10": 0.75,
+    "5": 0.75,
+    "3": 0.75,
+    "1": 0.75
+   }
+  },
+  "M1 과거 결정 빈도": {
+   "n_cells": 240,
+   "n_meetings": 40,
+   "n_change_meetings": 15,
+   "hit_rate": 0.575,
+   "brier": 0.5487,
+   "logloss": 0.9258,
+   "hit_rate_change": 0.2,
+   "hit_rate_hold": 0.8,
+   "alert_0.3": {
+    "precision": 0.375,
+    "recall": 1.0,
+    "f1": 0.5455,
+    "false_alarm_rate": 1.0,
+    "tp": 90,
+    "fp": 150,
+    "fn": 0,
+    "tn": 0
+   },
+   "alert_0.5": {
+    "precision": 0.5,
+    "recall": 0.3333,
+    "f1": 0.4,
+    "false_alarm_rate": 0.2,
+    "tp": 30,
+    "fp": 30,
+    "fn": 60,
+    "tn": 120
+   },
+   "direction_acc_given_alert": 0.7333,
+   "direction_n": 90,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 0,
+     "mean_p": null,
+     "observed": null
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 0,
+     "mean_p": null,
+     "observed": null
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 222,
+     "mean_p": 0.432,
+     "observed": 0.378
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 18,
+     "mean_p": 0.614,
+     "observed": 0.333
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.5487,
+    "20": 0.5487,
+    "10": 0.5487,
+    "5": 0.5487,
+    "3": 0.5487,
+    "1": 0.5487
+   }
+  },
+  "M3 통안채 91일 단독": {
+   "n_cells": 240,
+   "n_meetings": 40,
+   "n_change_meetings": 15,
+   "hit_rate": 0.6583,
+   "brier": 0.533,
+   "logloss": 2.1897,
+   "hit_rate_change": 0.3222,
+   "hit_rate_hold": 0.86,
+   "alert_0.3": {
+    "precision": 0.5205,
+    "recall": 0.4222,
+    "f1": 0.4663,
+    "false_alarm_rate": 0.2333,
+    "tp": 38,
+    "fp": 35,
+    "fn": 52,
+    "tn": 115
+   },
+   "alert_0.5": {
+    "precision": 0.58,
+    "recall": 0.3222,
+    "f1": 0.4143,
+    "false_alarm_rate": 0.14,
+    "tp": 29,
+    "fp": 21,
+    "fn": 61,
+    "tn": 129
+   },
+   "direction_acc_given_alert": 0.9737,
+   "direction_n": 38,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 137,
+     "mean_p": 0.01,
+     "observed": 0.255
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 30,
+     "mean_p": 0.198,
+     "observed": 0.567
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 34,
+     "mean_p": 0.443,
+     "observed": 0.412
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 39,
+     "mean_p": 0.805,
+     "observed": 0.615
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.5452,
+    "20": 0.5557,
+    "10": 0.5987,
+    "5": 0.5178,
+    "3": 0.5058,
+    "1": 0.4746
+   }
+  },
+  "M4 CD91 단독": {
+   "n_cells": 240,
+   "n_meetings": 40,
+   "n_change_meetings": 15,
+   "hit_rate": 0.6375,
+   "brier": 0.5836,
+   "logloss": 2.5437,
+   "hit_rate_change": 0.4667,
+   "hit_rate_hold": 0.74,
+   "alert_0.3": {
+    "precision": 0.431,
+    "recall": 0.5556,
+    "f1": 0.4854,
+    "false_alarm_rate": 0.44,
+    "tp": 50,
+    "fp": 66,
+    "fn": 40,
+    "tn": 84
+   },
+   "alert_0.5": {
+    "precision": 0.5244,
+    "recall": 0.4778,
+    "f1": 0.5,
+    "false_alarm_rate": 0.26,
+    "tp": 43,
+    "fp": 39,
+    "fn": 47,
+    "tn": 111
+   },
+   "direction_acc_given_alert": 0.94,
+   "direction_n": 50,
+   "calibration": [
+    {
+     "bin": "0.0~0.1",
+     "n": 101,
+     "mean_p": 0.009,
+     "observed": 0.337
+    },
+    {
+     "bin": "0.1~0.3",
+     "n": 23,
+     "mean_p": 0.202,
+     "observed": 0.261
+    },
+    {
+     "bin": "0.3~0.6",
+     "n": 43,
+     "mean_p": 0.436,
+     "observed": 0.233
+    },
+    {
+     "bin": "0.6~1.0",
+     "n": 73,
+     "mean_p": 0.851,
+     "observed": 0.548
+    }
+   ],
+   "brier_by_horizon": {
+    "30": 0.6983,
+    "20": 0.6019,
+    "10": 0.5181,
+    "5": 0.5961,
+    "3": 0.5772,
+    "1": 0.5101
+   }
+  }
+ },
+ "by_regime": {
+  "M0 항상 동결": {
+   "동결 국면": {
+    "n_cells": 90,
+    "n_meetings": 15,
+    "n_change_meetings": 2,
+    "hit_rate": 0.8667,
+    "brier": 0.2667,
+    "logloss": 1.8421,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 1.0,
+    "alert_0.3": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "false_alarm_rate": 0.0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 12,
+     "tn": 78
+    },
+    "alert_0.5": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "false_alarm_rate": 0.0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 12,
+     "tn": 78
+    },
+    "direction_acc_given_alert": null,
+    "direction_n": 0,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 90,
+      "mean_p": 0.0,
+      "observed": 0.133
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.2667,
+     "20": 0.2667,
+     "10": 0.2667,
+     "5": 0.2667,
+     "3": 0.2667,
+     "1": 0.2667
+    }
+   },
+   "인상 국면": {
+    "n_cells": 36,
+    "n_meetings": 6,
+    "n_change_meetings": 1,
+    "hit_rate": 0.8333,
+    "brier": 0.3333,
+    "logloss": 2.3026,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 1.0,
+    "alert_0.3": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "false_alarm_rate": 0.0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 6,
+     "tn": 30
+    },
+    "alert_0.5": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "false_alarm_rate": 0.0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 6,
+     "tn": 30
+    },
+    "direction_acc_given_alert": null,
+    "direction_n": 0,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 36,
+      "mean_p": 0.0,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3333,
+     "20": 0.3333,
+     "10": 0.3333,
+     "5": 0.3333,
+     "3": 0.3333,
+     "1": 0.3333
+    }
+   },
+   "인하 국면": {
+    "n_cells": 54,
+    "n_meetings": 9,
+    "n_change_meetings": 3,
+    "hit_rate": 0.6667,
+    "brier": 0.6667,
+    "logloss": 4.6052,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 1.0,
+    "alert_0.3": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "false_alarm_rate": 0.0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 18,
+     "tn": 36
+    },
+    "alert_0.5": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "false_alarm_rate": 0.0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 18,
+     "tn": 36
+    },
+    "direction_acc_given_alert": null,
+    "direction_n": 0,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 54,
+      "mean_p": 0.0,
+      "observed": 0.333
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.6667,
+     "20": 0.6667,
+     "10": 0.6667,
+     "5": 0.6667,
+     "3": 0.6667,
+     "1": 0.6667
+    }
+   }
+  },
+  "M1 과거 결정 빈도": {
+   "동결 국면": {
+    "n_cells": 90,
+    "n_meetings": 15,
+    "n_change_meetings": 2,
+    "hit_rate": 0.8,
+    "brier": 0.4461,
+    "logloss": 0.8079,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.9231,
+    "alert_0.3": {
+     "precision": 0.1333,
+     "recall": 1.0,
+     "f1": 0.2353,
+     "false_alarm_rate": 1.0,
+     "tp": 12,
+     "fp": 78,
+     "fn": 0,
+     "tn": 0
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.0769,
+     "tp": 0,
+     "fp": 6,
+     "fn": 12,
+     "tn": 72
+    },
+    "direction_acc_given_alert": 0.5,
+    "direction_n": 12,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 90,
+      "mean_p": 0.415,
+      "observed": 0.133
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.4461,
+     "20": 0.4461,
+     "10": 0.4461,
+     "5": 0.4461,
+     "3": 0.4461,
+     "1": 0.4461
+    }
+   },
+   "인상 국면": {
+    "n_cells": 36,
+    "n_meetings": 6,
+    "n_change_meetings": 1,
+    "hit_rate": 0.1667,
+    "brier": 0.6255,
+    "logloss": 0.8976,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.2,
+    "alert_0.3": {
+     "precision": 0.1667,
+     "recall": 1.0,
+     "f1": 0.2857,
+     "false_alarm_rate": 1.0,
+     "tp": 6,
+     "fp": 30,
+     "fn": 0,
+     "tn": 0
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.8,
+     "tp": 0,
+     "fp": 24,
+     "fn": 6,
+     "tn": 6
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 6,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 24,
+      "mean_p": 0.463,
+      "observed": 0.25
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 12,
+      "mean_p": 0.616,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.6255,
+     "20": 0.6255,
+     "10": 0.6255,
+     "5": 0.6255,
+     "3": 0.6255,
+     "1": 0.6255
+    }
+   },
+   "인하 국면": {
+    "n_cells": 54,
+    "n_meetings": 9,
+    "n_change_meetings": 3,
+    "hit_rate": 0.6667,
+    "brier": 0.6097,
+    "logloss": 1.1816,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 1.0,
+    "alert_0.3": {
+     "precision": 0.3333,
+     "recall": 1.0,
+     "f1": 0.5,
+     "false_alarm_rate": 1.0,
+     "tp": 18,
+     "fp": 36,
+     "fn": 0,
+     "tn": 0
+    },
+    "alert_0.5": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "false_alarm_rate": 0.0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 18,
+     "tn": 36
+    },
+    "direction_acc_given_alert": 0.0,
+    "direction_n": 18,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 54,
+      "mean_p": 0.405,
+      "observed": 0.333
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.6097,
+     "20": 0.6097,
+     "10": 0.6097,
+     "5": 0.6097,
+     "3": 0.6097,
+     "1": 0.6097
+    }
+   }
+  },
+  "M2 합성 OIS 단독": {
+   "동결 국면": {
+    "n_cells": 90,
+    "n_meetings": 15,
+    "n_change_meetings": 2,
+    "hit_rate": 0.6,
+    "brier": 0.5831,
+    "logloss": 1.4864,
+    "hit_rate_change": 0.75,
+    "hit_rate_hold": 0.5769,
+    "alert_0.3": {
+     "precision": 0.1765,
+     "recall": 1.0,
+     "f1": 0.3,
+     "false_alarm_rate": 0.7179,
+     "tp": 12,
+     "fp": 56,
+     "fn": 0,
+     "tn": 22
+    },
+    "alert_0.5": {
+     "precision": 0.2143,
+     "recall": 0.75,
+     "f1": 0.3333,
+     "false_alarm_rate": 0.4231,
+     "tp": 9,
+     "fp": 33,
+     "fn": 3,
+     "tn": 45
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 12,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 11,
+      "mean_p": 0.056,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 11,
+      "mean_p": 0.19,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 34,
+      "mean_p": 0.441,
+      "observed": 0.118
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 34,
+      "mean_p": 0.818,
+      "observed": 0.235
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.9446,
+     "20": 0.8502,
+     "10": 0.5886,
+     "5": 0.4013,
+     "3": 0.377,
+     "1": 0.3371
+    }
+   },
+   "인상 국면": {
+    "n_cells": 36,
+    "n_meetings": 6,
+    "n_change_meetings": 1,
+    "hit_rate": 0.6944,
+    "brier": 0.5374,
+    "logloss": 1.1453,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8333,
+    "alert_0.3": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.5,
+     "tp": 0,
+     "fp": 15,
+     "fn": 6,
+     "tn": 15
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.1667,
+     "tp": 0,
+     "fp": 5,
+     "fn": 6,
+     "tn": 25
+    },
+    "direction_acc_given_alert": null,
+    "direction_n": 0,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 5,
+      "mean_p": 0.043,
+      "observed": 0.2
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 16,
+      "mean_p": 0.188,
+      "observed": 0.312
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 12,
+      "mean_p": 0.414,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 3,
+      "mean_p": 0.908,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 1.0566,
+     "20": 0.5738,
+     "10": 0.546,
+     "5": 0.4057,
+     "3": 0.3336,
+     "1": 0.3088
+    }
+   },
+   "인하 국면": {
+    "n_cells": 54,
+    "n_meetings": 9,
+    "n_change_meetings": 3,
+    "hit_rate": 0.7407,
+    "brier": 0.4766,
+    "logloss": 2.388,
+    "hit_rate_change": 0.6667,
+    "hit_rate_hold": 0.7778,
+    "alert_0.3": {
+     "precision": 0.3333,
+     "recall": 0.6667,
+     "f1": 0.4444,
+     "false_alarm_rate": 0.6667,
+     "tp": 12,
+     "fp": 24,
+     "fn": 6,
+     "tn": 12
+    },
+    "alert_0.5": {
+     "precision": 0.6,
+     "recall": 0.6667,
+     "f1": 0.6316,
+     "false_alarm_rate": 0.2222,
+     "tp": 12,
+     "fp": 8,
+     "fn": 6,
+     "tn": 28
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 12,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 2,
+      "mean_p": 0.095,
+      "observed": 1.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 16,
+      "mean_p": 0.191,
+      "observed": 0.25
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 19,
+      "mean_p": 0.416,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 17,
+      "mean_p": 0.84,
+      "observed": 0.706
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.7472,
+     "20": 0.6341,
+     "10": 0.3277,
+     "5": 0.408,
+     "3": 0.3704,
+     "1": 0.3723
+    }
+   }
+  },
+  "M3 통안채 91일 단독": {
+   "동결 국면": {
+    "n_cells": 90,
+    "n_meetings": 15,
+    "n_change_meetings": 2,
+    "hit_rate": 0.8111,
+    "brier": 0.2087,
+    "logloss": 0.299,
+    "hit_rate_change": 0.6667,
+    "hit_rate_hold": 0.8333,
+    "alert_0.3": {
+     "precision": 0.3462,
+     "recall": 0.75,
+     "f1": 0.4737,
+     "false_alarm_rate": 0.2179,
+     "tp": 9,
+     "fp": 17,
+     "fn": 3,
+     "tn": 61
+    },
+    "alert_0.5": {
+     "precision": 0.381,
+     "recall": 0.6667,
+     "f1": 0.4848,
+     "false_alarm_rate": 0.1667,
+     "tp": 8,
+     "fp": 13,
+     "fn": 4,
+     "tn": 65
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 9,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 54,
+      "mean_p": 0.009,
+      "observed": 0.019
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 10,
+      "mean_p": 0.208,
+      "observed": 0.2
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 10,
+      "mean_p": 0.479,
+      "observed": 0.2
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 16,
+      "mean_p": 0.767,
+      "observed": 0.438
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.2291,
+     "20": 0.2193,
+     "10": 0.2,
+     "5": 0.1756,
+     "3": 0.2279,
+     "1": 0.2004
+    }
+   },
+   "인상 국면": {
+    "n_cells": 36,
+    "n_meetings": 6,
+    "n_change_meetings": 1,
+    "hit_rate": 0.7222,
+    "brier": 0.4672,
+    "logloss": 1.5913,
+    "hit_rate_change": 0.3333,
+    "hit_rate_hold": 0.8,
+    "alert_0.3": {
+     "precision": 0.1333,
+     "recall": 0.3333,
+     "f1": 0.1905,
+     "false_alarm_rate": 0.4333,
+     "tp": 2,
+     "fp": 13,
+     "fn": 4,
+     "tn": 17
+    },
+    "alert_0.5": {
+     "precision": 0.25,
+     "recall": 0.3333,
+     "f1": 0.2857,
+     "false_alarm_rate": 0.2,
+     "tp": 2,
+     "fp": 6,
+     "fn": 4,
+     "tn": 24
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 15,
+      "mean_p": 0.013,
+      "observed": 0.133
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 6,
+      "mean_p": 0.198,
+      "observed": 0.333
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 10,
+      "mean_p": 0.421,
+      "observed": 0.1
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 5,
+      "mean_p": 0.874,
+      "observed": 0.2
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.6285,
+     "20": 0.8161,
+     "10": 0.8089,
+     "5": 0.373,
+     "3": 0.0905,
+     "1": 0.0864
+    }
+   },
+   "인하 국면": {
+    "n_cells": 54,
+    "n_meetings": 9,
+    "n_change_meetings": 3,
+    "hit_rate": 0.7963,
+    "brier": 0.2897,
+    "logloss": 0.4395,
+    "hit_rate_change": 0.5,
+    "hit_rate_hold": 0.9444,
+    "alert_0.3": {
+     "precision": 0.7222,
+     "recall": 0.7222,
+     "f1": 0.7222,
+     "false_alarm_rate": 0.1389,
+     "tp": 13,
+     "fp": 5,
+     "fn": 5,
+     "tn": 31
+    },
+    "alert_0.5": {
+     "precision": 0.8182,
+     "recall": 0.5,
+     "f1": 0.6207,
+     "false_alarm_rate": 0.0556,
+     "tp": 9,
+     "fp": 2,
+     "fn": 9,
+     "tn": 34
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 13,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 33,
+      "mean_p": 0.011,
+      "observed": 0.091
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 3,
+      "mean_p": 0.203,
+      "observed": 0.667
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 9,
+      "mean_p": 0.444,
+      "observed": 0.667
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 9,
+      "mean_p": 0.745,
+      "observed": 0.778
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.1671,
+     "20": 0.2451,
+     "10": 0.233,
+     "5": 0.2846,
+     "3": 0.4112,
+     "1": 0.3972
+    }
+   }
+  },
+  "M4 CD91 단독": {
+   "동결 국면": {
+    "n_cells": 90,
+    "n_meetings": 15,
+    "n_change_meetings": 2,
+    "hit_rate": 0.6667,
+    "brier": 0.4752,
+    "logloss": 1.4079,
+    "hit_rate_change": 0.4167,
+    "hit_rate_hold": 0.7051,
+    "alert_0.3": {
+     "precision": 0.2045,
+     "recall": 0.75,
+     "f1": 0.3214,
+     "false_alarm_rate": 0.4487,
+     "tp": 9,
+     "fp": 35,
+     "fn": 3,
+     "tn": 43
+    },
+    "alert_0.5": {
+     "precision": 0.1786,
+     "recall": 0.4167,
+     "f1": 0.25,
+     "false_alarm_rate": 0.2949,
+     "tp": 5,
+     "fp": 23,
+     "fn": 7,
+     "tn": 55
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 9,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 36,
+      "mean_p": 0.009,
+      "observed": 0.083
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 10,
+      "mean_p": 0.197,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 18,
+      "mean_p": 0.435,
+      "observed": 0.278
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 26,
+      "mean_p": 0.781,
+      "observed": 0.154
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.7396,
+     "20": 0.5007,
+     "10": 0.4128,
+     "5": 0.4305,
+     "3": 0.4019,
+     "1": 0.366
+    }
+   },
+   "인상 국면": {
+    "n_cells": 36,
+    "n_meetings": 6,
+    "n_change_meetings": 1,
+    "hit_rate": 0.6667,
+    "brier": 0.4713,
+    "logloss": 2.5849,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8,
+    "alert_0.3": {
+     "precision": 0.25,
+     "recall": 0.5,
+     "f1": 0.3333,
+     "false_alarm_rate": 0.3,
+     "tp": 3,
+     "fp": 9,
+     "fn": 3,
+     "tn": 21
+    },
+    "alert_0.5": {
+     "precision": 0.1429,
+     "recall": 0.1667,
+     "f1": 0.1538,
+     "false_alarm_rate": 0.2,
+     "tp": 1,
+     "fp": 6,
+     "fn": 5,
+     "tn": 24
+    },
+    "direction_acc_given_alert": 0.0,
+    "direction_n": 3,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 21,
+      "mean_p": 0.012,
+      "observed": 0.095
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 3,
+      "mean_p": 0.224,
+      "observed": 0.333
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 8,
+      "mean_p": 0.447,
+      "observed": 0.25
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 4,
+      "mean_p": 0.782,
+      "observed": 0.25
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.6473,
+     "20": 0.5773,
+     "10": 0.2937,
+     "5": 0.4216,
+     "3": 0.4528,
+     "1": 0.4348
+    }
+   },
+   "인하 국면": {
+    "n_cells": 54,
+    "n_meetings": 9,
+    "n_change_meetings": 3,
+    "hit_rate": 0.6111,
+    "brier": 0.6328,
+    "logloss": 2.1454,
+    "hit_rate_change": 0.3889,
+    "hit_rate_hold": 0.7222,
+    "alert_0.3": {
+     "precision": 0.2667,
+     "recall": 0.4444,
+     "f1": 0.3333,
+     "false_alarm_rate": 0.6111,
+     "tp": 8,
+     "fp": 22,
+     "fn": 10,
+     "tn": 14
+    },
+    "alert_0.5": {
+     "precision": 0.4118,
+     "recall": 0.3889,
+     "f1": 0.4,
+     "false_alarm_rate": 0.2778,
+     "tp": 7,
+     "fp": 10,
+     "fn": 11,
+     "tn": 26
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 8,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 17,
+      "mean_p": 0.01,
+      "observed": 0.471
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 7,
+      "mean_p": 0.194,
+      "observed": 0.286
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 16,
+      "mean_p": 0.424,
+      "observed": 0.125
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 14,
+      "mean_p": 0.779,
+      "observed": 0.429
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.6439,
+     "20": 0.5663,
+     "10": 0.5574,
+     "5": 0.7553,
+     "3": 0.6868,
+     "1": 0.5873
+    }
+   }
+  },
+  "M5 OIS+통안채 50:50": {
+   "동결 국면": {
+    "n_cells": 90,
+    "n_meetings": 15,
+    "n_change_meetings": 2,
+    "hit_rate": 0.8,
+    "brier": 0.2761,
+    "logloss": 0.4334,
+    "hit_rate_change": 0.8333,
+    "hit_rate_hold": 0.7949,
+    "alert_0.3": {
+     "precision": 0.2553,
+     "recall": 1.0,
+     "f1": 0.4068,
+     "false_alarm_rate": 0.4487,
+     "tp": 12,
+     "fp": 35,
+     "fn": 0,
+     "tn": 43
+    },
+    "alert_0.5": {
+     "precision": 0.3846,
+     "recall": 0.8333,
+     "f1": 0.5263,
+     "false_alarm_rate": 0.2051,
+     "tp": 10,
+     "fp": 16,
+     "fn": 2,
+     "tn": 62
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 12,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 9,
+      "mean_p": 0.063,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 34,
+      "mean_p": 0.194,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 32,
+      "mean_p": 0.449,
+      "observed": 0.156
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 15,
+      "mean_p": 0.737,
+      "observed": 0.467
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.4055,
+     "20": 0.3585,
+     "10": 0.2677,
+     "5": 0.2066,
+     "3": 0.2183,
+     "1": 0.2
+    }
+   },
+   "인상 국면": {
+    "n_cells": 36,
+    "n_meetings": 6,
+    "n_change_meetings": 1,
+    "hit_rate": 0.6667,
+    "brier": 0.3963,
+    "logloss": 0.692,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8,
+    "alert_0.3": {
+     "precision": 0.1333,
+     "recall": 0.3333,
+     "f1": 0.1905,
+     "false_alarm_rate": 0.4333,
+     "tp": 2,
+     "fp": 13,
+     "fn": 4,
+     "tn": 17
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.2,
+     "tp": 0,
+     "fp": 6,
+     "fn": 6,
+     "tn": 24
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 3,
+      "mean_p": 0.036,
+      "observed": 0.333
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 18,
+      "mean_p": 0.181,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 12,
+      "mean_p": 0.416,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 3,
+      "mean_p": 0.694,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.59,
+     "20": 0.5566,
+     "10": 0.5726,
+     "5": 0.3442,
+     "3": 0.1524,
+     "1": 0.162
+    }
+   },
+   "인하 국면": {
+    "n_cells": 54,
+    "n_meetings": 9,
+    "n_change_meetings": 3,
+    "hit_rate": 0.7037,
+    "brier": 0.2838,
+    "logloss": 0.4493,
+    "hit_rate_change": 0.4444,
+    "hit_rate_hold": 0.8333,
+    "alert_0.3": {
+     "precision": 0.6667,
+     "recall": 0.8889,
+     "f1": 0.7619,
+     "false_alarm_rate": 0.2222,
+     "tp": 16,
+     "fp": 8,
+     "fn": 2,
+     "tn": 28
+    },
+    "alert_0.5": {
+     "precision": 0.625,
+     "recall": 0.5556,
+     "f1": 0.5882,
+     "false_alarm_rate": 0.1667,
+     "tp": 10,
+     "fp": 6,
+     "fn": 8,
+     "tn": 30
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 16,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 7,
+      "mean_p": 0.087,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 23,
+      "mean_p": 0.197,
+      "observed": 0.087
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 16,
+      "mean_p": 0.468,
+      "observed": 0.562
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 8,
+      "mean_p": 0.741,
+      "observed": 0.875
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3217,
+     "20": 0.2698,
+     "10": 0.2136,
+     "5": 0.2601,
+     "3": 0.3165,
+     "1": 0.321
+    }
+   }
+  },
+  "M6 기간별 고정 가중치": {
+   "동결 국면": {
+    "n_cells": 90,
+    "n_meetings": 15,
+    "n_change_meetings": 2,
+    "hit_rate": 0.7333,
+    "brier": 0.3045,
+    "logloss": 0.467,
+    "hit_rate_change": 0.6667,
+    "hit_rate_hold": 0.7436,
+    "alert_0.3": {
+     "precision": 0.2308,
+     "recall": 1.0,
+     "f1": 0.375,
+     "false_alarm_rate": 0.5128,
+     "tp": 12,
+     "fp": 40,
+     "fn": 0,
+     "tn": 38
+    },
+    "alert_0.5": {
+     "precision": 0.2857,
+     "recall": 0.6667,
+     "f1": 0.4,
+     "false_alarm_rate": 0.2564,
+     "tp": 8,
+     "fp": 20,
+     "fn": 4,
+     "tn": 58
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 12,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 7,
+      "mean_p": 0.063,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 31,
+      "mean_p": 0.204,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 37,
+      "mean_p": 0.459,
+      "observed": 0.135
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 15,
+      "mean_p": 0.716,
+      "observed": 0.467
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3926,
+     "20": 0.3499,
+     "10": 0.3213,
+     "5": 0.2426,
+     "3": 0.2729,
+     "1": 0.2475
+    }
+   },
+   "인상 국면": {
+    "n_cells": 36,
+    "n_meetings": 6,
+    "n_change_meetings": 1,
+    "hit_rate": 0.6667,
+    "brier": 0.4338,
+    "logloss": 0.7316,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8,
+    "alert_0.3": {
+     "precision": 0.1333,
+     "recall": 0.3333,
+     "f1": 0.1905,
+     "false_alarm_rate": 0.4333,
+     "tp": 2,
+     "fp": 13,
+     "fn": 4,
+     "tn": 17
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.2,
+     "tp": 0,
+     "fp": 6,
+     "fn": 6,
+     "tn": 24
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 4,
+      "mean_p": 0.055,
+      "observed": 0.25
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 17,
+      "mean_p": 0.212,
+      "observed": 0.176
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 11,
+      "mean_p": 0.415,
+      "observed": 0.182
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 4,
+      "mean_p": 0.669,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.6819,
+     "20": 0.5741,
+     "10": 0.5538,
+     "5": 0.3735,
+     "3": 0.2078,
+     "1": 0.2119
+    }
+   },
+   "인하 국면": {
+    "n_cells": 54,
+    "n_meetings": 9,
+    "n_change_meetings": 3,
+    "hit_rate": 0.7593,
+    "brier": 0.2874,
+    "logloss": 0.4646,
+    "hit_rate_change": 0.4444,
+    "hit_rate_hold": 0.9167,
+    "alert_0.3": {
+     "precision": 0.6522,
+     "recall": 0.8333,
+     "f1": 0.7317,
+     "false_alarm_rate": 0.2222,
+     "tp": 15,
+     "fp": 8,
+     "fn": 3,
+     "tn": 28
+    },
+    "alert_0.5": {
+     "precision": 0.7692,
+     "recall": 0.5556,
+     "f1": 0.6452,
+     "false_alarm_rate": 0.0833,
+     "tp": 10,
+     "fp": 3,
+     "fn": 8,
+     "tn": 33
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 15,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 4,
+      "mean_p": 0.088,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 27,
+      "mean_p": 0.2,
+      "observed": 0.111
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 16,
+      "mean_p": 0.472,
+      "observed": 0.5
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 7,
+      "mean_p": 0.761,
+      "observed": 1.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.2953,
+     "20": 0.257,
+     "10": 0.2324,
+     "5": 0.2814,
+     "3": 0.3273,
+     "1": 0.331
+    }
+   }
+  },
+  "M6c 기간 연속형 가중치": {
+   "동결 국면": {
+    "n_cells": 90,
+    "n_meetings": 15,
+    "n_change_meetings": 2,
+    "hit_rate": 0.8111,
+    "brier": 0.2788,
+    "logloss": 0.4368,
+    "hit_rate_change": 0.8333,
+    "hit_rate_hold": 0.8077,
+    "alert_0.3": {
+     "precision": 0.25,
+     "recall": 1.0,
+     "f1": 0.4,
+     "false_alarm_rate": 0.4615,
+     "tp": 12,
+     "fp": 36,
+     "fn": 0,
+     "tn": 42
+    },
+    "alert_0.5": {
+     "precision": 0.4,
+     "recall": 0.8333,
+     "f1": 0.5405,
+     "false_alarm_rate": 0.1923,
+     "tp": 10,
+     "fp": 15,
+     "fn": 2,
+     "tn": 63
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 12,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 9,
+      "mean_p": 0.067,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 33,
+      "mean_p": 0.194,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 33,
+      "mean_p": 0.448,
+      "observed": 0.152
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 15,
+      "mean_p": 0.736,
+      "observed": 0.467
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.4086,
+     "20": 0.3611,
+     "10": 0.2707,
+     "5": 0.2088,
+     "3": 0.2209,
+     "1": 0.2025
+    }
+   },
+   "인상 국면": {
+    "n_cells": 36,
+    "n_meetings": 6,
+    "n_change_meetings": 1,
+    "hit_rate": 0.6667,
+    "brier": 0.4006,
+    "logloss": 0.6983,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8,
+    "alert_0.3": {
+     "precision": 0.1333,
+     "recall": 0.3333,
+     "f1": 0.1905,
+     "false_alarm_rate": 0.4333,
+     "tp": 2,
+     "fp": 13,
+     "fn": 4,
+     "tn": 17
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.2,
+     "tp": 0,
+     "fp": 6,
+     "fn": 6,
+     "tn": 24
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 3,
+      "mean_p": 0.037,
+      "observed": 0.333
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 18,
+      "mean_p": 0.191,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 12,
+      "mean_p": 0.416,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 3,
+      "mean_p": 0.69,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.598,
+     "20": 0.5576,
+     "10": 0.5746,
+     "5": 0.3483,
+     "3": 0.157,
+     "1": 0.1679
+    }
+   },
+   "인하 국면": {
+    "n_cells": 54,
+    "n_meetings": 9,
+    "n_change_meetings": 3,
+    "hit_rate": 0.7407,
+    "brier": 0.2835,
+    "logloss": 0.4493,
+    "hit_rate_change": 0.4444,
+    "hit_rate_hold": 0.8889,
+    "alert_0.3": {
+     "precision": 0.6667,
+     "recall": 0.8889,
+     "f1": 0.7619,
+     "false_alarm_rate": 0.2222,
+     "tp": 16,
+     "fp": 8,
+     "fn": 2,
+     "tn": 28
+    },
+    "alert_0.5": {
+     "precision": 0.7143,
+     "recall": 0.5556,
+     "f1": 0.625,
+     "false_alarm_rate": 0.1111,
+     "tp": 10,
+     "fp": 4,
+     "fn": 8,
+     "tn": 32
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 16,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 6,
+      "mean_p": 0.086,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 24,
+      "mean_p": 0.193,
+      "observed": 0.083
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 16,
+      "mean_p": 0.467,
+      "observed": 0.562
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 8,
+      "mean_p": 0.74,
+      "observed": 0.875
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3199,
+     "20": 0.269,
+     "10": 0.2139,
+     "5": 0.2605,
+     "3": 0.3165,
+     "1": 0.3209
+    }
+   }
+  },
+  "M7 최근 오차 반영(EWA)": {
+   "동결 국면": {
+    "n_cells": 90,
+    "n_meetings": 15,
+    "n_change_meetings": 2,
+    "hit_rate": 0.8,
+    "brier": 0.2878,
+    "logloss": 0.4482,
+    "hit_rate_change": 0.6667,
+    "hit_rate_hold": 0.8205,
+    "alert_0.3": {
+     "precision": 0.2273,
+     "recall": 0.8333,
+     "f1": 0.3571,
+     "false_alarm_rate": 0.4359,
+     "tp": 10,
+     "fp": 34,
+     "fn": 2,
+     "tn": 44
+    },
+    "alert_0.5": {
+     "precision": 0.3636,
+     "recall": 0.6667,
+     "f1": 0.4706,
+     "false_alarm_rate": 0.1795,
+     "tp": 8,
+     "fp": 14,
+     "fn": 4,
+     "tn": 64
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 10,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 9,
+      "mean_p": 0.063,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 37,
+      "mean_p": 0.182,
+      "observed": 0.054
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 31,
+      "mean_p": 0.447,
+      "observed": 0.129
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 13,
+      "mean_p": 0.723,
+      "observed": 0.462
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3795,
+     "20": 0.3494,
+     "10": 0.2788,
+     "5": 0.2251,
+     "3": 0.2617,
+     "1": 0.2322
+    }
+   },
+   "인상 국면": {
+    "n_cells": 36,
+    "n_meetings": 6,
+    "n_change_meetings": 1,
+    "hit_rate": 0.6667,
+    "brier": 0.4202,
+    "logloss": 0.7227,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8,
+    "alert_0.3": {
+     "precision": 0.125,
+     "recall": 0.3333,
+     "f1": 0.1818,
+     "false_alarm_rate": 0.4667,
+     "tp": 2,
+     "fp": 14,
+     "fn": 4,
+     "tn": 16
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.2333,
+     "tp": 0,
+     "fp": 7,
+     "fn": 6,
+     "tn": 23
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 2,
+      "mean_p": 0.018,
+      "observed": 0.5
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 18,
+      "mean_p": 0.191,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 12,
+      "mean_p": 0.407,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 4,
+      "mean_p": 0.693,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.6888,
+     "20": 0.5631,
+     "10": 0.572,
+     "5": 0.3597,
+     "3": 0.16,
+     "1": 0.1776
+    }
+   },
+   "인하 국면": {
+    "n_cells": 54,
+    "n_meetings": 9,
+    "n_change_meetings": 3,
+    "hit_rate": 0.7593,
+    "brier": 0.3339,
+    "logloss": 0.5108,
+    "hit_rate_change": 0.5,
+    "hit_rate_hold": 0.8889,
+    "alert_0.3": {
+     "precision": 0.6,
+     "recall": 0.6667,
+     "f1": 0.6316,
+     "false_alarm_rate": 0.2222,
+     "tp": 12,
+     "fp": 8,
+     "fn": 6,
+     "tn": 28
+    },
+    "alert_0.5": {
+     "precision": 0.6923,
+     "recall": 0.5,
+     "f1": 0.5806,
+     "false_alarm_rate": 0.1111,
+     "tp": 9,
+     "fp": 4,
+     "fn": 9,
+     "tn": 32
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 12,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 8,
+      "mean_p": 0.084,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 26,
+      "mean_p": 0.191,
+      "observed": 0.231
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 13,
+      "mean_p": 0.458,
+      "observed": 0.462
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 7,
+      "mean_p": 0.753,
+      "observed": 0.857
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3121,
+     "20": 0.2952,
+     "10": 0.2763,
+     "5": 0.3302,
+     "3": 0.4009,
+     "1": 0.3888
+    }
+   }
+  },
+  "M8 기간+전환 신호 가중치": {
+   "동결 국면": {
+    "n_cells": 90,
+    "n_meetings": 15,
+    "n_change_meetings": 2,
+    "hit_rate": 0.8,
+    "brier": 0.2803,
+    "logloss": 0.4385,
+    "hit_rate_change": 0.8333,
+    "hit_rate_hold": 0.7949,
+    "alert_0.3": {
+     "precision": 0.25,
+     "recall": 1.0,
+     "f1": 0.4,
+     "false_alarm_rate": 0.4615,
+     "tp": 12,
+     "fp": 36,
+     "fn": 0,
+     "tn": 42
+    },
+    "alert_0.5": {
+     "precision": 0.3846,
+     "recall": 0.8333,
+     "f1": 0.5263,
+     "false_alarm_rate": 0.2051,
+     "tp": 10,
+     "fp": 16,
+     "fn": 2,
+     "tn": 62
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 12,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 9,
+      "mean_p": 0.069,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 33,
+      "mean_p": 0.193,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 33,
+      "mean_p": 0.45,
+      "observed": 0.152
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 15,
+      "mean_p": 0.736,
+      "observed": 0.467
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.4129,
+     "20": 0.365,
+     "10": 0.2712,
+     "5": 0.2088,
+     "3": 0.2211,
+     "1": 0.2025
+    }
+   },
+   "인상 국면": {
+    "n_cells": 36,
+    "n_meetings": 6,
+    "n_change_meetings": 1,
+    "hit_rate": 0.6944,
+    "brier": 0.3999,
+    "logloss": 0.6978,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8333,
+    "alert_0.3": {
+     "precision": 0.125,
+     "recall": 0.3333,
+     "f1": 0.1818,
+     "false_alarm_rate": 0.4667,
+     "tp": 2,
+     "fp": 14,
+     "fn": 4,
+     "tn": 16
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.2,
+     "tp": 0,
+     "fp": 6,
+     "fn": 6,
+     "tn": 24
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 3,
+      "mean_p": 0.037,
+      "observed": 0.333
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 17,
+      "mean_p": 0.187,
+      "observed": 0.176
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 13,
+      "mean_p": 0.406,
+      "observed": 0.154
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 3,
+      "mean_p": 0.686,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.5927,
+     "20": 0.5547,
+     "10": 0.5775,
+     "5": 0.3492,
+     "3": 0.1575,
+     "1": 0.1677
+    }
+   },
+   "인하 국면": {
+    "n_cells": 54,
+    "n_meetings": 9,
+    "n_change_meetings": 3,
+    "hit_rate": 0.7407,
+    "brier": 0.2836,
+    "logloss": 0.4494,
+    "hit_rate_change": 0.4444,
+    "hit_rate_hold": 0.8889,
+    "alert_0.3": {
+     "precision": 0.6667,
+     "recall": 0.8889,
+     "f1": 0.7619,
+     "false_alarm_rate": 0.2222,
+     "tp": 16,
+     "fp": 8,
+     "fn": 2,
+     "tn": 28
+    },
+    "alert_0.5": {
+     "precision": 0.7143,
+     "recall": 0.5556,
+     "f1": 0.625,
+     "false_alarm_rate": 0.1111,
+     "tp": 10,
+     "fp": 4,
+     "fn": 8,
+     "tn": 32
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 16,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 6,
+      "mean_p": 0.086,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 24,
+      "mean_p": 0.193,
+      "observed": 0.083
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 16,
+      "mean_p": 0.467,
+      "observed": 0.562
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 8,
+      "mean_p": 0.74,
+      "observed": 0.875
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3207,
+     "20": 0.2689,
+     "10": 0.2141,
+     "5": 0.2607,
+     "3": 0.3166,
+     "1": 0.3209
+    }
+   }
+  },
+  "M8b 기간+직전 결정 맥락 가중치(탐색적)": {
+   "동결 국면": {
+    "n_cells": 90,
+    "n_meetings": 15,
+    "n_change_meetings": 2,
+    "hit_rate": 0.8222,
+    "brier": 0.2691,
+    "logloss": 0.4249,
+    "hit_rate_change": 0.8333,
+    "hit_rate_hold": 0.8205,
+    "alert_0.3": {
+     "precision": 0.2609,
+     "recall": 1.0,
+     "f1": 0.4138,
+     "false_alarm_rate": 0.4359,
+     "tp": 12,
+     "fp": 34,
+     "fn": 0,
+     "tn": 44
+    },
+    "alert_0.5": {
+     "precision": 0.4167,
+     "recall": 0.8333,
+     "f1": 0.5556,
+     "false_alarm_rate": 0.1795,
+     "tp": 10,
+     "fp": 14,
+     "fn": 2,
+     "tn": 64
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 12,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 8,
+      "mean_p": 0.063,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 36,
+      "mean_p": 0.19,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 31,
+      "mean_p": 0.449,
+      "observed": 0.161
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 15,
+      "mean_p": 0.728,
+      "observed": 0.467
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3854,
+     "20": 0.3425,
+     "10": 0.2627,
+     "5": 0.2043,
+     "3": 0.2192,
+     "1": 0.2006
+    }
+   },
+   "인상 국면": {
+    "n_cells": 36,
+    "n_meetings": 6,
+    "n_change_meetings": 1,
+    "hit_rate": 0.6667,
+    "brier": 0.402,
+    "logloss": 0.6978,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8,
+    "alert_0.3": {
+     "precision": 0.1333,
+     "recall": 0.3333,
+     "f1": 0.1905,
+     "false_alarm_rate": 0.4333,
+     "tp": 2,
+     "fp": 13,
+     "fn": 4,
+     "tn": 17
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.2,
+     "tp": 0,
+     "fp": 6,
+     "fn": 6,
+     "tn": 24
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 3,
+      "mean_p": 0.037,
+      "observed": 0.333
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 18,
+      "mean_p": 0.19,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 12,
+      "mean_p": 0.412,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 3,
+      "mean_p": 0.69,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.597,
+     "20": 0.5572,
+     "10": 0.5726,
+     "5": 0.3466,
+     "3": 0.1654,
+     "1": 0.1731
+    }
+   },
+   "인하 국면": {
+    "n_cells": 54,
+    "n_meetings": 9,
+    "n_change_meetings": 3,
+    "hit_rate": 0.7778,
+    "brier": 0.2833,
+    "logloss": 0.4453,
+    "hit_rate_change": 0.5,
+    "hit_rate_hold": 0.9167,
+    "alert_0.3": {
+     "precision": 0.6957,
+     "recall": 0.8889,
+     "f1": 0.7805,
+     "false_alarm_rate": 0.1944,
+     "tp": 16,
+     "fp": 7,
+     "fn": 2,
+     "tn": 29
+    },
+    "alert_0.5": {
+     "precision": 0.75,
+     "recall": 0.5,
+     "f1": 0.6,
+     "false_alarm_rate": 0.0833,
+     "tp": 9,
+     "fp": 3,
+     "fn": 9,
+     "tn": 33
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 16,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 7,
+      "mean_p": 0.084,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 24,
+      "mean_p": 0.19,
+      "observed": 0.083
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 17,
+      "mean_p": 0.46,
+      "observed": 0.588
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 6,
+      "mean_p": 0.769,
+      "observed": 1.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.2842,
+     "20": 0.2508,
+     "10": 0.2249,
+     "5": 0.2709,
+     "3": 0.3339,
+     "1": 0.335
+    }
+   }
+  },
+  "M9 기간+전환 신호+신뢰도 가중치": {
+   "동결 국면": {
+    "n_cells": 90,
+    "n_meetings": 15,
+    "n_change_meetings": 2,
+    "hit_rate": 0.7778,
+    "brier": 0.2808,
+    "logloss": 0.4384,
+    "hit_rate_change": 0.8333,
+    "hit_rate_hold": 0.7692,
+    "alert_0.3": {
+     "precision": 0.25,
+     "recall": 1.0,
+     "f1": 0.4,
+     "false_alarm_rate": 0.4615,
+     "tp": 12,
+     "fp": 36,
+     "fn": 0,
+     "tn": 42
+    },
+    "alert_0.5": {
+     "precision": 0.3571,
+     "recall": 0.8333,
+     "f1": 0.5,
+     "false_alarm_rate": 0.2308,
+     "tp": 10,
+     "fp": 18,
+     "fn": 2,
+     "tn": 60
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 12,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 9,
+      "mean_p": 0.064,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 33,
+      "mean_p": 0.192,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 33,
+      "mean_p": 0.452,
+      "observed": 0.152
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 15,
+      "mean_p": 0.736,
+      "observed": 0.467
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.4173,
+     "20": 0.3684,
+     "10": 0.2702,
+     "5": 0.2076,
+     "3": 0.2199,
+     "1": 0.2012
+    }
+   },
+   "인상 국면": {
+    "n_cells": 36,
+    "n_meetings": 6,
+    "n_change_meetings": 1,
+    "hit_rate": 0.6944,
+    "brier": 0.3971,
+    "logloss": 0.6943,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8333,
+    "alert_0.3": {
+     "precision": 0.1333,
+     "recall": 0.3333,
+     "f1": 0.1905,
+     "false_alarm_rate": 0.4333,
+     "tp": 2,
+     "fp": 13,
+     "fn": 4,
+     "tn": 17
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.2,
+     "tp": 0,
+     "fp": 6,
+     "fn": 6,
+     "tn": 24
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 3,
+      "mean_p": 0.036,
+      "observed": 0.333
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 18,
+      "mean_p": 0.188,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 12,
+      "mean_p": 0.414,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 3,
+      "mean_p": 0.686,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.5887,
+     "20": 0.5518,
+     "10": 0.5749,
+     "5": 0.347,
+     "3": 0.1552,
+     "1": 0.1651
+    }
+   },
+   "인하 국면": {
+    "n_cells": 54,
+    "n_meetings": 9,
+    "n_change_meetings": 3,
+    "hit_rate": 0.7037,
+    "brier": 0.2841,
+    "logloss": 0.4494,
+    "hit_rate_change": 0.4444,
+    "hit_rate_hold": 0.8333,
+    "alert_0.3": {
+     "precision": 0.6667,
+     "recall": 0.8889,
+     "f1": 0.7619,
+     "false_alarm_rate": 0.2222,
+     "tp": 16,
+     "fp": 8,
+     "fn": 2,
+     "tn": 28
+    },
+    "alert_0.5": {
+     "precision": 0.625,
+     "recall": 0.5556,
+     "f1": 0.5882,
+     "false_alarm_rate": 0.1667,
+     "tp": 10,
+     "fp": 6,
+     "fn": 8,
+     "tn": 30
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 16,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 7,
+      "mean_p": 0.087,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 23,
+      "mean_p": 0.196,
+      "observed": 0.087
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 16,
+      "mean_p": 0.468,
+      "observed": 0.562
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 8,
+      "mean_p": 0.74,
+      "observed": 0.875
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3235,
+     "20": 0.2707,
+     "10": 0.2134,
+     "5": 0.26,
+     "3": 0.3162,
+     "1": 0.3206
+    }
+   }
+  },
+  "M9b 신호+결정 맥락+신뢰도(탐색적)": {
+   "동결 국면": {
+    "n_cells": 90,
+    "n_meetings": 15,
+    "n_change_meetings": 2,
+    "hit_rate": 0.7889,
+    "brier": 0.2739,
+    "logloss": 0.4289,
+    "hit_rate_change": 0.8333,
+    "hit_rate_hold": 0.7821,
+    "alert_0.3": {
+     "precision": 0.25,
+     "recall": 1.0,
+     "f1": 0.4,
+     "false_alarm_rate": 0.4615,
+     "tp": 12,
+     "fp": 36,
+     "fn": 0,
+     "tn": 42
+    },
+    "alert_0.5": {
+     "precision": 0.3704,
+     "recall": 0.8333,
+     "f1": 0.5128,
+     "false_alarm_rate": 0.2179,
+     "tp": 10,
+     "fp": 17,
+     "fn": 2,
+     "tn": 61
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 12,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 9,
+      "mean_p": 0.063,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 33,
+      "mean_p": 0.182,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 33,
+      "mean_p": 0.45,
+      "observed": 0.152
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 15,
+      "mean_p": 0.729,
+      "observed": 0.467
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.4045,
+     "20": 0.3571,
+     "10": 0.2635,
+     "5": 0.2026,
+     "3": 0.2172,
+     "1": 0.1985
+    }
+   },
+   "인상 국면": {
+    "n_cells": 36,
+    "n_meetings": 6,
+    "n_change_meetings": 1,
+    "hit_rate": 0.6944,
+    "brier": 0.3998,
+    "logloss": 0.697,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8333,
+    "alert_0.3": {
+     "precision": 0.1333,
+     "recall": 0.3333,
+     "f1": 0.1905,
+     "false_alarm_rate": 0.4333,
+     "tp": 2,
+     "fp": 13,
+     "fn": 4,
+     "tn": 17
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.2,
+     "tp": 0,
+     "fp": 6,
+     "fn": 6,
+     "tn": 24
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 3,
+      "mean_p": 0.036,
+      "observed": 0.333
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 18,
+      "mean_p": 0.188,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 12,
+      "mean_p": 0.41,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 3,
+      "mean_p": 0.686,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.5887,
+     "20": 0.551,
+     "10": 0.5741,
+     "5": 0.3467,
+     "3": 0.1672,
+     "1": 0.171
+    }
+   },
+   "인하 국면": {
+    "n_cells": 54,
+    "n_meetings": 9,
+    "n_change_meetings": 3,
+    "hit_rate": 0.7593,
+    "brier": 0.2869,
+    "logloss": 0.4472,
+    "hit_rate_change": 0.5,
+    "hit_rate_hold": 0.8889,
+    "alert_0.3": {
+     "precision": 0.6667,
+     "recall": 0.8889,
+     "f1": 0.7619,
+     "false_alarm_rate": 0.2222,
+     "tp": 16,
+     "fp": 8,
+     "fn": 2,
+     "tn": 28
+    },
+    "alert_0.5": {
+     "precision": 0.6923,
+     "recall": 0.5,
+     "f1": 0.5806,
+     "false_alarm_rate": 0.1111,
+     "tp": 9,
+     "fp": 4,
+     "fn": 9,
+     "tn": 32
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 16,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 8,
+      "mean_p": 0.082,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 22,
+      "mean_p": 0.19,
+      "observed": 0.091
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 17,
+      "mean_p": 0.445,
+      "observed": 0.588
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 7,
+      "mean_p": 0.742,
+      "observed": 0.857
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3027,
+     "20": 0.2618,
+     "10": 0.2232,
+     "5": 0.2707,
+     "3": 0.3311,
+     "1": 0.3317
+    }
+   }
+  },
+  "M10 변경·방향 2단계": {
+   "동결 국면": {
+    "n_cells": 90,
+    "n_meetings": 15,
+    "n_change_meetings": 2,
+    "hit_rate": 0.8667,
+    "brier": 0.3686,
+    "logloss": 0.797,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 1.0,
+    "alert_0.3": {
+     "precision": 0.0943,
+     "recall": 0.4167,
+     "f1": 0.1538,
+     "false_alarm_rate": 0.6154,
+     "tp": 5,
+     "fp": 48,
+     "fn": 7,
+     "tn": 30
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.0128,
+     "tp": 0,
+     "fp": 1,
+     "fn": 12,
+     "tn": 77
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 5,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 37,
+      "mean_p": 0.278,
+      "observed": 0.189
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 53,
+      "mean_p": 0.37,
+      "observed": 0.094
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3864,
+     "20": 0.3694,
+     "10": 0.3625,
+     "5": 0.3634,
+     "3": 0.3653,
+     "1": 0.3645
+    }
+   },
+   "인상 국면": {
+    "n_cells": 36,
+    "n_meetings": 6,
+    "n_change_meetings": 1,
+    "hit_rate": 0.4167,
+    "brier": 0.527,
+    "logloss": 0.7916,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.5,
+    "alert_0.3": {
+     "precision": 0.1786,
+     "recall": 0.8333,
+     "f1": 0.2941,
+     "false_alarm_rate": 0.7667,
+     "tp": 5,
+     "fp": 23,
+     "fn": 1,
+     "tn": 7
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.5,
+     "tp": 0,
+     "fp": 15,
+     "fn": 6,
+     "tn": 15
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 5,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 1,
+      "mean_p": 0.072,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 7,
+      "mean_p": 0.194,
+      "observed": 0.143
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 22,
+      "mean_p": 0.431,
+      "observed": 0.227
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 6,
+      "mean_p": 0.659,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.616,
+     "20": 0.5961,
+     "10": 0.6064,
+     "5": 0.4743,
+     "3": 0.4299,
+     "1": 0.4392
+    }
+   },
+   "인하 국면": {
+    "n_cells": 54,
+    "n_meetings": 9,
+    "n_change_meetings": 3,
+    "hit_rate": 0.6667,
+    "brier": 0.5391,
+    "logloss": 1.0135,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 1.0,
+    "alert_0.3": {
+     "precision": 0.3333,
+     "recall": 1.0,
+     "f1": 0.5,
+     "false_alarm_rate": 1.0,
+     "tp": 18,
+     "fp": 36,
+     "fn": 0,
+     "tn": 0
+    },
+    "alert_0.5": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "false_alarm_rate": 0.0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 18,
+     "tn": 36
+    },
+    "direction_acc_given_alert": 0.0,
+    "direction_n": 18,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 54,
+      "mean_p": 0.394,
+      "observed": 0.333
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.5433,
+     "20": 0.5356,
+     "10": 0.5402,
+     "5": 0.5354,
+     "3": 0.5395,
+     "1": 0.5405
+    }
+   }
+  }
+ },
+ "by_volatility": {
+  "M0 항상 동결": {
+   "급변": {
+    "n_cells": 34,
+    "n_meetings": 12,
+    "n_change_meetings": 1,
+    "hit_rate": 0.9118,
+    "brier": 0.1765,
+    "logloss": 1.219,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 1.0,
+    "alert_0.3": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "false_alarm_rate": 0.0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 3,
+     "tn": 31
+    },
+    "alert_0.5": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "false_alarm_rate": 0.0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 3,
+     "tn": 31
+    },
+    "direction_acc_given_alert": null,
+    "direction_n": 0,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 34,
+      "mean_p": 0.0,
+      "observed": 0.088
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.4,
+     "20": 0.0,
+     "10": 0.0,
+     "5": 0.0,
+     "3": 0.25,
+     "1": 0.25
+    }
+   },
+   "평온": {
+    "n_cells": 146,
+    "n_meetings": 30,
+    "n_change_meetings": 6,
+    "hit_rate": 0.774,
+    "brier": 0.4521,
+    "logloss": 3.1227,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 1.0,
+    "alert_0.3": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "false_alarm_rate": 0.0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 33,
+     "tn": 113
+    },
+    "alert_0.5": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "false_alarm_rate": 0.0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 33,
+     "tn": 113
+    },
+    "direction_acc_given_alert": null,
+    "direction_n": 0,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 146,
+      "mean_p": 0.0,
+      "observed": 0.226
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.4,
+     "20": 0.48,
+     "10": 0.4615,
+     "5": 0.4615,
+     "3": 0.4545,
+     "1": 0.4545
+    }
+   }
+  },
+  "M1 과거 결정 빈도": {
+   "급변": {
+    "n_cells": 34,
+    "n_meetings": 12,
+    "n_change_meetings": 1,
+    "hit_rate": 0.4706,
+    "brier": 0.5016,
+    "logloss": 0.764,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.5161,
+    "alert_0.3": {
+     "precision": 0.0882,
+     "recall": 1.0,
+     "f1": 0.1622,
+     "false_alarm_rate": 1.0,
+     "tp": 3,
+     "fp": 31,
+     "fn": 0,
+     "tn": 0
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.4839,
+     "tp": 0,
+     "fp": 15,
+     "fn": 3,
+     "tn": 16
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 3,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 24,
+      "mean_p": 0.429,
+      "observed": 0.125
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 10,
+      "mean_p": 0.616,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.4882,
+     "20": 0.429,
+     "10": 0.3527,
+     "5": 0.5718,
+     "3": 0.5481,
+     "1": 0.5481
+    }
+   },
+   "평온": {
+    "n_cells": 146,
+    "n_meetings": 30,
+    "n_change_meetings": 6,
+    "hit_rate": 0.6712,
+    "brier": 0.5379,
+    "logloss": 0.9785,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8673,
+    "alert_0.3": {
+     "precision": 0.226,
+     "recall": 1.0,
+     "f1": 0.3687,
+     "false_alarm_rate": 1.0,
+     "tp": 33,
+     "fp": 113,
+     "fn": 0,
+     "tn": 0
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.1327,
+     "tp": 0,
+     "fp": 15,
+     "fn": 33,
+     "tn": 98
+    },
+    "direction_acc_given_alert": 0.2727,
+    "direction_n": 33,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 144,
+      "mean_p": 0.417,
+      "observed": 0.229
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 2,
+      "mean_p": 0.616,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.5396,
+     "20": 0.5515,
+     "10": 0.5585,
+     "5": 0.5248,
+     "3": 0.5248,
+     "1": 0.5248
+    }
+   }
+  },
+  "M2 합성 OIS 단독": {
+   "급변": {
+    "n_cells": 34,
+    "n_meetings": 12,
+    "n_change_meetings": 1,
+    "hit_rate": 0.7647,
+    "brier": 0.4923,
+    "logloss": 1.3738,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8387,
+    "alert_0.3": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.6129,
+     "tp": 0,
+     "fp": 19,
+     "fn": 3,
+     "tn": 12
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.1613,
+     "tp": 0,
+     "fp": 5,
+     "fn": 3,
+     "tn": 26
+    },
+    "direction_acc_given_alert": null,
+    "direction_n": 0,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 2,
+      "mean_p": 0.03,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 13,
+      "mean_p": 0.212,
+      "observed": 0.231
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 15,
+      "mean_p": 0.413,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 4,
+      "mean_p": 0.856,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 1.3527,
+     "20": 0.3528,
+     "10": 0.3039,
+     "5": 0.2473,
+     "3": 0.3805,
+     "1": 0.3701
+    }
+   },
+   "평온": {
+    "n_cells": 146,
+    "n_meetings": 30,
+    "n_change_meetings": 6,
+    "hit_rate": 0.637,
+    "brier": 0.5536,
+    "logloss": 1.762,
+    "hit_rate_change": 0.6364,
+    "hit_rate_hold": 0.6372,
+    "alert_0.3": {
+     "precision": 0.24,
+     "recall": 0.7273,
+     "f1": 0.3609,
+     "false_alarm_rate": 0.6726,
+     "tp": 24,
+     "fp": 76,
+     "fn": 9,
+     "tn": 37
+    },
+    "alert_0.5": {
+     "precision": 0.3387,
+     "recall": 0.6364,
+     "f1": 0.4421,
+     "false_alarm_rate": 0.3628,
+     "tp": 21,
+     "fp": 41,
+     "fn": 12,
+     "tn": 72
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 24,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 16,
+      "mean_p": 0.06,
+      "observed": 0.188
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 30,
+      "mean_p": 0.18,
+      "observed": 0.2
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 50,
+      "mean_p": 0.433,
+      "observed": 0.08
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 50,
+      "mean_p": 0.828,
+      "observed": 0.4
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.8188,
+     "20": 0.8056,
+     "10": 0.5323,
+     "5": 0.4283,
+     "3": 0.3613,
+     "1": 0.3318
+    }
+   }
+  },
+  "M3 통안채 91일 단독": {
+   "급변": {
+    "n_cells": 34,
+    "n_meetings": 12,
+    "n_change_meetings": 1,
+    "hit_rate": 0.8235,
+    "brier": 0.2503,
+    "logloss": 0.3558,
+    "hit_rate_change": 0.6667,
+    "hit_rate_hold": 0.8387,
+    "alert_0.3": {
+     "precision": 0.1818,
+     "recall": 0.6667,
+     "f1": 0.2857,
+     "false_alarm_rate": 0.2903,
+     "tp": 2,
+     "fp": 9,
+     "fn": 1,
+     "tn": 22
+    },
+    "alert_0.5": {
+     "precision": 0.2857,
+     "recall": 0.6667,
+     "f1": 0.4,
+     "false_alarm_rate": 0.1613,
+     "tp": 2,
+     "fp": 5,
+     "fn": 1,
+     "tn": 26
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 19,
+      "mean_p": 0.005,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 4,
+      "mean_p": 0.173,
+      "observed": 0.25
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 6,
+      "mean_p": 0.439,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 5,
+      "mean_p": 0.748,
+      "observed": 0.2
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3151,
+     "20": 0.3605,
+     "10": 0.5381,
+     "5": 0.093,
+     "3": 0.1538,
+     "1": 0.1723
+    }
+   },
+   "평온": {
+    "n_cells": 146,
+    "n_meetings": 30,
+    "n_change_meetings": 6,
+    "hit_rate": 0.7808,
+    "brier": 0.2927,
+    "logloss": 0.6564,
+    "hit_rate_change": 0.5152,
+    "hit_rate_hold": 0.8584,
+    "alert_0.3": {
+     "precision": 0.4583,
+     "recall": 0.6667,
+     "f1": 0.5432,
+     "false_alarm_rate": 0.2301,
+     "tp": 22,
+     "fp": 26,
+     "fn": 11,
+     "tn": 87
+    },
+    "alert_0.5": {
+     "precision": 0.5152,
+     "recall": 0.5152,
+     "f1": 0.5152,
+     "false_alarm_rate": 0.1416,
+     "tp": 17,
+     "fp": 16,
+     "fn": 16,
+     "tn": 97
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 22,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 83,
+      "mean_p": 0.011,
+      "observed": 0.072
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 15,
+      "mean_p": 0.212,
+      "observed": 0.333
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 23,
+      "mean_p": 0.451,
+      "observed": 0.348
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 25,
+      "mean_p": 0.785,
+      "observed": 0.56
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.2854,
+     "20": 0.3436,
+     "10": 0.2999,
+     "5": 0.2716,
+     "3": 0.2923,
+     "1": 0.26
+    }
+   }
+  },
+  "M4 CD91 단독": {
+   "급변": {
+    "n_cells": 34,
+    "n_meetings": 12,
+    "n_change_meetings": 1,
+    "hit_rate": 0.6765,
+    "brier": 0.4518,
+    "logloss": 1.9508,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.7419,
+    "alert_0.3": {
+     "precision": 0.0714,
+     "recall": 0.3333,
+     "f1": 0.1176,
+     "false_alarm_rate": 0.4194,
+     "tp": 1,
+     "fp": 13,
+     "fn": 2,
+     "tn": 18
+    },
+    "alert_0.5": {
+     "precision": 0.1111,
+     "recall": 0.3333,
+     "f1": 0.1667,
+     "false_alarm_rate": 0.2581,
+     "tp": 1,
+     "fp": 8,
+     "fn": 2,
+     "tn": 23
+    },
+    "direction_acc_given_alert": 0.0,
+    "direction_n": 1,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 17,
+      "mean_p": 0.021,
+      "observed": 0.118
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 3,
+      "mean_p": 0.209,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 7,
+      "mean_p": 0.447,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 7,
+      "mean_p": 0.736,
+      "observed": 0.143
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.9106,
+     "20": 0.2547,
+     "10": 0.0696,
+     "5": 0.3251,
+     "3": 0.5058,
+     "1": 0.4888
+    }
+   },
+   "평온": {
+    "n_cells": 146,
+    "n_meetings": 30,
+    "n_change_meetings": 6,
+    "hit_rate": 0.6438,
+    "brier": 0.538,
+    "logloss": 1.8445,
+    "hit_rate_change": 0.3636,
+    "hit_rate_hold": 0.7257,
+    "alert_0.3": {
+     "precision": 0.2639,
+     "recall": 0.5758,
+     "f1": 0.3619,
+     "false_alarm_rate": 0.469,
+     "tp": 19,
+     "fp": 53,
+     "fn": 14,
+     "tn": 60
+    },
+    "alert_0.5": {
+     "precision": 0.2791,
+     "recall": 0.3636,
+     "f1": 0.3158,
+     "false_alarm_rate": 0.2743,
+     "tp": 12,
+     "fp": 31,
+     "fn": 21,
+     "tn": 82
+    },
+    "direction_acc_given_alert": 0.8947,
+    "direction_n": 19,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 57,
+      "mean_p": 0.007,
+      "observed": 0.193
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 17,
+      "mean_p": 0.198,
+      "observed": 0.176
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 35,
+      "mean_p": 0.43,
+      "observed": 0.257
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 37,
+      "mean_p": 0.789,
+      "observed": 0.27
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.6488,
+     "20": 0.5919,
+     "10": 0.4882,
+     "5": 0.5571,
+     "3": 0.4946,
+     "1": 0.4306
+    }
+   }
+  },
+  "M5 OIS+통안채 50:50": {
+   "급변": {
+    "n_cells": 34,
+    "n_meetings": 12,
+    "n_change_meetings": 1,
+    "hit_rate": 0.7059,
+    "brier": 0.276,
+    "logloss": 0.4552,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.7742,
+    "alert_0.3": {
+     "precision": 0.1429,
+     "recall": 0.6667,
+     "f1": 0.2353,
+     "false_alarm_rate": 0.3871,
+     "tp": 2,
+     "fp": 12,
+     "fn": 1,
+     "tn": 19
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.2258,
+     "tp": 0,
+     "fp": 7,
+     "fn": 3,
+     "tn": 24
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 3,
+      "mean_p": 0.067,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 17,
+      "mean_p": 0.177,
+      "observed": 0.059
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 12,
+      "mean_p": 0.433,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 2,
+      "mean_p": 0.701,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.5926,
+     "20": 0.2729,
+     "10": 0.3099,
+     "5": 0.1033,
+     "3": 0.2036,
+     "1": 0.222
+    }
+   },
+   "평온": {
+    "n_cells": 146,
+    "n_meetings": 30,
+    "n_change_meetings": 6,
+    "hit_rate": 0.7534,
+    "brier": 0.3086,
+    "logloss": 0.498,
+    "hit_rate_change": 0.5455,
+    "hit_rate_hold": 0.8142,
+    "alert_0.3": {
+     "precision": 0.3889,
+     "recall": 0.8485,
+     "f1": 0.5333,
+     "false_alarm_rate": 0.3894,
+     "tp": 28,
+     "fp": 44,
+     "fn": 5,
+     "tn": 69
+    },
+    "alert_0.5": {
+     "precision": 0.4878,
+     "recall": 0.6061,
+     "f1": 0.5405,
+     "false_alarm_rate": 0.1858,
+     "tp": 20,
+     "fp": 21,
+     "fn": 13,
+     "tn": 92
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 28,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 16,
+      "mean_p": 0.068,
+      "observed": 0.062
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 58,
+      "mean_p": 0.196,
+      "observed": 0.069
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 48,
+      "mean_p": 0.451,
+      "observed": 0.292
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 24,
+      "mean_p": 0.736,
+      "observed": 0.583
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3822,
+     "20": 0.3912,
+     "10": 0.3128,
+     "5": 0.2728,
+     "3": 0.2459,
+     "1": 0.2311
+    }
+   }
+  },
+  "M6 기간별 고정 가중치": {
+   "급변": {
+    "n_cells": 34,
+    "n_meetings": 12,
+    "n_change_meetings": 1,
+    "hit_rate": 0.7353,
+    "brier": 0.3096,
+    "logloss": 0.492,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8065,
+    "alert_0.3": {
+     "precision": 0.1333,
+     "recall": 0.6667,
+     "f1": 0.2222,
+     "false_alarm_rate": 0.4194,
+     "tp": 2,
+     "fp": 13,
+     "fn": 1,
+     "tn": 18
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.1935,
+     "tp": 0,
+     "fp": 6,
+     "fn": 3,
+     "tn": 25
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 4,
+      "mean_p": 0.068,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 15,
+      "mean_p": 0.209,
+      "observed": 0.067
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 12,
+      "mean_p": 0.403,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 3,
+      "mean_p": 0.685,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.632,
+     "20": 0.3184,
+     "10": 0.2772,
+     "5": 0.1292,
+     "3": 0.2528,
+     "1": 0.266
+    }
+   },
+   "평온": {
+    "n_cells": 146,
+    "n_meetings": 30,
+    "n_change_meetings": 6,
+    "hit_rate": 0.726,
+    "brier": 0.3289,
+    "logloss": 0.5255,
+    "hit_rate_change": 0.4848,
+    "hit_rate_hold": 0.7965,
+    "alert_0.3": {
+     "precision": 0.36,
+     "recall": 0.8182,
+     "f1": 0.5,
+     "false_alarm_rate": 0.4248,
+     "tp": 27,
+     "fp": 48,
+     "fn": 6,
+     "tn": 65
+    },
+    "alert_0.5": {
+     "precision": 0.439,
+     "recall": 0.5455,
+     "f1": 0.4865,
+     "false_alarm_rate": 0.2035,
+     "tp": 18,
+     "fp": 23,
+     "fn": 15,
+     "tn": 90
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 27,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 11,
+      "mean_p": 0.067,
+      "observed": 0.091
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 60,
+      "mean_p": 0.204,
+      "observed": 0.083
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 52,
+      "mean_p": 0.466,
+      "observed": 0.25
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 23,
+      "mean_p": 0.726,
+      "observed": 0.609
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3791,
+     "20": 0.3766,
+     "10": 0.351,
+     "5": 0.3037,
+     "3": 0.2847,
+     "1": 0.2652
+    }
+   }
+  },
+  "M6c 기간 연속형 가중치": {
+   "급변": {
+    "n_cells": 34,
+    "n_meetings": 12,
+    "n_change_meetings": 1,
+    "hit_rate": 0.7353,
+    "brier": 0.2783,
+    "logloss": 0.4586,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8065,
+    "alert_0.3": {
+     "precision": 0.1429,
+     "recall": 0.6667,
+     "f1": 0.2353,
+     "false_alarm_rate": 0.3871,
+     "tp": 2,
+     "fp": 12,
+     "fn": 1,
+     "tn": 19
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.1935,
+     "tp": 0,
+     "fp": 6,
+     "fn": 3,
+     "tn": 25
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 3,
+      "mean_p": 0.067,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 17,
+      "mean_p": 0.182,
+      "observed": 0.059
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 12,
+      "mean_p": 0.433,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 2,
+      "mean_p": 0.7,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.5954,
+     "20": 0.275,
+     "10": 0.3064,
+     "5": 0.1033,
+     "3": 0.2073,
+     "1": 0.2266
+    }
+   },
+   "평온": {
+    "n_cells": 146,
+    "n_meetings": 30,
+    "n_change_meetings": 6,
+    "hit_rate": 0.7671,
+    "brier": 0.3106,
+    "logloss": 0.5008,
+    "hit_rate_change": 0.5455,
+    "hit_rate_hold": 0.8319,
+    "alert_0.3": {
+     "precision": 0.3836,
+     "recall": 0.8485,
+     "f1": 0.5283,
+     "false_alarm_rate": 0.3982,
+     "tp": 28,
+     "fp": 45,
+     "fn": 5,
+     "tn": 68
+    },
+    "alert_0.5": {
+     "precision": 0.5128,
+     "recall": 0.6061,
+     "f1": 0.5556,
+     "false_alarm_rate": 0.1681,
+     "tp": 20,
+     "fp": 19,
+     "fn": 13,
+     "tn": 94
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 28,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 15,
+      "mean_p": 0.069,
+      "observed": 0.067
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 58,
+      "mean_p": 0.196,
+      "observed": 0.069
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 49,
+      "mean_p": 0.45,
+      "observed": 0.286
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 24,
+      "mean_p": 0.734,
+      "observed": 0.583
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3848,
+     "20": 0.3923,
+     "10": 0.3156,
+     "5": 0.2751,
+     "3": 0.2476,
+     "1": 0.2327
+    }
+   }
+  },
+  "M7 최근 오차 반영(EWA)": {
+   "급변": {
+    "n_cells": 34,
+    "n_meetings": 12,
+    "n_change_meetings": 1,
+    "hit_rate": 0.7353,
+    "brier": 0.2924,
+    "logloss": 0.4726,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8065,
+    "alert_0.3": {
+     "precision": 0.1333,
+     "recall": 0.6667,
+     "f1": 0.2222,
+     "false_alarm_rate": 0.4194,
+     "tp": 2,
+     "fp": 13,
+     "fn": 1,
+     "tn": 18
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.1935,
+     "tp": 0,
+     "fp": 6,
+     "fn": 3,
+     "tn": 25
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 3,
+      "mean_p": 0.06,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 16,
+      "mean_p": 0.175,
+      "observed": 0.062
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 12,
+      "mean_p": 0.42,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 3,
+      "mean_p": 0.704,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.682,
+     "20": 0.2856,
+     "10": 0.2966,
+     "5": 0.1113,
+     "3": 0.2046,
+     "1": 0.2293
+    }
+   },
+   "평온": {
+    "n_cells": 146,
+    "n_meetings": 30,
+    "n_change_meetings": 6,
+    "hit_rate": 0.7671,
+    "brier": 0.3364,
+    "logloss": 0.5333,
+    "hit_rate_change": 0.5152,
+    "hit_rate_hold": 0.8407,
+    "alert_0.3": {
+     "precision": 0.3385,
+     "recall": 0.6667,
+     "f1": 0.449,
+     "false_alarm_rate": 0.3805,
+     "tp": 22,
+     "fp": 43,
+     "fn": 11,
+     "tn": 70
+    },
+    "alert_0.5": {
+     "precision": 0.4722,
+     "recall": 0.5152,
+     "f1": 0.4928,
+     "false_alarm_rate": 0.1681,
+     "tp": 17,
+     "fp": 19,
+     "fn": 16,
+     "tn": 94
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 22,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 16,
+      "mean_p": 0.068,
+      "observed": 0.062
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 65,
+      "mean_p": 0.19,
+      "observed": 0.154
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 44,
+      "mean_p": 0.446,
+      "observed": 0.227
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 21,
+      "mean_p": 0.73,
+      "observed": 0.571
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3689,
+     "20": 0.3939,
+     "10": 0.3429,
+     "5": 0.31,
+     "3": 0.3116,
+     "1": 0.2824
+    }
+   }
+  },
+  "M8 기간+전환 신호 가중치": {
+   "급변": {
+    "n_cells": 34,
+    "n_meetings": 12,
+    "n_change_meetings": 1,
+    "hit_rate": 0.7353,
+    "brier": 0.2778,
+    "logloss": 0.4583,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8065,
+    "alert_0.3": {
+     "precision": 0.1429,
+     "recall": 0.6667,
+     "f1": 0.2353,
+     "false_alarm_rate": 0.3871,
+     "tp": 2,
+     "fp": 12,
+     "fn": 1,
+     "tn": 19
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.1935,
+     "tp": 0,
+     "fp": 6,
+     "fn": 3,
+     "tn": 25
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 3,
+      "mean_p": 0.067,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 17,
+      "mean_p": 0.182,
+      "observed": 0.059
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 12,
+      "mean_p": 0.433,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 2,
+      "mean_p": 0.699,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.5928,
+     "20": 0.2742,
+     "10": 0.3064,
+     "5": 0.1038,
+     "3": 0.2075,
+     "1": 0.2262
+    }
+   },
+   "평온": {
+    "n_cells": 146,
+    "n_meetings": 30,
+    "n_change_meetings": 6,
+    "hit_rate": 0.7671,
+    "brier": 0.3116,
+    "logloss": 0.5019,
+    "hit_rate_change": 0.5455,
+    "hit_rate_hold": 0.8319,
+    "alert_0.3": {
+     "precision": 0.3784,
+     "recall": 0.8485,
+     "f1": 0.5234,
+     "false_alarm_rate": 0.4071,
+     "tp": 28,
+     "fp": 46,
+     "fn": 5,
+     "tn": 67
+    },
+    "alert_0.5": {
+     "precision": 0.5,
+     "recall": 0.6061,
+     "f1": 0.5479,
+     "false_alarm_rate": 0.177,
+     "tp": 20,
+     "fp": 20,
+     "fn": 13,
+     "tn": 93
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 28,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 15,
+      "mean_p": 0.07,
+      "observed": 0.067
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 57,
+      "mean_p": 0.195,
+      "observed": 0.07
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 50,
+      "mean_p": 0.448,
+      "observed": 0.28
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 24,
+      "mean_p": 0.734,
+      "observed": 0.583
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3869,
+     "20": 0.3941,
+     "10": 0.3167,
+     "5": 0.2753,
+     "3": 0.2478,
+     "1": 0.2328
+    }
+   }
+  },
+  "M8b 기간+직전 결정 맥락 가중치(탐색적)": {
+   "급변": {
+    "n_cells": 34,
+    "n_meetings": 12,
+    "n_change_meetings": 1,
+    "hit_rate": 0.7353,
+    "brier": 0.2751,
+    "logloss": 0.4524,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8065,
+    "alert_0.3": {
+     "precision": 0.1538,
+     "recall": 0.6667,
+     "f1": 0.25,
+     "false_alarm_rate": 0.3548,
+     "tp": 2,
+     "fp": 11,
+     "fn": 1,
+     "tn": 20
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.1935,
+     "tp": 0,
+     "fp": 6,
+     "fn": 3,
+     "tn": 25
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 3,
+      "mean_p": 0.059,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 18,
+      "mean_p": 0.179,
+      "observed": 0.056
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 11,
+      "mean_p": 0.437,
+      "observed": 0.182
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 2,
+      "mean_p": 0.7,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.5732,
+     "20": 0.274,
+     "10": 0.3012,
+     "5": 0.0961,
+     "3": 0.2125,
+     "1": 0.2286
+    }
+   },
+   "평온": {
+    "n_cells": 146,
+    "n_meetings": 30,
+    "n_change_meetings": 6,
+    "hit_rate": 0.7877,
+    "brier": 0.3057,
+    "logloss": 0.4933,
+    "hit_rate_change": 0.5758,
+    "hit_rate_hold": 0.8496,
+    "alert_0.3": {
+     "precision": 0.3944,
+     "recall": 0.8485,
+     "f1": 0.5385,
+     "false_alarm_rate": 0.3805,
+     "tp": 28,
+     "fp": 43,
+     "fn": 5,
+     "tn": 70
+    },
+    "alert_0.5": {
+     "precision": 0.5278,
+     "recall": 0.5758,
+     "f1": 0.5507,
+     "false_alarm_rate": 0.1504,
+     "tp": 19,
+     "fp": 17,
+     "fn": 14,
+     "tn": 96
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 28,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 15,
+      "mean_p": 0.068,
+      "observed": 0.067
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 60,
+      "mean_p": 0.193,
+      "observed": 0.067
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 49,
+      "mean_p": 0.446,
+      "observed": 0.306
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 22,
+      "mean_p": 0.736,
+      "observed": 0.591
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3621,
+     "20": 0.3747,
+     "10": 0.3152,
+     "5": 0.2769,
+     "3": 0.2539,
+     "1": 0.2379
+    }
+   }
+  },
+  "M9 기간+전환 신호+신뢰도 가중치": {
+   "급변": {
+    "n_cells": 34,
+    "n_meetings": 12,
+    "n_change_meetings": 1,
+    "hit_rate": 0.7059,
+    "brier": 0.2777,
+    "logloss": 0.4574,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.7742,
+    "alert_0.3": {
+     "precision": 0.1429,
+     "recall": 0.6667,
+     "f1": 0.2353,
+     "false_alarm_rate": 0.3871,
+     "tp": 2,
+     "fp": 12,
+     "fn": 1,
+     "tn": 19
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.2258,
+     "tp": 0,
+     "fp": 7,
+     "fn": 3,
+     "tn": 24
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 3,
+      "mean_p": 0.067,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 17,
+      "mean_p": 0.179,
+      "observed": 0.059
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 12,
+      "mean_p": 0.434,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 2,
+      "mean_p": 0.699,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.5983,
+     "20": 0.2734,
+     "10": 0.3075,
+     "5": 0.1037,
+     "3": 0.2056,
+     "1": 0.2241
+    }
+   },
+   "평온": {
+    "n_cells": 146,
+    "n_meetings": 30,
+    "n_change_meetings": 6,
+    "hit_rate": 0.7466,
+    "brier": 0.3114,
+    "logloss": 0.5011,
+    "hit_rate_change": 0.5455,
+    "hit_rate_hold": 0.8053,
+    "alert_0.3": {
+     "precision": 0.3836,
+     "recall": 0.8485,
+     "f1": 0.5283,
+     "false_alarm_rate": 0.3982,
+     "tp": 28,
+     "fp": 45,
+     "fn": 5,
+     "tn": 68
+    },
+    "alert_0.5": {
+     "precision": 0.4651,
+     "recall": 0.6061,
+     "f1": 0.5263,
+     "false_alarm_rate": 0.2035,
+     "tp": 20,
+     "fp": 23,
+     "fn": 13,
+     "tn": 90
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 28,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 16,
+      "mean_p": 0.068,
+      "observed": 0.062
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 57,
+      "mean_p": 0.196,
+      "observed": 0.07
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 49,
+      "mean_p": 0.452,
+      "observed": 0.286
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 24,
+      "mean_p": 0.734,
+      "observed": 0.583
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3884,
+     "20": 0.3963,
+     "10": 0.3151,
+     "5": 0.2739,
+     "3": 0.2468,
+     "1": 0.2318
+    }
+   }
+  },
+  "M9b 신호+결정 맥락+신뢰도(탐색적)": {
+   "급변": {
+    "n_cells": 34,
+    "n_meetings": 12,
+    "n_change_meetings": 1,
+    "hit_rate": 0.7353,
+    "brier": 0.2766,
+    "logloss": 0.4531,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.8065,
+    "alert_0.3": {
+     "precision": 0.1429,
+     "recall": 0.6667,
+     "f1": 0.2353,
+     "false_alarm_rate": 0.3871,
+     "tp": 2,
+     "fp": 12,
+     "fn": 1,
+     "tn": 19
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.1935,
+     "tp": 0,
+     "fp": 6,
+     "fn": 3,
+     "tn": 25
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 2,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 3,
+      "mean_p": 0.057,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 17,
+      "mean_p": 0.168,
+      "observed": 0.059
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 12,
+      "mean_p": 0.43,
+      "observed": 0.167
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 2,
+      "mean_p": 0.699,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.5942,
+     "20": 0.2724,
+     "10": 0.3022,
+     "5": 0.0958,
+     "3": 0.2109,
+     "1": 0.2241
+    }
+   },
+   "평온": {
+    "n_cells": 146,
+    "n_meetings": 30,
+    "n_change_meetings": 6,
+    "hit_rate": 0.7671,
+    "brier": 0.3091,
+    "logloss": 0.4962,
+    "hit_rate_change": 0.5758,
+    "hit_rate_hold": 0.823,
+    "alert_0.3": {
+     "precision": 0.3836,
+     "recall": 0.8485,
+     "f1": 0.5283,
+     "false_alarm_rate": 0.3982,
+     "tp": 28,
+     "fp": 45,
+     "fn": 5,
+     "tn": 68
+    },
+    "alert_0.5": {
+     "precision": 0.475,
+     "recall": 0.5758,
+     "f1": 0.5205,
+     "false_alarm_rate": 0.1858,
+     "tp": 19,
+     "fp": 21,
+     "fn": 14,
+     "tn": 92
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 28,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 17,
+      "mean_p": 0.069,
+      "observed": 0.059
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 56,
+      "mean_p": 0.192,
+      "observed": 0.071
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 50,
+      "mean_p": 0.444,
+      "observed": 0.3
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 23,
+      "mean_p": 0.73,
+      "observed": 0.565
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.3741,
+     "20": 0.3863,
+     "10": 0.3153,
+     "5": 0.2758,
+     "3": 0.2525,
+     "1": 0.2362
+    }
+   }
+  },
+  "M10 변경·방향 2단계": {
+   "급변": {
+    "n_cells": 34,
+    "n_meetings": 12,
+    "n_change_meetings": 1,
+    "hit_rate": 0.6765,
+    "brier": 0.3713,
+    "logloss": 0.6276,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.7419,
+    "alert_0.3": {
+     "precision": 0.1154,
+     "recall": 1.0,
+     "f1": 0.2069,
+     "false_alarm_rate": 0.7419,
+     "tp": 3,
+     "fp": 23,
+     "fn": 0,
+     "tn": 8
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.2581,
+     "tp": 0,
+     "fp": 8,
+     "fn": 3,
+     "tn": 23
+    },
+    "direction_acc_given_alert": 1.0,
+    "direction_n": 3,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 0,
+      "mean_p": null,
+      "observed": null
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 8,
+      "mean_p": 0.205,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 23,
+      "mean_p": 0.414,
+      "observed": 0.13
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 3,
+      "mean_p": 0.674,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.45,
+     "20": 0.2694,
+     "10": 0.3762,
+     "5": 0.3065,
+     "3": 0.3892,
+     "1": 0.3979
+    }
+   },
+   "평온": {
+    "n_cells": 146,
+    "n_meetings": 30,
+    "n_change_meetings": 6,
+    "hit_rate": 0.726,
+    "brier": 0.4701,
+    "logloss": 0.9152,
+    "hit_rate_change": 0.0,
+    "hit_rate_hold": 0.9381,
+    "alert_0.3": {
+     "precision": 0.2294,
+     "recall": 0.7576,
+     "f1": 0.3521,
+     "false_alarm_rate": 0.7434,
+     "tp": 25,
+     "fp": 84,
+     "fn": 8,
+     "tn": 29
+    },
+    "alert_0.5": {
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "false_alarm_rate": 0.0708,
+     "tp": 0,
+     "fp": 8,
+     "fn": 33,
+     "tn": 105
+    },
+    "direction_acc_given_alert": 0.28,
+    "direction_n": 25,
+    "calibration": [
+     {
+      "bin": "0.0~0.1",
+      "n": 1,
+      "mean_p": 0.072,
+      "observed": 0.0
+     },
+     {
+      "bin": "0.1~0.3",
+      "n": 36,
+      "mean_p": 0.278,
+      "observed": 0.222
+     },
+     {
+      "bin": "0.3~0.6",
+      "n": 106,
+      "mean_p": 0.385,
+      "observed": 0.236
+     },
+     {
+      "bin": "0.6~1.0",
+      "n": 3,
+      "mean_p": 0.645,
+      "observed": 0.0
+     }
+    ],
+    "brier_by_horizon": {
+     "30": 0.4852,
+     "20": 0.5037,
+     "10": 0.4782,
+     "5": 0.4573,
+     "3": 0.4455,
+     "1": 0.4447
+    }
+   }
+  }
+ },
+ "weight_by_horizon": {
+  "M5 OIS+통안채 50:50": {
+   "30": {
+    "mean": 0.5,
+    "min": 0.5,
+    "max": 0.5,
+    "n": 30
+   },
+   "20": {
+    "mean": 0.5,
+    "min": 0.5,
+    "max": 0.5,
+    "n": 30
+   },
+   "10": {
+    "mean": 0.5,
+    "min": 0.5,
+    "max": 0.5,
+    "n": 30
+   },
+   "5": {
+    "mean": 0.5,
+    "min": 0.5,
+    "max": 0.5,
+    "n": 30
+   },
+   "3": {
+    "mean": 0.5,
+    "min": 0.5,
+    "max": 0.5,
+    "n": 30
+   },
+   "1": {
+    "mean": 0.5,
+    "min": 0.5,
+    "max": 0.5,
+    "n": 30
+   }
+  },
+  "M6 기간별 고정 가중치": {
+   "30": {
+    "mean": 0.476,
+    "min": 0.338,
+    "max": 0.692,
+    "n": 30
+   },
+   "20": {
+    "mean": 0.476,
+    "min": 0.338,
+    "max": 0.692,
+    "n": 30
+   },
+   "10": {
+    "mean": 0.589,
+    "min": 0.5,
+    "max": 0.75,
+    "n": 30
+   },
+   "5": {
+    "mean": 0.589,
+    "min": 0.5,
+    "max": 0.75,
+    "n": 30
+   },
+   "3": {
+    "mean": 0.666,
+    "min": 0.572,
+    "max": 0.765,
+    "n": 30
+   },
+   "1": {
+    "mean": 0.666,
+    "min": 0.572,
+    "max": 0.765,
+    "n": 30
+   }
+  },
+  "M6c 기간 연속형 가중치": {
+   "30": {
+    "mean": 0.502,
+    "min": 0.492,
+    "max": 0.565,
+    "n": 30
+   },
+   "20": {
+    "mean": 0.503,
+    "min": 0.493,
+    "max": 0.566,
+    "n": 30
+   },
+   "10": {
+    "mean": 0.51,
+    "min": 0.499,
+    "max": 0.596,
+    "n": 30
+   },
+   "5": {
+    "mean": 0.511,
+    "min": 0.5,
+    "max": 0.599,
+    "n": 30
+   },
+   "3": {
+    "mean": 0.515,
+    "min": 0.503,
+    "max": 0.61,
+    "n": 30
+   },
+   "1": {
+    "mean": 0.517,
+    "min": 0.504,
+    "max": 0.614,
+    "n": 30
+   }
+  },
+  "M7 최근 오차 반영(EWA)": {
+   "30": {
+    "mean": 0.456,
+    "min": 0.108,
+    "max": 0.714,
+    "n": 30
+   },
+   "20": {
+    "mean": 0.456,
+    "min": 0.108,
+    "max": 0.714,
+    "n": 30
+   },
+   "10": {
+    "mean": 0.456,
+    "min": 0.108,
+    "max": 0.714,
+    "n": 30
+   },
+   "5": {
+    "mean": 0.456,
+    "min": 0.108,
+    "max": 0.714,
+    "n": 30
+   },
+   "3": {
+    "mean": 0.456,
+    "min": 0.108,
+    "max": 0.714,
+    "n": 30
+   },
+   "1": {
+    "mean": 0.456,
+    "min": 0.108,
+    "max": 0.714,
+    "n": 30
+   }
+  },
+  "M8 기간+전환 신호 가중치": {
+   "30": {
+    "mean": 0.506,
+    "min": 0.493,
+    "max": 0.59,
+    "n": 30
+   },
+   "20": {
+    "mean": 0.507,
+    "min": 0.493,
+    "max": 0.613,
+    "n": 30
+   },
+   "10": {
+    "mean": 0.512,
+    "min": 0.498,
+    "max": 0.631,
+    "n": 30
+   },
+   "5": {
+    "mean": 0.512,
+    "min": 0.499,
+    "max": 0.619,
+    "n": 30
+   },
+   "3": {
+    "mean": 0.515,
+    "min": 0.5,
+    "max": 0.642,
+    "n": 30
+   },
+   "1": {
+    "mean": 0.515,
+    "min": 0.501,
+    "max": 0.64,
+    "n": 30
+   }
+  },
+  "M8b 기간+직전 결정 맥락 가중치(탐색적)": {
+   "30": {
+    "mean": 0.458,
+    "min": 0.369,
+    "max": 0.569,
+    "n": 30
+   },
+   "20": {
+    "mean": 0.458,
+    "min": 0.369,
+    "max": 0.569,
+    "n": 30
+   },
+   "10": {
+    "mean": 0.486,
+    "min": 0.391,
+    "max": 0.598,
+    "n": 30
+   },
+   "5": {
+    "mean": 0.486,
+    "min": 0.391,
+    "max": 0.598,
+    "n": 30
+   },
+   "3": {
+    "mean": 0.501,
+    "min": 0.405,
+    "max": 0.609,
+    "n": 30
+   },
+   "1": {
+    "mean": 0.501,
+    "min": 0.405,
+    "max": 0.609,
+    "n": 30
+   }
+  },
+  "M9 기간+전환 신호+신뢰도 가중치": {
+   "30": {
+    "mean": 0.508,
+    "min": 0.493,
+    "max": 0.591,
+    "n": 30
+   },
+   "20": {
+    "mean": 0.508,
+    "min": 0.493,
+    "max": 0.596,
+    "n": 30
+   },
+   "10": {
+    "mean": 0.503,
+    "min": 0.48,
+    "max": 0.592,
+    "n": 30
+   },
+   "5": {
+    "mean": 0.502,
+    "min": 0.494,
+    "max": 0.557,
+    "n": 30
+   },
+   "3": {
+    "mean": 0.505,
+    "min": 0.496,
+    "max": 0.549,
+    "n": 30
+   },
+   "1": {
+    "mean": 0.504,
+    "min": 0.495,
+    "max": 0.553,
+    "n": 30
+   }
+  },
+  "M9b 신호+결정 맥락+신뢰도(탐색적)": {
+   "30": {
+    "mean": 0.473,
+    "min": 0.364,
+    "max": 0.591,
+    "n": 30
+   },
+   "20": {
+    "mean": 0.474,
+    "min": 0.376,
+    "max": 0.596,
+    "n": 30
+   },
+   "10": {
+    "mean": 0.467,
+    "min": 0.371,
+    "max": 0.592,
+    "n": 30
+   },
+   "5": {
+    "mean": 0.465,
+    "min": 0.372,
+    "max": 0.557,
+    "n": 30
+   },
+   "3": {
+    "mean": 0.477,
+    "min": 0.38,
+    "max": 0.561,
+    "n": 30
+   },
+   "1": {
+    "mean": 0.476,
+    "min": 0.38,
+    "max": 0.553,
+    "n": 30
+   }
+  }
+ },
+ "paired": {
+  "M1 과거 결정 빈도": {
+   "M5 OIS+통안채 50:50": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.2286,
+     "ci95": [
+      0.0895,
+      0.3671
+     ],
+     "p_two_sided": 0.0008,
+     "wins": 6,
+     "losses": 24
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 0.448,
+     "ci95": [
+      0.1929,
+      0.733
+     ],
+     "p_two_sided": 0.0,
+     "wins": 4,
+     "losses": 26
+    }
+   },
+   "M7 최근 오차 반영(EWA)": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.203,
+     "ci95": [
+      0.0774,
+      0.3354
+     ],
+     "p_two_sided": 0.0014,
+     "wins": 6,
+     "losses": 24
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 0.4161,
+     "ci95": [
+      0.1832,
+      0.693
+     ],
+     "p_two_sided": 0.0,
+     "wins": 4,
+     "losses": 26
+    }
+   },
+   "M2 합성 OIS 단독": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.011,
+     "ci95": [
+      -0.2124,
+      0.1917
+     ],
+     "p_two_sided": 0.9006,
+     "wins": 17,
+     "losses": 13
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -0.7507,
+     "ci95": [
+      -1.7592,
+      0.0776
+     ],
+     "p_two_sided": 0.0802,
+     "wins": 18,
+     "losses": 12
+    }
+   },
+   "M0 항상 동결": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.131,
+     "ci95": [
+      -0.0527,
+      0.2959
+     ],
+     "p_two_sided": 0.1462,
+     "wins": 6,
+     "losses": 24
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -1.8251,
+     "ci95": [
+      -3.6388,
+      -0.1914
+     ],
+     "p_two_sided": 0.0236,
+     "wins": 6,
+     "losses": 24
+    }
+   }
+  },
+  "M2 합성 OIS 단독": {
+   "M5 OIS+통안채 50:50": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.2396,
+     "ci95": [
+      0.1213,
+      0.3643
+     ],
+     "p_two_sided": 0.0002,
+     "wins": 7,
+     "losses": 23
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 1.1988,
+     "ci95": [
+      0.441,
+      2.2343
+     ],
+     "p_two_sided": 0.0,
+     "wins": 6,
+     "losses": 24
+    }
+   },
+   "M7 최근 오차 반영(EWA)": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.214,
+     "ci95": [
+      0.0571,
+      0.3652
+     ],
+     "p_two_sided": 0.0096,
+     "wins": 7,
+     "losses": 23
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 1.1668,
+     "ci95": [
+      0.3842,
+      2.2258
+     ],
+     "p_two_sided": 0.0002,
+     "wins": 7,
+     "losses": 23
+    }
+   },
+   "M0 항상 동결": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.142,
+     "ci95": [
+      -0.1911,
+      0.4315
+     ],
+     "p_two_sided": 0.3716,
+     "wins": 6,
+     "losses": 24
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -1.0744,
+     "ci95": [
+      -3.2367,
+      0.8141
+     ],
+     "p_two_sided": 0.2946,
+     "wins": 5,
+     "losses": 24
+    }
+   }
+  },
+  "M3 통안채 91일 단독": {
+   "M5 OIS+통안채 50:50": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0177,
+     "ci95": [
+      -0.1152,
+      0.0898
+     ],
+     "p_two_sided": 0.704,
+     "wins": 20,
+     "losses": 10
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 0.1097,
+     "ci95": [
+      -0.1655,
+      0.4859
+     ],
+     "p_two_sided": 0.5628,
+     "wins": 22,
+     "losses": 8
+    }
+   },
+   "M7 최근 오차 반영(EWA)": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0434,
+     "ci95": [
+      -0.1149,
+      0.0329
+     ],
+     "p_two_sided": 0.2498,
+     "wins": 20,
+     "losses": 10
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 0.0777,
+     "ci95": [
+      -0.1697,
+      0.4432
+     ],
+     "p_two_sided": 0.7088,
+     "wins": 22,
+     "losses": 8
+    }
+   },
+   "M2 합성 OIS 단독": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.2573,
+     "ci95": [
+      -0.4742,
+      -0.0388
+     ],
+     "p_two_sided": 0.0216,
+     "wins": 23,
+     "losses": 7
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -1.0891,
+     "ci95": [
+      -2.2759,
+      -0.1365
+     ],
+     "p_two_sided": 0.0214,
+     "wins": 22,
+     "losses": 8
+    }
+   },
+   "M0 항상 동결": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.1153,
+     "ci95": [
+      -0.3763,
+      0.1114
+     ],
+     "p_two_sided": 0.3654,
+     "wins": 6,
+     "losses": 20
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -2.1635,
+     "ci95": [
+      -4.1604,
+      -0.3917
+     ],
+     "p_two_sided": 0.0122,
+     "wins": 6,
+     "losses": 20
+    }
+   }
+  },
+  "M4 CD91 단독": {
+   "M5 OIS+통안채 50:50": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.2193,
+     "ci95": [
+      0.0821,
+      0.3623
+     ],
+     "p_two_sided": 0.0014,
+     "wins": 11,
+     "losses": 19
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 1.3746,
+     "ci95": [
+      0.3677,
+      2.6596
+     ],
+     "p_two_sided": 0.0004,
+     "wins": 10,
+     "losses": 20
+    }
+   },
+   "M7 최근 오차 반영(EWA)": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.1936,
+     "ci95": [
+      0.0437,
+      0.3469
+     ],
+     "p_two_sided": 0.0118,
+     "wins": 11,
+     "losses": 19
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 1.3427,
+     "ci95": [
+      0.3374,
+      2.6313
+     ],
+     "p_two_sided": 0.0018,
+     "wins": 10,
+     "losses": 20
+    }
+   },
+   "M2 합성 OIS 단독": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0203,
+     "ci95": [
+      -0.1989,
+      0.1529
+     ],
+     "p_two_sided": 0.8412,
+     "wins": 14,
+     "losses": 16
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 0.1759,
+     "ci95": [
+      -0.7064,
+      1.3049
+     ],
+     "p_two_sided": 0.788,
+     "wins": 15,
+     "losses": 14
+    }
+   },
+   "M0 항상 동결": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.1217,
+     "ci95": [
+      -0.1293,
+      0.3518
+     ],
+     "p_two_sided": 0.3278,
+     "wins": 5,
+     "losses": 21
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -0.8986,
+     "ci95": [
+      -2.5773,
+      0.5035
+     ],
+     "p_two_sided": 0.256,
+     "wins": 4,
+     "losses": 21
+    }
+   }
+  },
+  "M5 OIS+통안채 50:50": {
+   "M7 최근 오차 반영(EWA)": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0256,
+     "ci95": [
+      -0.0806,
+      0.0145
+     ],
+     "p_two_sided": 0.2966,
+     "wins": 12,
+     "losses": 18
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -0.0319,
+     "ci95": [
+      -0.1004,
+      0.0182
+     ],
+     "p_two_sided": 0.2964,
+     "wins": 12,
+     "losses": 18
+    }
+   },
+   "M2 합성 OIS 단독": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.2396,
+     "ci95": [
+      -0.3643,
+      -0.1213
+     ],
+     "p_two_sided": 0.0002,
+     "wins": 23,
+     "losses": 7
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -1.1988,
+     "ci95": [
+      -2.2343,
+      -0.441
+     ],
+     "p_two_sided": 0.0,
+     "wins": 24,
+     "losses": 6
+    }
+   },
+   "M0 항상 동결": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0976,
+     "ci95": [
+      -0.3697,
+      0.1403
+     ],
+     "p_two_sided": 0.4764,
+     "wins": 6,
+     "losses": 24
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -2.2732,
+     "ci95": [
+      -4.302,
+      -0.4842
+     ],
+     "p_two_sided": 0.006,
+     "wins": 6,
+     "losses": 24
+    }
+   }
+  },
+  "M6 기간별 고정 가중치": {
+   "M5 OIS+통안채 50:50": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.0228,
+     "ci95": [
+      -0.0002,
+      0.0486
+     ],
+     "p_two_sided": 0.0532,
+     "wins": 12,
+     "losses": 18
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 0.0293,
+     "ci95": [
+      0.0029,
+      0.0583
+     ],
+     "p_two_sided": 0.0282,
+     "wins": 12,
+     "losses": 18
+    }
+   },
+   "M7 최근 오차 반영(EWA)": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0029,
+     "ci95": [
+      -0.066,
+      0.0476
+     ],
+     "p_two_sided": 0.9766,
+     "wins": 11,
+     "losses": 19
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -0.0026,
+     "ci95": [
+      -0.0798,
+      0.0578
+     ],
+     "p_two_sided": 0.996,
+     "wins": 10,
+     "losses": 20
+    }
+   },
+   "M2 합성 OIS 단독": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.2168,
+     "ci95": [
+      -0.3271,
+      -0.1105
+     ],
+     "p_two_sided": 0.0002,
+     "wins": 24,
+     "losses": 6
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -1.1695,
+     "ci95": [
+      -2.2021,
+      -0.4235
+     ],
+     "p_two_sided": 0.0,
+     "wins": 24,
+     "losses": 6
+    }
+   },
+   "M0 항상 동결": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0748,
+     "ci95": [
+      -0.3479,
+      0.1636
+     ],
+     "p_two_sided": 0.6008,
+     "wins": 6,
+     "losses": 24
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -2.2439,
+     "ci95": [
+      -4.2552,
+      -0.4559
+     ],
+     "p_two_sided": 0.0086,
+     "wins": 6,
+     "losses": 24
+    }
+   }
+  },
+  "M6c 기간 연속형 가중치": {
+   "M5 OIS+통안채 50:50": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.0021,
+     "ci95": [
+      -0.0005,
+      0.0049
+     ],
+     "p_two_sided": 0.1208,
+     "wins": 13,
+     "losses": 17
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 0.0029,
+     "ci95": [
+      -0.0004,
+      0.0068
+     ],
+     "p_two_sided": 0.087,
+     "wins": 12,
+     "losses": 18
+    }
+   },
+   "M7 최근 오차 반영(EWA)": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0236,
+     "ci95": [
+      -0.0791,
+      0.0166
+     ],
+     "p_two_sided": 0.3472,
+     "wins": 10,
+     "losses": 20
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -0.029,
+     "ci95": [
+      -0.0981,
+      0.021
+     ],
+     "p_two_sided": 0.3532,
+     "wins": 9,
+     "losses": 21
+    }
+   },
+   "M2 합성 OIS 단독": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.2375,
+     "ci95": [
+      -0.3613,
+      -0.1202
+     ],
+     "p_two_sided": 0.0002,
+     "wins": 23,
+     "losses": 7
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -1.1958,
+     "ci95": [
+      -2.2317,
+      -0.4381
+     ],
+     "p_two_sided": 0.0,
+     "wins": 24,
+     "losses": 6
+    }
+   },
+   "M0 항상 동결": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0955,
+     "ci95": [
+      -0.3677,
+      0.1426
+     ],
+     "p_two_sided": 0.4856,
+     "wins": 6,
+     "losses": 24
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -2.2702,
+     "ci95": [
+      -4.2992,
+      -0.4818
+     ],
+     "p_two_sided": 0.0062,
+     "wins": 6,
+     "losses": 24
+    }
+   }
+  },
+  "M7 최근 오차 반영(EWA)": {
+   "M5 OIS+통안채 50:50": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.0256,
+     "ci95": [
+      -0.0145,
+      0.0806
+     ],
+     "p_two_sided": 0.2966,
+     "wins": 18,
+     "losses": 12
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 0.0319,
+     "ci95": [
+      -0.0182,
+      0.1004
+     ],
+     "p_two_sided": 0.2964,
+     "wins": 18,
+     "losses": 12
+    }
+   },
+   "M2 합성 OIS 단독": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.214,
+     "ci95": [
+      -0.3652,
+      -0.0571
+     ],
+     "p_two_sided": 0.0096,
+     "wins": 23,
+     "losses": 7
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -1.1668,
+     "ci95": [
+      -2.2258,
+      -0.3842
+     ],
+     "p_two_sided": 0.0002,
+     "wins": 23,
+     "losses": 7
+    }
+   },
+   "M0 항상 동결": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0719,
+     "ci95": [
+      -0.3208,
+      0.1444
+     ],
+     "p_two_sided": 0.576,
+     "wins": 6,
+     "losses": 24
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -2.2412,
+     "ci95": [
+      -4.2642,
+      -0.4828
+     ],
+     "p_two_sided": 0.006,
+     "wins": 6,
+     "losses": 24
+    }
+   }
+  },
+  "M8 기간+전환 신호 가중치": {
+   "M5 OIS+통안채 50:50": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.0028,
+     "ci95": [
+      -0.001,
+      0.0068
+     ],
+     "p_two_sided": 0.1568,
+     "wins": 11,
+     "losses": 19
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 0.0037,
+     "ci95": [
+      -0.0009,
+      0.0089
+     ],
+     "p_two_sided": 0.1262,
+     "wins": 11,
+     "losses": 19
+    }
+   },
+   "M7 최근 오차 반영(EWA)": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0229,
+     "ci95": [
+      -0.0784,
+      0.0172
+     ],
+     "p_two_sided": 0.3622,
+     "wins": 11,
+     "losses": 19
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -0.0282,
+     "ci95": [
+      -0.0973,
+      0.0216
+     ],
+     "p_two_sided": 0.3694,
+     "wins": 10,
+     "losses": 20
+    }
+   },
+   "M2 합성 OIS 단독": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.2368,
+     "ci95": [
+      -0.3603,
+      -0.1198
+     ],
+     "p_two_sided": 0.0002,
+     "wins": 23,
+     "losses": 7
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -1.195,
+     "ci95": [
+      -2.2315,
+      -0.4362
+     ],
+     "p_two_sided": 0.0,
+     "wins": 24,
+     "losses": 6
+    }
+   },
+   "M0 항상 동결": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0948,
+     "ci95": [
+      -0.3672,
+      0.143
+     ],
+     "p_two_sided": 0.4888,
+     "wins": 6,
+     "losses": 24
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -2.2695,
+     "ci95": [
+      -4.2984,
+      -0.4811
+     ],
+     "p_two_sided": 0.0062,
+     "wins": 6,
+     "losses": 24
+    }
+   }
+  },
+  "M8b 기간+직전 결정 맥락 가중치(탐색적)": {
+   "M5 OIS+통안채 50:50": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0025,
+     "ci95": [
+      -0.015,
+      0.0118
+     ],
+     "p_two_sided": 0.6642,
+     "wins": 19,
+     "losses": 11
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -0.0043,
+     "ci95": [
+      -0.0184,
+      0.0114
+     ],
+     "p_two_sided": 0.5364,
+     "wins": 19,
+     "losses": 11
+    }
+   },
+   "M7 최근 오차 반영(EWA)": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0282,
+     "ci95": [
+      -0.0727,
+      0.0041
+     ],
+     "p_two_sided": 0.1376,
+     "wins": 14,
+     "losses": 16
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -0.0362,
+     "ci95": [
+      -0.0931,
+      0.0049
+     ],
+     "p_two_sided": 0.141,
+     "wins": 13,
+     "losses": 17
+    }
+   },
+   "M2 합성 OIS 단독": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.2421,
+     "ci95": [
+      -0.3742,
+      -0.1138
+     ],
+     "p_two_sided": 0.0004,
+     "wins": 23,
+     "losses": 7
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -1.2031,
+     "ci95": [
+      -2.2486,
+      -0.4344
+     ],
+     "p_two_sided": 0.0,
+     "wins": 24,
+     "losses": 6
+    }
+   },
+   "M0 항상 동결": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.1001,
+     "ci95": [
+      -0.3665,
+      0.1327
+     ],
+     "p_two_sided": 0.4578,
+     "wins": 6,
+     "losses": 24
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -2.2775,
+     "ci95": [
+      -4.316,
+      -0.4937
+     ],
+     "p_two_sided": 0.0052,
+     "wins": 6,
+     "losses": 24
+    }
+   }
+  },
+  "M9 기간+전환 신호+신뢰도 가중치": {
+   "M5 OIS+통안채 50:50": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.0026,
+     "ci95": [
+      -0.001,
+      0.0062
+     ],
+     "p_two_sided": 0.1554,
+     "wins": 13,
+     "losses": 17
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 0.0029,
+     "ci95": [
+      -0.0011,
+      0.0071
+     ],
+     "p_two_sided": 0.1598,
+     "wins": 12,
+     "losses": 18
+    }
+   },
+   "M7 최근 오차 반영(EWA)": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0231,
+     "ci95": [
+      -0.0786,
+      0.0171
+     ],
+     "p_two_sided": 0.3614,
+     "wins": 12,
+     "losses": 18
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -0.029,
+     "ci95": [
+      -0.0981,
+      0.0209
+     ],
+     "p_two_sided": 0.3538,
+     "wins": 11,
+     "losses": 19
+    }
+   },
+   "M2 합성 OIS 단독": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.237,
+     "ci95": [
+      -0.3601,
+      -0.1199
+     ],
+     "p_two_sided": 0.0002,
+     "wins": 23,
+     "losses": 7
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -1.1958,
+     "ci95": [
+      -2.232,
+      -0.4369
+     ],
+     "p_two_sided": 0.0,
+     "wins": 23,
+     "losses": 7
+    }
+   },
+   "M0 항상 동결": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.095,
+     "ci95": [
+      -0.3674,
+      0.1429
+     ],
+     "p_two_sided": 0.4888,
+     "wins": 6,
+     "losses": 24
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -2.2703,
+     "ci95": [
+      -4.299,
+      -0.4819
+     ],
+     "p_two_sided": 0.0062,
+     "wins": 6,
+     "losses": 24
+    }
+   }
+  },
+  "M9b 신호+결정 맥락+신뢰도(탐색적)": {
+   "M5 OIS+통안채 50:50": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.0005,
+     "ci95": [
+      -0.0128,
+      0.0165
+     ],
+     "p_two_sided": 0.9678,
+     "wins": 18,
+     "losses": 12
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -0.0019,
+     "ci95": [
+      -0.0178,
+      0.016
+     ],
+     "p_two_sided": 0.7712,
+     "wins": 18,
+     "losses": 12
+    }
+   },
+   "M7 최근 오차 반영(EWA)": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0251,
+     "ci95": [
+      -0.0678,
+      0.0065
+     ],
+     "p_two_sided": 0.1752,
+     "wins": 16,
+     "losses": 14
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -0.0338,
+     "ci95": [
+      -0.0888,
+      0.0065
+     ],
+     "p_two_sided": 0.1578,
+     "wins": 16,
+     "losses": 14
+    }
+   },
+   "M2 합성 OIS 단독": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.2391,
+     "ci95": [
+      -0.3713,
+      -0.1106
+     ],
+     "p_two_sided": 0.0006,
+     "wins": 23,
+     "losses": 7
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -1.2006,
+     "ci95": [
+      -2.2475,
+      -0.4311
+     ],
+     "p_two_sided": 0.0,
+     "wins": 23,
+     "losses": 7
+    }
+   },
+   "M0 항상 동결": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.097,
+     "ci95": [
+      -0.3657,
+      0.1359
+     ],
+     "p_two_sided": 0.4748,
+     "wins": 6,
+     "losses": 24
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -2.2751,
+     "ci95": [
+      -4.3155,
+      -0.4909
+     ],
+     "p_two_sided": 0.0054,
+     "wins": 6,
+     "losses": 24
+    }
+   }
+  },
+  "M10 변경·방향 2단계": {
+   "M5 OIS+통안채 50:50": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.149,
+     "ci95": [
+      0.0106,
+      0.2976
+     ],
+     "p_two_sided": 0.0338,
+     "wins": 9,
+     "losses": 19
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 0.371,
+     "ci95": [
+      0.091,
+      0.7386
+     ],
+     "p_two_sided": 0.0026,
+     "wins": 5,
+     "losses": 23
+    }
+   },
+   "M7 최근 오차 반영(EWA)": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.1233,
+     "ci95": [
+      -0.0022,
+      0.264
+     ],
+     "p_two_sided": 0.0546,
+     "wins": 12,
+     "losses": 18
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": 0.339,
+     "ci95": [
+      0.0799,
+      0.7007
+     ],
+     "p_two_sided": 0.0044,
+     "wins": 7,
+     "losses": 23
+    }
+   },
+   "M2 합성 OIS 단독": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": -0.0906,
+     "ci95": [
+      -0.2963,
+      0.1246
+     ],
+     "p_two_sided": 0.3948,
+     "wins": 19,
+     "losses": 11
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -0.8278,
+     "ci95": [
+      -1.8672,
+      0.0384
+     ],
+     "p_two_sided": 0.0644,
+     "wins": 18,
+     "losses": 12
+    }
+   },
+   "M0 항상 동결": {
+    "brier": {
+     "n_meetings": 30,
+     "mean_diff": 0.0514,
+     "ci95": [
+      -0.1125,
+      0.2021
+     ],
+     "p_two_sided": 0.5206,
+     "wins": 6,
+     "losses": 24
+    },
+    "logloss": {
+     "n_meetings": 30,
+     "mean_diff": -1.9022,
+     "ci95": [
+      -3.6893,
+      -0.3105
+     ],
+     "p_two_sided": 0.0236,
+     "wins": 6,
+     "losses": 24
+    }
+   }
+  }
+ },
+ "sensitivity": {
+  "3": {
+   "sample": {
+    "n_cells": 198,
+    "n_meetings": 33,
+    "first": "2022-10-12",
+    "last": "2026-10-22",
+    "actuals": {
+     "hike": 5,
+     "hold": 24,
+     "cut": 4
+    }
+   },
+   "brier": {
+    "M0 항상 동결": 0.5455,
+    "M1 과거 결정 빈도": 0.5189,
+    "M2 합성 OIS 단독": 0.4928,
+    "M3 통안채 91일 단독": 0.3193,
+    "M4 CD91 단독": 0.4743,
+    "M5 OIS+통안채 50:50": 0.2901,
+    "M6 기간별 고정 가중치": 0.3034,
+    "M6c 기간 연속형 가중치": 0.292,
+    "M7 최근 오차 반영(EWA)": 0.3053,
+    "M8 기간+전환 신호 가중치": 0.2926,
+    "M8b 기간+직전 결정 맥락 가중치(탐색적)": 0.2878,
+    "M9 기간+전환 신호+신뢰도 가중치": 0.2924,
+    "M9b 신호+결정 맥락+신뢰도(탐색적)": 0.2905,
+    "M10 변경·방향 2단계": 0.4255
+   }
+  },
+  "10": {
+   "sample": {
+    "n_cells": 156,
+    "n_meetings": 26,
+    "first": "2023-08-24",
+    "last": "2026-10-22",
+    "actuals": {
+     "hike": 2,
+     "hold": 20,
+     "cut": 4
+    }
+   },
+   "brier": {
+    "M0 항상 동결": 0.4615,
+    "M1 과거 결정 빈도": 0.5145,
+    "M2 합성 OIS 단독": 0.5647,
+    "M3 통안채 91일 단독": 0.2779,
+    "M4 CD91 단독": 0.5598,
+    "M5 OIS+통안채 50:50": 0.3152,
+    "M6 기간별 고정 가중치": 0.3354,
+    "M6c 기간 연속형 가중치": 0.3167,
+    "M7 최근 오차 반영(EWA)": 0.3393,
+    "M8 기간+전환 신호 가중치": 0.3176,
+    "M8b 기간+직전 결정 맥락 가중치(탐색적)": 0.3114,
+    "M9 기간+전환 신호+신뢰도 가중치": 0.318,
+    "M9b 신호+결정 맥락+신뢰도(탐색적)": 0.3157,
+    "M10 변경·방향 2단계": 0.45
+   }
+  }
+ },
+ "recent": [
+  {
+   "meeting": "2025-11-27",
+   "D": 30,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.0,
+    "M3 통안채 91일 단독": 0.0,
+    "M5 OIS+통안채 50:50": 0.0,
+    "M7 최근 오차 반영(EWA)": 0.0,
+    "M8 기간+전환 신호 가중치": 0.0
+   }
+  },
+  {
+   "meeting": "2025-11-27",
+   "D": 10,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.428,
+    "M3 통안채 91일 단독": 0.0,
+    "M5 OIS+통안채 50:50": 0.214,
+    "M7 최근 오차 반영(EWA)": 0.203,
+    "M8 기간+전환 신호 가중치": 0.215
+   }
+  },
+  {
+   "meeting": "2025-11-27",
+   "D": 1,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.377,
+    "M3 통안채 91일 단독": 0.0,
+    "M5 OIS+통안채 50:50": 0.189,
+    "M7 최근 오차 반영(EWA)": 0.179,
+    "M8 기간+전환 신호 가중치": 0.189
+   }
+  },
+  {
+   "meeting": "2026-01-15",
+   "D": 30,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 1.0,
+    "M3 통안채 91일 단독": 0.0,
+    "M5 OIS+통안채 50:50": 0.5,
+    "M7 최근 오차 반영(EWA)": 0.466,
+    "M8 기간+전환 신호 가중치": 0.497
+   }
+  },
+  {
+   "meeting": "2026-01-15",
+   "D": 10,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.425,
+    "M3 통안채 91일 단독": 0.0,
+    "M5 OIS+통안채 50:50": 0.213,
+    "M7 최근 오차 반영(EWA)": 0.198,
+    "M8 기간+전환 신호 가중치": 0.213
+   }
+  },
+  {
+   "meeting": "2026-01-15",
+   "D": 1,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.206,
+    "M3 통안채 91일 단독": 0.0,
+    "M5 OIS+통안채 50:50": 0.103,
+    "M7 최근 오차 반영(EWA)": 0.096,
+    "M8 기간+전환 신호 가중치": 0.103
+   }
+  },
+  {
+   "meeting": "2026-02-26",
+   "D": 30,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.36,
+    "M3 통안채 91일 단독": 0.0,
+    "M5 OIS+통안채 50:50": 0.18,
+    "M7 최근 오차 반영(EWA)": 0.155,
+    "M8 기간+전환 신호 가중치": 0.178
+   }
+  },
+  {
+   "meeting": "2026-02-26",
+   "D": 10,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.588,
+    "M3 통안채 91일 단독": 0.0,
+    "M5 OIS+통안채 50:50": 0.294,
+    "M7 최근 오차 반영(EWA)": 0.253,
+    "M8 기간+전환 신호 가중치": 0.294
+   }
+  },
+  {
+   "meeting": "2026-02-26",
+   "D": 1,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.347,
+    "M3 통안채 91일 단독": 0.0,
+    "M5 OIS+통안채 50:50": 0.173,
+    "M7 최근 오차 반영(EWA)": 0.149,
+    "M8 기간+전환 신호 가중치": 0.174
+   }
+  },
+  {
+   "meeting": "2026-04-10",
+   "D": 30,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 1.0,
+    "M3 통안채 91일 단독": 0.376,
+    "M5 OIS+통안채 50:50": 0.688,
+    "M7 최근 오차 반영(EWA)": 0.641,
+    "M8 기간+전환 신호 가중치": 0.685
+   }
+  },
+  {
+   "meeting": "2026-04-10",
+   "D": 10,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.686,
+    "M3 통안채 91일 단독": 0.156,
+    "M5 OIS+통안채 50:50": 0.421,
+    "M7 최근 오차 반영(EWA)": 0.381,
+    "M8 기간+전환 신호 가중치": 0.421
+   }
+  },
+  {
+   "meeting": "2026-04-10",
+   "D": 1,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.514,
+    "M3 통안채 91일 단독": 0.0,
+    "M5 OIS+통안채 50:50": 0.257,
+    "M7 최근 오차 반영(EWA)": 0.218,
+    "M8 기간+전환 신호 가중치": 0.258
+   }
+  },
+  {
+   "meeting": "2026-05-28",
+   "D": 30,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 1.0,
+    "M3 통안채 91일 단독": 0.619,
+    "M5 OIS+통안채 50:50": 0.809,
+    "M7 최근 오차 반영(EWA)": 0.769,
+    "M8 기간+전환 신호 가중치": 0.807
+   }
+  },
+  {
+   "meeting": "2026-05-28",
+   "D": 10,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.75,
+    "M3 통안채 91일 단독": 0.604,
+    "M5 OIS+통안채 50:50": 0.677,
+    "M7 최근 오차 반영(EWA)": 0.662,
+    "M8 기간+전환 신호 가중치": 0.677
+   }
+  },
+  {
+   "meeting": "2026-05-28",
+   "D": 1,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.488,
+    "M3 통안채 91일 단독": 0.48,
+    "M5 OIS+통안채 50:50": 0.484,
+    "M7 최근 오차 반영(EWA)": 0.483,
+    "M8 기간+전환 신호 가중치": 0.484
+   }
+  },
+  {
+   "meeting": "2026-07-16",
+   "D": 30,
+   "actual": "hike",
+   "p_hike": {
+    "M2 합성 OIS 단독": 1.0,
+    "M3 통안채 91일 단독": 0.902,
+    "M5 OIS+통안채 50:50": 0.951,
+    "M7 최근 오차 반영(EWA)": 0.913,
+    "M8 기간+전환 신호 가중치": 0.95
+   }
+  },
+  {
+   "meeting": "2026-07-16",
+   "D": 10,
+   "actual": "hike",
+   "p_hike": {
+    "M2 합성 OIS 단독": 1.0,
+    "M3 통안채 91일 단독": 0.366,
+    "M5 OIS+통안채 50:50": 0.683,
+    "M7 최근 오차 반영(EWA)": 0.434,
+    "M8 기간+전환 신호 가중치": 0.683
+   }
+  },
+  {
+   "meeting": "2026-07-16",
+   "D": 1,
+   "actual": "hike",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.663,
+    "M3 통안채 91일 단독": 0.128,
+    "M5 OIS+통안채 50:50": 0.395,
+    "M7 최근 오차 반영(EWA)": 0.186,
+    "M8 기간+전환 신호 가중치": 0.396
+   }
+  },
+  {
+   "meeting": "2026-08-27",
+   "D": 30,
+   "actual": "hike",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.109,
+    "M3 통안채 91일 단독": 0.172,
+    "M5 OIS+통안채 50:50": 0.141,
+    "M7 최근 오차 반영(EWA)": 0.142,
+    "M8 기간+전환 신호 가중치": 0.141
+   }
+  },
+  {
+   "meeting": "2026-08-27",
+   "D": 10,
+   "actual": "hike",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.01,
+    "M3 통안채 91일 단독": 0.0,
+    "M5 OIS+통안채 50:50": 0.005,
+    "M7 최근 오차 반영(EWA)": 0.005,
+    "M8 기간+전환 신호 가중치": 0.005
+   }
+  },
+  {
+   "meeting": "2026-08-27",
+   "D": 1,
+   "actual": "hike",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.212,
+    "M3 통안채 91일 단독": 0.561,
+    "M5 OIS+통안채 50:50": 0.386,
+    "M7 최근 오차 반영(EWA)": 0.395,
+    "M8 기간+전환 신호 가중치": 0.385
+   }
+  },
+  {
+   "meeting": "2026-10-22",
+   "D": 30,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.439,
+    "M3 통안채 91일 단독": 0.321,
+    "M5 OIS+통안채 50:50": 0.38,
+    "M7 최근 오차 반영(EWA)": 0.375,
+    "M8 기간+전환 신호 가중치": 0.379
+   }
+  },
+  {
+   "meeting": "2026-10-22",
+   "D": 10,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.282,
+    "M3 통안채 91일 단독": 0.493,
+    "M5 OIS+통안채 50:50": 0.388,
+    "M7 최근 오차 반영(EWA)": 0.396,
+    "M8 기간+전환 신호 가중치": 0.387
+   }
+  },
+  {
+   "meeting": "2026-10-22",
+   "D": 1,
+   "actual": "hold",
+   "p_hike": {
+    "M2 합성 OIS 단독": 0.106,
+    "M3 통안채 91일 단독": 0.236,
+    "M5 OIS+통안채 50:50": 0.171,
+    "M7 최근 오차 반영(EWA)": 0.176,
+    "M8 기간+전환 신호 가중치": 0.171
+   }
+  }
+ ],
+ "bootstrap": {
+  "B": 10000,
+  "unit": "금통위(군집)"
+ },
+ "data": {
+  "first_obs": "2021-01-26",
+  "last_obs": "2026-10-21",
+  "sources": "ECOS(CD91·통안증권 91일·기준금리), 한국은행 CD 시가평가 곡선, KOFR(자체 합성 OIS)"
+ }
+}

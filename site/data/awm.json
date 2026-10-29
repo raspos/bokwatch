@@ -1,0 +1,103 @@
+{
+ "generated": "2026-10-29",
+ "live": {
+  "meeting": "2026-11-26",
+  "D": 28,
+  "obs_date": "2026-10-28",
+  "ois_policy": "flat",
+  "panel_rebuilt": false,
+  "n_train_meetings": 46,
+  "models": {
+   "M2 합성 OIS 단독": {
+    "ok": true,
+    "p": {
+     "hike": 0.5841,
+     "hold": 0.4159,
+     "cut": 0.0
+    }
+   },
+   "M3 통안채 91일 단독": {
+    "ok": true,
+    "p": {
+     "hike": 0.8883,
+     "hold": 0.1117,
+     "cut": 0.0
+    }
+   },
+   "M5 OIS+통안채 50:50": {
+    "ok": true,
+    "p": {
+     "hike": 0.7362,
+     "hold": 0.2638,
+     "cut": 0.0
+    },
+    "w_ois": 0.5
+   },
+   "M6c 기간 연속형 가중치": {
+    "ok": true,
+    "p": {
+     "hike": 0.7382,
+     "hold": 0.2618,
+     "cut": 0.0
+    },
+    "w_ois": 0.4932
+   },
+   "M7 최근 오차 반영(EWA)": {
+    "ok": true,
+    "p": {
+     "hike": 0.7408,
+     "hold": 0.2592,
+     "cut": 0.0
+    },
+    "w_ois": 0.485
+   },
+   "M8 기간+전환 신호 가중치": {
+    "ok": true,
+    "p": {
+     "hike": 0.7379,
+     "hold": 0.2621,
+     "cut": 0.0
+    },
+    "w_ois": 0.4945
+   }
+  },
+  "inputs": {
+   "cd91": {
+    "source_type": "single_cd91",
+    "input_date": "2026-10-28",
+    "p": {
+     "hike": 0,
+     "hold": 0.988571,
+     "cut": 0.011429
+    },
+    "solve": "min_hike",
+    "spread_how": "당시까지 자료"
+   },
+   "msb91": {
+    "source_type": "single_msb91",
+    "input_date": "2026-10-28",
+    "p": {
+     "hike": 0.888286,
+     "hold": 0.111714,
+     "cut": 0
+    },
+    "solve": "min_hike",
+    "spread_how": "당시까지 자료"
+   },
+   "ois": {
+    "source_type": "ois_3m",
+    "input_date": "2026-10-28",
+    "p": {
+     "hike": 0.5841,
+     "hold": 0.4159,
+     "cut": 0
+    },
+    "solve": null,
+    "spread_how": null
+   }
+  },
+  "ois_source": "ois_3m"
+ },
+ "label": "통계적 결합 실험값. 시장가격이 아니며 기본 확률(KOFR OIS)을 대체하지 않는다.",
+ "backtest_file": "awm_backtest.json"
+}

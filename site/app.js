@@ -1077,6 +1077,67 @@
 
   // ------------------------------------------------------------ 방법·검증
   const methodOpen = new Set();
+  // AWM 실험: OIS와 통안채 91일 확률의 통계적 결합(시장가격 아님, 기본 확률을 대체하지 않음)
+  async function renderAwm() {
+    const el = $("#awm");
+    if (!el) return;
+    const [A, B] = await Promise.all([getJSON("data/awm.json"), getJSON("data/awm_backtest.json")]);
+    if (!A || !A.live) { el.replaceChildren(); return; }
+    const L = A.live;
+    const short = (n) => n.replace(/^M\d+[a-z]?\s*/, "");
+    const tbl = (head, rows) => h("div", { class: "tbl-wrap" }, h("table", { class: "grid" }, h("thead", {}, h("tr", {}, ...head.map((t, i) => h("th", { class: i ? null : "l" }, t)))), h("tbody", {}, rows)));
+    const sec = [h("h2", {}, "AWM 실험 ", h("small", {}, "통계적 결합 · 참고용")),
+      h("p", { class: "note" }, "서로 다른 두 상품(합성 KOFR OIS, 통안증권 91일)의 확률을 과거 성적으로 섞은 값이다. 시장가격이 아니며 위 기본 확률(KOFR OIS)을 바꾸지 않는다. 표본이 작아(변경 회의 6번) 결과는 참고용이다.")];
+    // A. 다음 회의 확률
+    const ois = (L.inputs || {}).ois, rows = [];
+    const add = (name, p, note) => rows.push(h("tr", {}, h("td", { class: "l" }, name, note ? h("span", { class: "badge" }, note) : ""), h("td", {}, pct(p.hike)), h("td", {}, pct(p.hold)), h("td", {}, pct(p.cut))));
+    const m5 = L.models["M5 OIS+통안채 50:50"];
+    if (m5 && m5.ok) add("OIS·통안채 50:50", m5.p, "대표");
+    Object.entries(L.models).forEach(([n, m]) => { if (m.ok && n !== "M5 OIS+통안채 50:50") add(short(n), m.p, n.startsWith("M2") || n.startsWith("M3") ? "단독" : "적응형"); });
+    if (L.inputs.cd91 && L.inputs.cd91.p) add("CD 91일 단독", L.inputs.cd91.p, "참고");
+    const srcLbl = { ois_1m: "1개월 OIS", ois_3m: "3개월 OIS" };
+    sec.push(h("h3", {}, `${md(L.meeting)} 회의 확률 `, h("small", {}, `금통위 ${L.D}일 전 · 자료일 ${ymd(L.obs_date)} · OIS 계산 방식 ${srcLbl[L.ois_source] || L.ois_source || "없음"}`)),
+      tbl(["모형", "인상", "동결", "인하"], rows));
+    // B·C. 현재 가중치와 변화 이유
+    const wr = Object.entries(L.models).filter(([, m]) => m.ok && m.w_ois != null).map(([n, m]) => h("tr", {}, h("td", { class: "l" }, short(n)), h("td", {}, pct(m.w_ois, 0)), h("td", {}, pct(1 - m.w_ois, 0))));
+    sec.push(h("h3", {}, "현재 가중치"), tbl(["모형", "OIS", "통안채 91일"], wr),
+      h("p", { class: "note" }, "적응형 가중치는 50:50에서 크게 벗어나지 않는다. 표본이 적을 때 50:50 쪽으로 당기도록 만들었고, 과거 성적 차이가 통계적으로 뚜렷하지 않기 때문이다."));
+    if (!B) { el.replaceChildren(...sec); return; }
+    // D. 시점별 가중치
+    const wh = B.weight_by_horizon || {}, Ds = ["30", "20", "10", "5", "3", "1"];
+    const wrows = Object.entries(wh).map(([n, o]) => h("tr", {}, h("td", { class: "l" }, short(n)), ...Ds.map((k) => h("td", {}, o[k] ? pct(o[k].mean, 0) : "–"))));
+    sec.push(h("h3", {}, "금통위까지 남은 날에 따른 OIS 가중치 ", h("small", {}, "과거 평균")), tbl(["모형", ...Ds.map((k) => `${k}일 전`)], wrows));
+    // E. 모형별 성적
+    const T = B.table || {}, P = (B.paired || {});
+    const base = "M5 OIS+통안채 50:50";
+    const ord = Object.keys(T).sort((a, b) => T[a].brier - T[b].brier);
+    const erows = ord.map((n) => {
+      const s = T[n], pr = n !== base && P[n] && P[n][base] ? P[n][base].brier : null;
+      const diff = pr && pr.ci95 ? `${pr.mean_diff > 0 ? "+" : ""}${pr.mean_diff.toFixed(3)} (${pr.ci95[0].toFixed(2)}~${pr.ci95[1].toFixed(2)})` : "–";
+      return h("tr", {}, h("td", { class: "l" }, short(n), /탐색적/.test(n) ? h("span", { class: "badge verify" }, "탐색") : ""), h("td", {}, fx(s.brier, 3)), h("td", {}, fx(s.logloss, 2)), h("td", {}, pct(s.hit_rate, 0)),
+        h("td", {}, s.hit_rate_change == null ? "–" : pct(s.hit_rate_change, 0)), h("td", {}, s.hit_rate_hold == null ? "–" : pct(s.hit_rate_hold, 0)), h("td", {}, diff));
+    });
+    const sm = B.sample || {};
+    sec.push(h("h3", {}, "모형별 성적 ", h("small", {}, `${md(sm.first)}→${md(sm.last)} · 금통위 ${sm.n_meetings}회 · 인상 ${(sm.actuals || {}).hike}·인하 ${(sm.actuals || {}).cut}`)),
+      tbl(["모형", "Brier", "LogLoss", "적중", "변경 회의 적중", "동결 회의 적중", "50:50 대비 Brier 차(95% 구간)"], erows),
+      h("p", { class: "note" }, "Brier·LogLoss는 낮을수록 좋다. 50:50 대비 차이의 95% 구간이 0을 지나면 차이가 뚜렷하지 않다는 뜻이다(금통위 단위 군집 부트스트랩). '탐색'은 자료를 본 뒤 만든 변수를 쓴 모형이다."));
+    // F. 시점별 성적(합성 OIS 단독이 먼 시점에서 크게 빗나가는지)
+    const hs = ["M2 합성 OIS 단독", "M3 통안채 91일 단독", base, "M0 항상 동결"].filter((n) => T[n]);
+    sec.push(h("h3", {}, "남은 날별 Brier"), tbl(["모형", ...Ds.map((k) => `${k}일 전`)], hs.map((n) => h("tr", {}, h("td", { class: "l" }, short(n)), ...Ds.map((k) => h("td", {}, fx(T[n].brier_by_horizon[k], 2)))))));
+    // G. 최근 회의 예측 대 실제
+    const lab = { hike: "인상", hold: "동결", cut: "인하" };
+    const rec = (B.recent || []).filter((e) => e.D === 10 || e.D === 30);
+    if (rec.length) sec.push(h("h3", {}, "최근 회의: 인상 확률 예측과 실제 ", h("small", {}, "사후 재계산 값(당시 저장 값 아님)")),
+      tbl(["회의", "남은 날", "실제", "OIS 단독", "통안채", "50:50"], rec.slice().reverse().map((e) => h("tr", {}, h("td", { class: "l" }, ymd(e.meeting)), h("td", {}, `${e.D}일`), h("td", {}, lab[e.actual]),
+        h("td", {}, pct(e.p_hike["M2 합성 OIS 단독"], 0)), h("td", {}, pct(e.p_hike["M3 통안채 91일 단독"], 0)), h("td", {}, pct(e.p_hike[base], 0))))));
+    // H. 자료 기준
+    sec.push(h("h3", {}, "자료 기준"), h("p", { class: "note" }, `자료: ${(B.data || {}).sources}. 관측일 ${ymd((B.data || {}).first_obs)}~${ymd((B.data || {}).last_obs)}. 각 칸은 그 날까지 알 수 있던 값만 쓴다. `
+      + "OIS는 실제 OIS 호가가 아니라 CD 시가평가와 KOFR로 만든 합성 값이며, 합성 OIS가 없는 칸은 CD91로 채우지 않고 예측에서 뺀다. "
+      + `백테스트는 금통위 순서의 확장 창 검증이지만 모형 후보와 구간 나누기는 자료를 본 뒤 정했으므로 사후 검증에 가깝다. 초기 ${B.primary_burn_in}회는 학습에만 쓴다. `
+      + "민감도: " + Object.entries(B.sensitivity || {}).map(([k, v]) => `초기 ${k}회 제외 시 50:50 Brier ${fx((v.brier || {})[base], 3)}`).join(", ") + "."));
+    el.replaceChildren(...sec);
+  }
+
   function renderMethod() {
     const B = D.backtest || {};
     const C = B.compare || null;
@@ -1426,6 +1487,7 @@
     renderNews();
     renderQual();
     renderMethod();
+    renderAwm();
     writeHash();
   }
 

@@ -294,6 +294,11 @@ def main(argv=None):
         write_json(SITE_DATA / "review.json", build_review(guidance, plog, raw["reports"], raw["kofia_survey"], today) or {})
 
         warnings = [stalled] if stalled else []
+        try:  # AWM 실험값(통계적 결합). 실패해도 기본 확률·화면에는 영향 없음
+            from bokwatch.awm_live import build_outputs
+            build_outputs(today, SITE_DATA, write_log=a.log)
+        except Exception as e:  # noqa: BLE001
+            print(f"AWM 실험값 생성 실패: {e}")
         for y, ds in cfg["meetings"].items():
             if not ds:
                 warnings.append(f"{y}년 금통위 일정 미입력")
