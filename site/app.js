@@ -94,18 +94,19 @@
 
   // ------------------------------------------------------------ 로드
   async function load() {
-    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review, awmSeries] = await Promise.all([
+    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review, awmSeries, awmBt] = await Promise.all([
       getJSON("data/meta.json"), getJSON("data/status.json"), getJSON("data/guidance.json"),
       getJSON("data/reports.json"), getJSON("data/minutes.json"), getJSON("data/news.json"),
       getJSON("data/backtest.json"), getText("data/history.csv"),
       getJSON("data/events.json"), getJSON("data/qual.json"), getJSON("data/prob_log.json"), getJSON("data/decision.json"),
-      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"), getJSON("data/awm_series.json"),
+      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"), getJSON("data/awm_series.json"), getJSON("data/awm_backtest.json"),
     ]);
     Object.assign(D, { meta: meta || {}, status: status || {}, guidance: guidance || { meetings: [], dotplots: [], speeches: [] },
       reports: reports || { reports: [], consensus: { by_meeting: {} } }, minutes: minutes || { meetings: [] },
       news: news || { items: [], chips: [] }, backtest, hist: hist ? parseCSV(hist) : [],
       events: events || { upcoming: [], recent: [], all: [], indicators: {} }, qual, plog: plog || [], decision, cdshort, kois, review });
     D.snaps = {};
+    D.awmBt = awmBt;
     initRep(awmSeries);
   }
   // 대표 확률 모형: m5 = BOK WATCH 종합 예측(합성 OIS 50% + 통안채 91일 50%), ois = 합성 KOFR OIS 단독.
@@ -1248,14 +1249,40 @@
         ]),
         h("h3", {}, "CME FedWatch 방식과의 차이"),
       table(["항목", "CME FedWatch", "BOK워치"], [
-        ["입력 가격", "30일 연방기금 선물(ZQ) 체결 가격 → 그달 평균 실효금리(EFFR)", "자체 합성 KOFR OIS(금투협 CD 평가금리 − 스프레드). 거래 가격이 아니고 1bp 단위"],
-        ["회의 전후 나누기", "회의 있는 달을 회의 전 N일·뒤 M일로 나눠 그달 시작·끝 금리를 역산", "1개월·3개월 OIS 기간을 회의 전·뒤 일수로 나눠 회의 뒤 기대 금리를 역산(같은 원리)"],
+        ["입력 가격", "30일 연방기금 선물(ZQ) 체결 가격 → 그달 평균 실효금리(EFFR)",
+          REP.mode === "m5" ? "① 자체 합성 KOFR OIS(금투협 CD 평가금리 − 스프레드), ② 통안증권 91일 금리(−정상 스프레드). 둘 다 거래 가격이 아닌 평가·추정 값이고 1bp 단위"
+            : "자체 합성 KOFR OIS(금투협 CD 평가금리 − 스프레드). 거래 가격이 아니고 1bp 단위"],
+        ["회의 전후 나누기", "회의 있는 달을 회의 전 N일·뒤 M일로 나눠 그달 시작·끝 금리를 역산", "1개월·3개월 OIS 기간(통안채 91일은 91일 구간)을 회의 전·뒤 일수로 나눠 회의 뒤 기대 금리를 역산(같은 원리)"],
         ["시작점", "회의 없는 달(기준월) 선물로 앞뒤 달의 시작·끝 금리를 이어 붙임", "회의 전 구간은 '현재 기준금리 + KOFR−기준금리 차이'로 둠. 1개월물로 다음 회의, 3개월물로 그다음 회의"],
-        ["회의별 확률", "Δ/25bp를 정수와 소수로 나눠 두 결과(예: 50bp 10%·75bp 90%)", "같음(Δ = 그 회의 뒤 기대 금리 − 직전 회의 뒤 기대 금리)"],
+        ["회의별 확률", "Δ/25bp를 정수와 소수로 나눠 두 결과(예: 50bp 10%·75bp 90%)", "같음(Δ = 그 회의 뒤 기대 금리 − 직전 회의 뒤 기대 금리)" + (REP.mode === "m5" ? ". 상품별로 구한 뒤 50:50으로 평균해 'BOK WATCH 종합 예측'으로 쓴다(통계적 결합, 시장 내재확률 아님. 과거 평가에서 OIS 단독보다 Brier가 작았다)" : "")],
         ["정책금리와 시장금리 차이", "EFFR이 목표금리 변화에 비례해 움직인다고 가정", "KOFR − 기준금리 차이(60일 중앙값)가 일정하다고 가정"],
         ["여러 회의 누적 분포", "회의별 확률을 곱함(이진 확률 트리, 회의 사이 독립 가정)", "회의별 확률만으로는 정해지지 않아 가능 범위로 보이고, 독립 가정(FedWatch 방식) 값을 함께 보인다"],
       ]),
       p(h("span", { class: "note" }, "출처: CME Group 'Understanding the CME Group FedWatch Tool Methodology'(2025-01-23). BOK워치는 CME Group과 관계없다."))),
+      ...(REP.mode === "m5" ? sec("0. BOK WATCH 종합 예측 (대표 확률)", (() => {
+        const T = (D.awmBt || {}).table || {}, P = (D.awmBt || {}).paired || {}, SM = (D.awmBt || {}).sample || {};
+        const m5 = T["M5 OIS+통안채 50:50"], m2 = T["M2 합성 OIS 단독"], m3 = T["M3 통안채 91일 단독"], m0 = T["M0 항상 동결"];
+        const pd = ((P["M5 OIS+통안채 50:50"] || {})["M2 합성 OIS 단독"] || {}).brier;
+        return [
+          ...sub("무엇인가", h("ul", {},
+            li("합성 KOFR OIS로 낸 회의 확률과 통안증권 91일 금리로 낸 회의 확률을 인상·동결·인하별로 50:50 평균한 값이다. 세 확률의 합은 100%다."),
+            li("시장에서 직접 거래되는 확률이 아니다. 두 상품 모두 평가·추정 값이어서 통계적으로 섞은 결합모형이다."),
+            li("두 상품 중 하나라도 그날 입력이 없으면 종합 예측을 만들지 않는다. 그때는 합성 OIS 단독 값을 보이고 산출 불가 이유를 적는다(CD 91일 등으로 임의로 채우지 않는다)."))),
+          ...sub("왜 바꿨나(과거 회의 평가)", m5 && m2 ? h("ul", {},
+            li(`금통위 ${SM.n_meetings}회(${ymd(SM.first)}~${ymd(SM.last)}, 인상 ${(SM.actuals || {}).hike}·인하 ${(SM.actuals || {}).cut}) 순차 검증. 앞 6회는 학습에만 썼다. Brier(낮을수록 좋음): 종합 예측 ${fx(m5.brier, 3)}, 합성 OIS 단독 ${fx(m2.brier, 3)}, 통안채 91일 단독 ${m3 ? fx(m3.brier, 3) : "–"}, 항상 동결 ${m0 ? fx(m0.brier, 3) : "–"}.`),
+            pd && pd.ci95 ? li(`종합 예측과 합성 OIS 단독의 Brier 차이 ${fx(pd.mean_diff, 3)}(95% 구간 ${fx(pd.ci95[0], 2)}~${fx(pd.ci95[1], 2)}, 금통위 단위 부트스트랩). 구간이 0을 지나지 않아 OIS 단독보다 낫다고 볼 수 있다.`) : "",
+            li(`금통위 30일 전 Brier는 OIS 단독 ${fx(m2.brier_by_horizon["30"], 2)}, 종합 예측 ${fx(m5.brier_by_horizon["30"], 2)}다. OIS 단독은 먼 시점에서 크게 빗나간다.`),
+            li("회의 시점에 따라 가중치를 바꾸는 모형(기간별·신호별·최근 오차 반영)은 50:50보다 뚜렷하게 낫지 않았다. 표본이 작아 단순한 50:50을 쓴다."),
+            li("통안채 91일 단독은 Brier가 조금 낮지만 LogLoss가 나빠 확률을 과신하는 쪽이라 단독으로 쓰지 않는다.")) : p(h("span", { class: "note" }, "백테스트 요약 없음"))),
+          ...sub("한계", h("ul", {},
+            li("금리가 바뀐 회의가 6번뿐이라 결과는 참고용이다. 모형 후보와 제외 횟수는 자료를 본 뒤 정했으므로 사후 검증에 가깝다."),
+            li("합성 OIS가 실제 OIS 호가가 아니라는 한계(한계 절)를 그대로 갖는다."))),
+          ...sub("표시 구분", h("ul", {},
+            li("사후 재계산: 그 날짜에 알 수 있던 자료로 지금 다시 계산한 값. 오늘까지 화면의 종합 예측 과거 값은 모두 여기에 해당한다."),
+            li("당시 저장 예측: 그날 실제로 기록해 둔 값(data/awm_log.csv). 다음 일일 갱신부터 쌓이며, 기록은 고치지 않는다."),
+            li("합성 OIS 단독의 당시 저장 값(날짜별 확률 기록)은 그대로 남아 있다. 주소 끝에 ?model=ois를 붙이면 합성 OIS 단독 화면을 본다."))),
+        ];
+      })()) : []),
       ...sec("1. CD 91일 모형 (OIS로 풀리지 않는 회의의 기본값·참고 범위)",
         ...sub("가정",
           h("ul", {},
@@ -1312,7 +1339,7 @@
             li(`KOFR 선물 모형은 반대다. 변경 회의에 평균 ${pct(C.by_outcome.kofr.change, 0)}를 줬지만 동결 회의에서 헛신호가 많다(동결에 평균 ${pct(C.by_outcome.kofr.hold, 0)}).`),
             li(`CD 모형의 Brier ${C.cd.brier.toFixed(3)}는 '과거 결정 빈도'(${C.base_rate.brier.toFixed(3)})보다 ${C.cd.brier < C.base_rate.brier ? "낮다(낫다)" : "높다(못하다)"}. 금리 변경 ${HB.hike.n + HB.cut.n}회 중 CD가 맞힌 것은 ${HB.hike.cd + HB.cut.cd}회다.`),
             li("백테스트의 정상 스프레드는 회의마다 그 시점 이전 자료로만 다시 추정했다(미래정보 제거). 처음 공개한 성적(CD 27/36·Brier 0.461)은 2023~24년 구간으로 구한 18bp를 2021~22년 예측에도 쓴 값이라 실제보다 좋게 나왔다."),
-            li("결론: CD 91일·KOFR 선물·혼합은 단순 비교 기준보다 낫다는 근거가 없다. 현재 기본값인 자체 합성 KOFR OIS는 같은 회의에서 CD 91일보다 Brier가 낮지만(1-1절), '항상 동결'과의 차이는 확실하지 않다. 금리에 반영된 기대를 가늠하는 참고치로 쓰고, 단정적인 확률로 인용하지 않는다."))] : [p("KOFR 선물 이력 수집 전")])),
+            li("결론: CD 91일·KOFR 선물·혼합은 단순 비교 기준보다 낫다는 근거가 없다. 합성 KOFR OIS는 같은 회의에서 CD 91일보다 Brier가 낮지만(1-1절), '항상 동결'과의 차이는 확실하지 않다. 금리에 반영된 기대를 가늠하는 참고치로 쓰고, 단정적인 확률로 인용하지 않는다."))] : [p("KOFR 선물 이력 수집 전")])),
         ...sub("결과별 적중", byActTable, p(h("span", { class: "note" }, "전체 적중률은 동결이 많은 표본에서 높게 나온다. 금리 변경(인상·인하) 포착률을 따로 본다."))),
         ...sub("방법",
           h("ul", {},
@@ -1334,6 +1361,7 @@
       ...decisionSection(sec, sub, p, li, table),
       ...sec("5. 기본값 교체 기록과 기준",
         h("ul", {},
+          ...(REP.mode === "m5" ? [li("2026-10-29 교체: 대표 확률을 합성 KOFR OIS 단독에서 종합 예측(OIS 50% + 통안채 91일 50%)으로 바꿨다. 근거와 한계는 1절(대표 확률). 합성 OIS 단독 기록과 시계열은 그대로 두었고, 종합 예측의 과거 값은 사후 재계산으로 표시한다. 당시 저장 예측이 쌓이면 같은 방식으로 평가한다.")] : []),
           li("2026-10-15 교체: 기본값을 CD 91일 모형에서 자체 산출 KOFR OIS로 바꿨다. 근거: 같은 회의 백테스트 Brier 다음 회의 0.394 대 0.557(27회), 그다음 회의 0.465 대 0.665(26회). 한계: 인상 2회·인하 4회로 표본이 작고, 같은 자료로 CD 단기물 방식 3개를 먼저 시험했다. '항상 동결'과의 차이는 확실하지 않다(다음 회의 0.394 대 0.444, 그다음 0.465 대 0.462)."),
           li("OIS로 풀리지 않는 회의(1개월물 안에 회의가 없고 3개월물 안에 회의가 둘 이상인 날 등)는 CD 91일 모형 가능 범위를 쓴다."),
           li("2026-10-22 회의부터 날짜별 확률 기록의 회의 3영업일 전 값으로 순차 평가한다. 8회 뒤 OIS의 평균 Brier가 CD 91일 모형이나 '항상 동결'보다 높으면 교체를 다시 검토한다."),
@@ -1341,6 +1369,7 @@
           li("앞으로 판정 기준은 결과를 본 뒤 바꾸지 않는다. 바꿀 때는 날짜와 이유를 이 절에 남긴다."))),
       ...sec("6. 한계",
         h("ul", {},
+          ...(REP.mode === "m5" ? [li("종합 예측은 두 상품의 확률을 섞은 통계 값이다. 시장 내재확률이 아니며, 인용할 때는 '합성 KOFR OIS와 통안채 91일 50:50 결합'과 사후 재계산 여부를 밝힌다. 기대 기준금리 표와 1월 참고 추정은 합성 OIS 기준이다.")] : []),
           li("자체 합성 KOFR OIS는 거래된 OIS 금리가 아니다. CD 평가금리에서 과거 'CD − 실제 KOFR' 차이의 중앙값을 뺀 추정치라, 그 차이가 지금 평소와 다르면 확률이 치우친다. CD 공시값이 1bp 단위라 회의 확률에 5~7%p 안팎 오차가 늘 있다."),
           li("OIS로는 회의별 확률만 나온다. 두 회의 이상 누적 분포(예: 두 번 모두 인상)는 정해지지 않아 가능 범위로만 보인다."),
           li("CD 금리에는 은행 자금사정과 신용 웃돈이 섞이고, 그 폭이 시기마다 크게 다르다(CD 91일 참고 범위의 한계)."),
@@ -1357,9 +1386,11 @@
       ...sec("데이터 출처", h("ul", {}, ...(D.meta.sources || []).map((s) => li(s.url ? ext(s.url, s.name) : s.name, ` — ${s.what}`)))),
     );
     // 순서·이름 정리: 현재 기본값과 판단에 필요한 절을 위로, 실험·과거 모형은 '참고'로 아래에
-    const order = [["1-1. 자체 산출 KOFR OIS", "1. 기본 추정: 자체 합성 KOFR OIS"],
-      ["5. 기본값 교체", "2. 기본값 교체 기록과 기준"], ["6. 한계", "3. 한계"], ["데이터 출처", "4. 데이터 출처"],
-      ["AI 정성 판단 방식", "5. AI 정성 판단 방식"],
+    const k = REP.mode === "m5" ? 1 : 0;      // 종합 예측 절이 맨 앞에 오면 번호가 하나씩 밀린다
+    const order = [...(k ? [["0. BOK WATCH 종합 예측", "1. 대표 확률: BOK WATCH 종합 예측"]] : []),
+      ["1-1. 자체 산출 KOFR OIS", `${1 + k}. ${k ? "구성 요소" : "기본 추정"}: 자체 합성 KOFR OIS`],
+      ["5. 기본값 교체", `${2 + k}. ${k ? "대표 확률" : "기본값"} 교체 기록과 기준`], ["6. 한계", `${3 + k}. 한계`], ["데이터 출처", `${4 + k}. 데이터 출처`],
+      ["AI 정성 판단 방식", `${5 + k}. AI 정성 판단 방식`],
       ["1. CD 91일 모형", "참고 · CD 91일 모형(참고 범위)"], ["4. 검증", "참고 · CD 91일·KOFR 선물·혼합 백테스트"],
       ["2. KOFR 3개월 선물", "참고 · KOFR 3개월 선물 모형(실험)"], ["3. 혼합", "참고 · CD·KOFR 혼합(실험)"],
       ["3-1. AI 정성 확률", "참고 · AI 정성 확률(실험)"], ["4-1. 결정 예측 모형", "참고 · 결정 예측 모형(실험)"],
