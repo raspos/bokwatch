@@ -288,10 +288,16 @@ def main(argv=None):
         write_json(SITE_DATA / "memo.json", memo)
         plog = update_prob_log(cur, today, stalled, a.log)
         write_json(SITE_DATA / "prob_log.json", plog)
+        series = None
+        try:  # 대표모형 전환용 시계열(OIS 단독과 M5). 기존 기록은 건드리지 않는다
+            from bokwatch import awm_series
+            series = awm_series.write_series(SITE_DATA, DATA / "awm_log.csv", today, (cfg.get("awm") or {}).get("representative", "m5"))
+        except Exception as e:  # noqa: BLE001
+            print(f"AWM 시계열 생성 실패: {e}")
         from bokwatch.reports import load_reports
         from bokwatch.review import build_review
         raw = load_reports()
-        write_json(SITE_DATA / "review.json", build_review(guidance, plog, raw["reports"], raw["kofia_survey"], today) or {})
+        write_json(SITE_DATA / "review.json", build_review(guidance, plog, raw["reports"], raw["kofia_survey"], today, series) or {})
 
         warnings = [stalled] if stalled else []
         try:  # AWM 실험값(통계적 결합). 실패해도 기본 확률·화면에는 영향 없음

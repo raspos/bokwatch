@@ -94,22 +94,60 @@
 
   // ------------------------------------------------------------ 로드
   async function load() {
-    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review] = await Promise.all([
+    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review, awmSeries] = await Promise.all([
       getJSON("data/meta.json"), getJSON("data/status.json"), getJSON("data/guidance.json"),
       getJSON("data/reports.json"), getJSON("data/minutes.json"), getJSON("data/news.json"),
       getJSON("data/backtest.json"), getText("data/history.csv"),
       getJSON("data/events.json"), getJSON("data/qual.json"), getJSON("data/prob_log.json"), getJSON("data/decision.json"),
-      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"),
+      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"), getJSON("data/awm_series.json"),
     ]);
     Object.assign(D, { meta: meta || {}, status: status || {}, guidance: guidance || { meetings: [], dotplots: [], speeches: [] },
       reports: reports || { reports: [], consensus: { by_meeting: {} } }, minutes: minutes || { meetings: [] },
       news: news || { items: [], chips: [] }, backtest, hist: hist ? parseCSV(hist) : [],
       events: events || { upcoming: [], recent: [], all: [], indicators: {} }, qual, plog: plog || [], decision, cdshort, kois, review });
     D.snaps = {};
+    initRep(awmSeries);
+  }
+  // 대표 확률 모형: m5 = BOK WATCH 종합 예측(합성 OIS 50% + 통안채 91일 50%), ois = 합성 KOFR OIS 단독.
+  // 기본값은 data/config.yaml의 awm.representative. 주소 끝에 ?model=ois 또는 ?model=m5를 붙이면 그 화면만 바꿔 볼 수 있다.
+  const REP = { mode: "ois", series: null };
+  function initRep(series) {
+    REP.series = series && series.meetings ? series : null;
+    const q = new URLSearchParams(location.search).get("model");
+    const want = q === "ois" || q === "m5" ? q : (REP.series ? REP.series.representative : "ois");
+    REP.mode = want === "m5" && REP.series ? "m5" : "ois";
+    if (REP.mode !== "m5") return;
+    // 확률 추이 차트용 이력: 같은 회의·기준일의 값을 M5로 바꾼다(없는 날은 OIS 값 그대로)
+    D.hist.forEach((r) => {
+      const e = repEntry(String(r.meeting), String(r.date));
+      if (e) { r.p_hike = e.m5.hike; r.p_hold = e.m5.hold; r.p_cut = e.m5.cut; }
+    });
+  }
+  const repEntry = (meeting, day) => { const e = REP.series && ((REP.series.meetings || {})[meeting] || {})[day]; return e && e.m5 ? e : null; };
+  const repKind = (k) => (REP.series && REP.series.kind_label && REP.series.kind_label[k]) || k;
+  // 스냅샷의 KOFR OIS 회의 확률을 M5로 바꾼다. 원래 OIS 값은 m.ois_only에 남기고, 입력이 없는 날은 OIS 값을 그대로 쓰며 이유를 m.rep_fail에 적는다.
+  function patchSnap(snap) {
+    if (REP.mode !== "m5" || !snap || snap.__rep) return snap;
+    snap.__rep = true;
+    for (const sc of Object.values(snap.scenarios || {})) {
+      for (const m of sc.meetings || []) {
+        if (!m.in_range || m.method !== "kofr_ois") continue;
+        const days = (REP.series.meetings || {})[m.date];
+        if (!days) continue;                                     // 대표모형 대상 회의가 아님
+        const e = days[snap.asof];
+        if (!e || !e.m5) { m.rep_fail = e ? e.why : "해당 기준일 계산 없음"; continue; }
+        m.ois_only = { p_hike: m.p_hike, p_hold: m.p_hold, p_cut: m.p_cut, expected: m.expected, moves: m.moves };
+        m.p_hike = e.m5.hike; m.p_hold = e.m5.hold; m.p_cut = e.m5.cut;
+        m.moves = { 0: e.m5.hold, 25: e.m5.hike }; if (e.m5.cut > 0) m.moves["-25"] = e.m5.cut;
+        m.expected = Math.round((snap.r0 + 0.25 * (e.m5.hike - e.m5.cut)) * 1000) / 1000;
+        m.rep = { kind: e.kind, ois: e.ois, msb91: e.msb91 };
+      }
+    }
+    return snap;
   }
   async function snapshot(date) {
     if (!date) return null;
-    if (!(date in D.snaps)) D.snaps[date] = await getJSON(`data/snapshots/${date}.json`);
+    if (!(date in D.snaps)) D.snaps[date] = patchSnap(await getJSON(`data/snapshots/${date}.json`));
     return D.snaps[date];
   }
   const prevDate = (date) => { const ix = D.meta.snapshots || []; const i = ix.indexOf(date); return i > 0 ? ix[i - 1] : null; };
@@ -181,10 +219,11 @@
     const janLine = laterOf(snap).length ? h("div", { class: "s" }, `${laterLbl(laterOf(snap)[0])} 인상 ${laterPct(laterOf(snap)[0])} (참고)`) : "";
     const nTop = nxt && nxt.method === "kofr_ois" ? outcomes(nxt).reduce((a, b) => (b.p > a.p ? b : a)) : null;
     tiles.push(h("div", { class: "tile" }, h("div", { class: "tgt" }, nextDate ? `대상: ${dmon(nextDate)} 회의` : "대상: 다음 회의"),
-      h("div", { class: "k" }, nTop ? `모형 추정(KOFR OIS)${staleFrom ? ` · ${ymd(staleFrom)} 기준` : ""}`
+      h("div", { class: "k", title: nxt && nxt.rep ? repTip(nxt) : null }, nTop ? `${nxt.rep ? "BOK WATCH 종합 예측" : "모형 추정(KOFR OIS)"}${staleFrom ? ` · ${ymd(staleFrom)} 기준` : ""}`
       : `모형 추정(CD) · ${nextDate ? mon(nextDate) + " 회의" : "다음 회의"} 인상 확률${staleFrom ? ` · ${ymd(staleFrom)} 기준` : ""}`),
       h("div", { class: "v" }, nTop ? `${nTop.name} ${pct(nTop.p)}` : nxt ? (nxt.range && nxt.range.direction === "hike" ? `최고 ${pct(nxt.range.max)}` : pct(nxt.p_hike)) : "–"),
       nTop ? h("div", { class: "s" }, outcomes(nxt).filter((o) => o.bp !== nTop.bp).map((o) => `${o.name} ${pct(o.p)}`).join(" · ")) : "",
+      nxt && nxt.rep ? h("div", { class: "s" }, `합성 KOFR OIS와 통안채 91일물의 예측 확률을 각각 50% 반영한 통계적 결합모형 · ${repKind(nxt.rep.kind)}`) : "",
       nxt && nxt.range ? h("div", { class: "s" }, `가능 범위 ${pct(nxt.range.min, 0)}~${pct(nxt.range.max, 0)}`) : "",
       h("div", { class: "s" }, ms[1] ? (ms[1].method === "kofr_ois"
         ? `${mon(ms[1].date)} ${(() => { const t = outcomes(ms[1]).reduce((a, b) => (b.p > a.p ? b : a)); return `${t.name} ${pct(t.p)}`; })()} · 인상 ${pct(ms[1].p_hike)}`
@@ -332,12 +371,18 @@
     return r && r.p_hike !== "" ? { date: r.date, p: +r.p_hike } : null;
   }
 
+  // 종합 예측 설명: 이름·구성·표시 구분(사후 재계산/당시 저장 예측)·구성 확률
+  function repTip(m) {
+    const o = m.rep.ois, s = m.rep.msb91;
+    return `BOK WATCH 종합 예측 — 합성 KOFR OIS와 통안채 91일물의 예측 확률을 각각 50% 반영한 통계적 결합모형 · ${repKind(m.rep.kind)}`
+      + (o && s ? ` · 합성 OIS 단독 인상 ${pct(o.hike)} · 통안채 91일 인상 ${pct(s.hike)}` : "") + ". 시장에서 직접 거래되는 확률이 아니다.";
+  }
   function decisionCard(m, pm, pd, snapForParts) {
     const os = outcomes(m);
     const top = os.reduce((a, b) => (b.p > a.p ? b : a), os[0] || { name: "동결", p: 1, cls: "hold" });
     const rest = os.filter((o) => o !== top).sort((a, b) => b.p - a.p);
     // 전일 대비: 전날 화면에 실제로 낸 값(날짜별 확률 기록)과 비교한다. 기록이 없으면 다시 계산한 전날 값과 비교
-    const rec = S.d === D.meta.latest ? prevRecord(m.date) : null;  // 지난 날짜를 볼 때는 다시 계산한 값끼리 비교
+    const rec = S.d === D.meta.latest && !m.rep ? prevRecord(m.date) : null;  // 지난 날짜를 볼 때는 다시 계산한 값끼리 비교
     const ch = rec ? m.p_hike - rec.p : pm ? m.p_hike - pm.p_hike : null;
     const chTitle = rec ? `${ymd(rec.date)} 기록(${pct(rec.p)}) 대비 인상 확률 변화` : pm ? `전일(${ymd(pd)}) 다시 계산한 값 대비` : "전일 데이터 없음";
     const cls = ch == null ? "flat" : ch > 0.0005 ? "up" : ch < -0.0005 ? "down" : "flat";
@@ -352,7 +397,8 @@
       h("div", { class: "dlegend" }, ...os.map((o) => h("span", {}, h("i", { class: o.cls }), `${o.name} ${pct(o.p)}`))),
       h("div", { class: "sub" }, `회의 뒤 기대 금리 ${fx(m.expected, 3)}%`),
       more("근거",
-        h("div", { class: "sub" }, `자체 합성 KOFR OIS(${m.ois_source}) 모형 추정 · ${cand.join(" 또는 ")} 가정${tailNote}`),
+        m.rep ? h("div", { class: "sub" }, repTip(m)) : h("div", { class: "sub" }, `자체 합성 KOFR OIS(${m.ois_source}) 모형 추정 · ${cand.join(" 또는 ")} 가정${tailNote}`
+          + (m.rep_fail ? ` · 종합 예측 산출 불가(${m.rep_fail}), 합성 OIS 단독으로 표시` : "")),
         m.cd91 && m.cd91.range ? h("div", { class: "sub range" }, `참고 — CD 91일 가능 범위: 인상 ${pct(m.cd91.range.min)}~${pct(m.cd91.range.max)}`) : null,
         h("div", { class: "sub parts" }, partsLine(snapForParts, m.date))));
   }
@@ -397,9 +443,11 @@
     const v = R.vote || {};
     const voteTxt = v.for ? ((v.dissent || []).length ? `${v.for}명 찬성 · 소수의견 ${v.dissent.length}명` : `${v.for}명 만장일치`) : "";
     const rows = [];
-    const M = R.model;
-    if (M && M.final) rows.push(["모형 (KOFR OIS) · 회의 당일 아침", says(M.final.p), verdict(M.final.hit)]);
-    if (M && M.d3) rows.push([`모형 · 3영업일 전(${md(M.d3_day)} 종가)`, says(M.d3.p), verdict(M.d3.hit)]);
+    const useM5 = REP.mode === "m5" && R.model_m5 && R.model_m5.final;
+    const M = useM5 ? R.model_m5 : R.model;
+    const tag = useM5 ? `BOK WATCH 종합 예측 · ${repKind(M.final.kind)}` : "모형 (KOFR OIS)";
+    if (M && M.final) rows.push([`${tag} · 회의 당일 아침`, says(M.final.p), verdict(M.final.hit)]);
+    if (M && M.d3) rows.push([`${useM5 ? "종합 예측" : "모형"} · 3영업일 전(${md(M.d3_day)} 종가)`, says(M.d3.p), verdict(M.d3.hit)]);
     if (R.experts) rows.push([`전문가 전망 (${R.experts.n}곳)`, ["동결", "인상", "인하"].filter((k) => R.experts.counts[k]).map((k) => `${k} ${R.experts.counts[k]}곳`).join(" · "), verdict(R.experts.hit)]);
     if (R.kofia) rows.push([`금투협 설문${R.kofia.respondents ? ` (${R.kofia.respondents}명)` : ""}`, says({ hold: R.kofia.hold / 100, hike: R.kofia.hike / 100, cut: (R.kofia.cut || 0) / 100 }), verdict(R.kofia.hit)]);
     const bpTxt = (x) => `${x > 0 ? "+" : ""}${x.toFixed(1)}bp`;
@@ -465,7 +513,8 @@
           h("div", { class: "sub parts" }, partsLine(staleFrom ? live : snap, m.date))),
         h("div", { class: "method-tag" }, m.source || ({ bootstrap: "부트스트래핑", min_hike: "최소 인상 경로", lsq: "비음수 최소제곱" }[m.method] || m.method)));
     });
-    const lastE = ms.length ? ms[ms.length - 1].expected : snap.r0;
+    const lastM = ms[ms.length - 1];
+    const lastE = lastM ? (lastM.ois_only ? lastM.ois_only.expected : lastM.expected) : snap.r0;   // 1월 참고 추정은 OIS 기준이라 OIS 값에 이어 붙인다
     for (const it of ((((snap.components || {}).kofr_ois || {}).later_est || {}).later || [])) cards.push(laterCard(it, lastE));
     const out = scen.meetings.filter((m) => !m.in_range).map((m) => md(m.date));
     // 정상 스프레드 버튼 설명: 그날 실제 가정값과 회의별 확률 범위
@@ -668,7 +717,7 @@
     }).filter(Boolean);
     $("#logMemoBody").replaceChildren(...notes);
     $("#logMemo").hidden = !notes.length;
-    $("#logNote").textContent = "기록일 아침 10시에 그 전 영업일 종가로 계산해 화면에 낸 값이다. 이후 가정이 바뀌어도 고치지 않는다. '추가' 줄은 정기 기록 밖에서 모형을 바꾼 시점의 값이다.";
+    $("#logNote").textContent = "기록일 아침 10시에 그 전 영업일 종가로 계산해 화면에 낸 값이다. 이후 가정이 바뀌어도 고치지 않는다. '추가' 줄은 정기 기록 밖에서 모형을 바꾼 시점의 값이다." + (REP.mode === "m5" ? " 이 표는 당시 저장한 KOFR OIS 값이며, 종합 예측 값은 위 카드와 추이에서 확인한다." : "");
   }
 
   function renderEvents() {
@@ -1087,7 +1136,7 @@
     const short = (n) => n.replace(/^M\d+[a-z]?\s*/, "");
     const tbl = (head, rows) => h("div", { class: "tbl-wrap" }, h("table", { class: "grid" }, h("thead", {}, h("tr", {}, ...head.map((t, i) => h("th", { class: i ? null : "l" }, t)))), h("tbody", {}, rows)));
     const sec = [h("h2", {}, "AWM 실험 ", h("small", {}, "통계적 결합 · 참고용")),
-      h("p", { class: "note" }, "서로 다른 두 상품(합성 KOFR OIS, 통안증권 91일)의 확률을 과거 성적으로 섞은 값이다. 시장가격이 아니며 위 기본 확률(KOFR OIS)을 바꾸지 않는다. 표본이 작아(변경 회의 6번) 결과는 참고용이다.")];
+      h("p", { class: "note" }, "서로 다른 두 상품(합성 KOFR OIS, 통안증권 91일)의 확률을 과거 성적으로 섞은 값이다. 시장가격이 아니다. " + (REP.mode === "m5" ? "50:50 결합이 'BOK WATCH 종합 예측'으로 확률 추정 탭의 대표 확률이다(합성 KOFR OIS 단독은 이 표의 '합성 OIS 단독' 행과 주소 끝 ?model=ois 화면에서 확인)." : "위 기본 확률(KOFR OIS)을 바꾸지 않는다(50:50 결합 화면은 주소 끝 ?model=m5).") + " 표본이 작아(변경 회의 6번) 결과는 참고용이다.")];
     // A. 다음 회의 확률
     const ois = (L.inputs || {}).ois, rows = [];
     const add = (name, p, note) => rows.push(h("tr", {}, h("td", { class: "l" }, name, note ? h("span", { class: "badge" }, note) : ""), h("td", {}, pct(p.hike)), h("td", {}, pct(p.hold)), h("td", {}, pct(p.cut))));

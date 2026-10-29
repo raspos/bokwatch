@@ -34,7 +34,31 @@ def _model_row(r: dict, actual: str) -> dict:
             "instrument": r.get("instrument"), "top": top, "hit": top == actual}
 
 
-def build_review(guidance: dict, plog: list[dict], reports: list[dict], kofia: list[dict], today: date) -> dict | None:
+def _model_m5(series, M, rows, actual, d3_day, g) -> dict | None:
+    """M5(종합 예측) 기준 적중도. 기준일에 알 수 있던 자료로 다시 계산한 값이면 kind=retro(사후 재계산), 당시 저장 값이면 stored."""
+    days = ((series or {}).get("meetings") or {}).get(M) or {}
+    if not rows or not days:
+        return None
+
+    def row(day):
+        e = days.get(day)
+        if not e or not e.get("m5"):
+            return None
+        p = e["m5"]
+        top = top_kind(p)
+        exp = round(float(g["prev_rate"]) + 0.25 * (p["hike"] - p["cut"]), 3)
+        return {"date": day, "asof": day, "p": p, "expected": exp, "top": top, "hit": top == actual, "kind": e.get("kind")}
+
+    final = row(rows[-1]["asof"])
+    if not final:
+        return None
+    out = {"final": final, "d3": row(d3_day), "d3_day": d3_day,
+           "path": [[k, e["m5"]["hike"]] for k, e in sorted(days.items()) if e.get("m5")]}
+    out["predicted_change_bp"] = round((final["expected"] - float(g["prev_rate"])) * 100, 1)
+    return out
+
+
+def build_review(guidance: dict, plog: list[dict], reports: list[dict], kofia: list[dict], today: date, series: dict | None = None) -> dict | None:
     done = [m for m in guidance.get("meetings", []) if m.get("decision") and d(m["date"]) <= today and m.get("prev_rate") is not None]
     if not done:
         return None
@@ -57,6 +81,7 @@ def build_review(guidance: dict, plog: list[dict], reports: list[dict], kofia: l
         if final["expected"] is not None:
             model["predicted_change_bp"] = round((final["expected"] - float(g["prev_rate"])) * 100, 1)
     out["model"] = model
+    out["model_m5"] = _model_m5(series, M, rows, actual, d3_day if rows else None, g)
 
     c = consensus(reports, [M], d(M))
     cm = c["by_meeting"].get(M) or {}
