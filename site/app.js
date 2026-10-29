@@ -638,7 +638,7 @@
   function renderLog() {
     const L = D.plog || [];
     const days = [...new Set(L.map((r) => r.date))].sort().reverse().slice(0, 60);
-    const meets = [...new Set(L.filter((r) => r.status === "산출" && days.includes(r.date)).map((r) => r.meeting))].sort();
+    const meets = [...new Set(L.filter((r) => r.status === "산출" && days.includes(r.date)).map((r) => r.meeting))].sort().slice(0, 3);
     if (!days.length) {
       $("#logTable").replaceChildren();
       $("#logNote").textContent = "아직 기록이 없습니다. 매일 10시 갱신 때 하루 한 줄씩 쌓입니다.";
@@ -654,7 +654,12 @@
         ...meets.map((m) => { const r = rs.find((x) => x.meeting === m); return h("td", {}, r && r.p_hike !== "" ? pct(+r.p_hike) : "–"); }),
         h("td", {}, stop ? "–" : r0.instrument));
     });
-    $("#logTable").replaceChildren(head, h("tbody", {}, body));
+    // 최근 10줄만 보이고 나머지는 접어 둔다
+    $("#logTable").replaceChildren(head, h("tbody", {}, body.slice(0, 10)));
+    const rest = body.slice(10);
+    $("#logMore").hidden = !rest.length;
+    $("#logMoreSum").textContent = `이전 기록 ${rest.length}줄`;
+    $("#logTableRest").replaceChildren(head.cloneNode(true), h("tbody", {}, rest));
     // 비고는 표에서 빼고 접어 둔다(모바일 가로 스크롤 줄이기)
     const notes = days.map((dd) => {
       const rs = L.filter((r) => r.date === dd);
