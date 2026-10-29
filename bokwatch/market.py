@@ -228,23 +228,26 @@ def run_day(rows, cfg, day: date, spreads: dict, shifts=(-5, 0, 5), fut_by_date=
             kf["spread_how"], kf["price_date"] = s_how, fut_day
             if not kf["meetings"]:
                 kf = None
-    # 가정 회의는 계산에만 쓰고 회의 목록(화면·기록)에서는 뺀다
-    asm = {x.isoformat() for x in assumed_meetings(cfg)}
-    used_asm = sorted(x for x in asm if x > day.isoformat()
-                      and any(m["date"] == x for k in (cd or {}) for m in cd[k]["meetings"]))
-    if cd and used_asm:
-        for k in cd:
-            cd[k]["meetings"] = [m for m in cd[k]["meetings"] if m["date"] not in asm]
-    if not cd and not kf:
-        return None
     cs_ = cd_short.compute(curve, series(rows, "base"), meetings_after(cfg, date(2000, 1, 1)), day, r0) if curve else None
     ko = None
     if ois is not None:
         ks, ks_how = kofr_spread(rows, day, cfg)
-        ko = kofr_ois.compute(ois, day, r0, ks, meetings_after(cfg, date(2000, 1, 1)), assumed=assumed_meetings(cfg),
+        ko = kofr_ois.compute(ois, day, r0, ks, meetings_after(cfg, date(2000, 1, 1)),
                               late={d(a): d(b) for a, b in (cfg.get("assumed_latest") or {}).items()})
         if ko:
             ko["kofr_base_how"] = ks_how
+    # 가정 회의(일정 미공지)와 3개월 OIS로 풀 수 없는 뒤 회의는 계산에만 쓰고 회의 목록(화면·기록)에서는 뺀다.
+    # 뒤 회의는 components.kofr_ois.later_est의 참고 추정으로 따로 보인다.
+    asm = {x.isoformat() for x in assumed_meetings(cfg)}
+    later = {x["date"] for x in (((ko or {}).get("later_est") or {}).get("later") or [])}
+    hide = asm | later
+    used_asm = sorted(x for x in asm if x > day.isoformat()
+                      and any(m["date"] == x for k in (cd or {}) for m in cd[k]["meetings"]))
+    if cd and (used_asm or later):
+        for k in cd:
+            cd[k]["meetings"] = [m for m in cd[k]["meetings"] if m["date"] not in hide]
+    if not cd and not kf:
+        return None
     # 기본값 = CD 모형 추정치. KOFR 선물·혼합은 실험값(components)으로만 둔다.
     w = float(cfg["model"].get("blend", {}).get("experimental_kofr_weight", 0.5))
     scen = {}

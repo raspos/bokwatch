@@ -224,7 +224,7 @@ def main(argv=None):
         guidance = build_guidance(cfg, minutes, today)
         write_json(SITE_DATA / "guidance.json", guidance)
         upcoming = [m.isoformat() for m in all_meetings(cfg) if m > today]
-        reports = build_reports(upcoming + (["2027-01"] if cfg.get("assumed_meetings") else []), today)  # 날짜 미정인 1월 회의
+        reports = build_reports(upcoming, today)
         write_json(SITE_DATA / "reports.json", reports)
 
         cur = snap(index, today)

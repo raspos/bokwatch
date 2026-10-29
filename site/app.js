@@ -174,8 +174,11 @@
     const c = nextDate ? cons[nextDate] : null;
     const tiles = [];
     // 시장
-    const janA = ((((snap || {}).components || {}).kofr_ois || {}).jan_est || {}).assumed;
-    const janLine = janA && janA[0] ? h("div", { class: "s" }, `1월 중 인상 ${pct(janA[0].p_hike[0])}~${pct(janA[0].p_hike[1])} (참고)`) : "";
+    // 3개월 OIS 한 식으로 풀 수 없는 뒤 회의(예: 1월 회의)의 참고 추정. 날짜가 미정이면 'N월 중', 확정이면 날짜로 쓴다.
+    const laterOf = (s) => (((((s || {}).components || {}).kofr_ois || {}).later_est || {}).later || []);
+    const laterLbl = (it) => (it.late !== it.date ? `${+it.date.slice(5, 7)}월 중` : mon(it.date));
+    const laterPct = (it) => (it.p_hike[0] === it.p_hike[1] ? pct(it.p_hike[0]) : `${pct(it.p_hike[0])}~${pct(it.p_hike[1])}`);
+    const janLine = laterOf(snap).length ? h("div", { class: "s" }, `${laterLbl(laterOf(snap)[0])} 인상 ${laterPct(laterOf(snap)[0])} (참고)`) : "";
     const nTop = nxt && nxt.method === "kofr_ois" ? outcomes(nxt).reduce((a, b) => (b.p > a.p ? b : a)) : null;
     tiles.push(h("div", { class: "tile" }, h("div", { class: "tgt" }, nextDate ? `대상: ${dmon(nextDate)} 회의` : "대상: 다음 회의"),
       h("div", { class: "k" }, nTop ? `모형 추정(KOFR OIS)${staleFrom ? ` · ${ymd(staleFrom)} 기준` : ""}`
@@ -479,15 +482,15 @@
       prevE = ex;
       return r;
     });
-    const janAsm = (snap.assumed_meetings || []).some((x) => x.startsWith("2027-01"));
-    if (janAsm) {
-      const cj = (D.reports.consensus.by_meeting || {})["2027-01"];
+    for (const it of ((((snap.components || {}).kofr_ois || {}).later_est || {}).later || [])) {
+      const unsched = it.late !== it.date;
+      const cj = (D.reports.consensus.by_meeting || {})[it.date];
       const ex = cj && cj.n ? ["동결", "인상", "열어둠", "인하"].filter((k) => cj.counts[k]).map((k) => `${k} ${cj.counts[k]}곳`).join(" · ") : "";
-      const ja = (((snap.components || {}).kofr_ois || {}).jan_est || {}).assumed;
-      const est = ja && ja[0] ? `동결 ${pct(1 - ja[0].p_hike[1])}~${pct(1 - ja[0].p_hike[0])} · 25bp 인상 ${pct(ja[0].p_hike[0])}~${pct(ja[0].p_hike[1])} (참고 추정)` : "시장 가격으로 정해지지 않음";
-      rows.push(h("tr", {}, h("td", {}, "2027년 1월 중(날짜 미정)"), h("td", {}, "–"), h("td", {}, "–"), h("td", {}, "–"),
+      const rng = (lo, hi) => (lo === hi ? pct(lo) : `${pct(lo)}~${pct(hi)}`);
+      const est = `동결 ${rng(1 - it.p_hike[1], 1 - it.p_hike[0])} · 25bp 인상 ${rng(it.p_hike[0], it.p_hike[1])} (참고 추정)`;
+      rows.push(h("tr", {}, h("td", {}, unsched ? `${it.date.slice(0, 4)}년 ${+it.date.slice(5, 7)}월 중(날짜 미정)` : ymd(it.date)), h("td", {}, "–"), h("td", {}, "–"), h("td", {}, "–"),
         h("td", {}, est + (ex ? ` · 전문가 ${ex}` : "")),
-        h("td", { class: "l" }, ja && ja[0] ? "3개월 OIS 한 식, 회의별 변화폭 최소 가정(1월 11~16일). 같은 가격이 인상 0~100%와 모두 맞아 정해진 값이 아님" : "3개월물이 1월 하순까지만 걸림")));
+        h("td", { class: "l" }, "3개월 OIS 한 식, 회의별 변화폭 최소 가정. 같은 가격이 인상 0~100%와 모두 맞아 정해진 값이 아님")));
     }
     $("#probTable").replaceChildren(thead, h("tbody", {}, rows));
     // 두 회의 누적 결과: 회의별 확률(동결·같은 방향 25bp)만 주어지면 '두 번 모두 변경' 확률은 [max(0, p1+p2−1), min(p1, p2)] 사이 어디든 가능하다
@@ -1130,7 +1133,7 @@
             li("회의 뒤 목표금리 분포는 기대금리를 맞추는 인접 두 격자점으로 표시한다. 회의별 결과를 독립 확률나무로 잇는 CME FedWatch와 달리 분포를 좁게 보이게 한다(예: 두 회의 각 50%면 실제 누적 결과는 0·25·50bp가 25·50·25%이지만 '25bp 100%'로 표시)."),
           li("CD 한 금리로는 회의 사이 배분이 정해지지 않는다. 화면의 '같은 금리로 가능한 범위'는 동결·한 방향 25bp만 허용할 때 이 금리와 양립하는 회의별 확률의 최소·최대다. 예: 10/13 CD 3.24%, 스프레드 18bp → 83×p(10월)+48×p(11월)=21.84 → 10월 0~26.3%, 11월 0~45.5%. 화면의 'CD 91일 참고 범위'는 이 최소~최대다(2026-10-15 전에는 게이지 숫자가 그중 최고값이었다). 회의별 최고값은 다른 회의 날짜와 무관하다."))),
         ...sub("계산 예시 (검산 고정값)",
-          p("기준일 2026-10-13, 기준금리 3.00%, CD 91일 3.24%, 정상 스프레드 10bp, 회의 10/22·11/26(만기 안 회의가 둘뿐이라고 둔 검산용 예시. 현재 화면 계산은 2027년 1월 회의(날짜 미정)를 더한다)."),
+          p("기준일 2026-10-13, 기준금리 3.00%, CD 91일 3.24%, 정상 스프레드 10bp, 회의 10/22·11/26(만기 안 회의가 둘뿐이라고 둔 검산용 예시. 현재 화면 계산은 2027년 1월 14일 회의를 뒤 회의로 더한다)."),
           table(["단계", "값"], [
             ["구간", "결제일 10/14 ~ 만기 2027-01-13(91일): 10/14~10/21 8일(3.00%), 10/22~11/25 35일(E1), 11/26~1/12 48일(E2)"],
             ["좌변", "91 × (3.24 − 0.10 − 3.00) = 12.74 (%p·일)"],
@@ -1203,7 +1206,7 @@
           li("OIS로는 회의별 확률만 나온다. 두 회의 이상 누적 분포(예: 두 번 모두 인상)는 정해지지 않아 가능 범위로만 보인다."),
           li("CD 금리에는 은행 자금사정과 신용 웃돈이 섞이고, 그 폭이 시기마다 크게 다르다(CD 91일 참고 범위의 한계)."),
           li("CD 91일 참고 범위의 '최소 인상 경로'는 한 만기 안의 회의 사이 배정을 가정으로 정한다. 2026-08-27 인상처럼 가까운 회의를 놓칠 수 있다."),
-          li("2027년 금통위 일정이 공지되지 않아 1월 회의는 1월 중(날짜 미정)으로 둔다. 계산에는 임시 날짜를 쓰고, KOFR OIS 3개월물 계산에서는 이 회의를 동결로 두고, CD 91일 참고 범위의 최고값은 이 가정과 무관하다. CD 만기가 가정 범위(2027-02-21)를 넘는 날부터는 CD 91일 참고 범위가 멈춘다."),
+          li("3개월 OIS는 식이 하나라 만기 안에 아직 모르는 회의가 둘 이상이면 앞 회의만 풀고, 뒤 회의(2027년 1월 14일 등)는 변화 없음으로 둔다. 뒤 회의의 인상 확률은 회의별 변화폭이 가장 작다고 두고 따로 낸 '참고 추정'이며, 같은 가격이 인상 0~100%와 모두 맞아 정해진 값이 아니다. 6개월 OIS 같은 더 긴 만기가 있으면 값이 정해진다. 한은은 2027년 통화정책방향 회의를 1/14, 2/25, 4/9, 5/27, 7/15, 8/26, 10/15, 11/25로 공지했다(2026-10-29)."),
           li("보도 인용 값(기관 전망·발언)은 원문 대조가 필요하다. 매파·비둘기 점수와 의사록 입장 분류는 자동 산출이다."),
           li("AI 정성 판단은 기사 제목·검색 요약만 보고 내린 자동 판단이다. 기본 확률 계산에 넣지 않는다."))),
       ...sec("AI 정성 판단 방식",

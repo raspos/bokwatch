@@ -121,7 +121,6 @@ def next_meeting(ois_row: dict, r0: float, k_spread: float, meetings: list[date]
 
 
 MIN_POST_DAYS = 15  # 1개월물로 다음 회의를 풀려면 회의 뒤 구간이 이 일수 이상이어야 한다(오차 확대 ≤ 2배)
-TAIL_DAYS = 7  # 3개월 만기 직전 회의의 뒤 구간이 이 일수 이하면 그 회의는 변화 없음으로 둔다(영향이 작아 풀 수 없음)
 
 
 def _probs(delta: float) -> dict:
@@ -131,10 +130,11 @@ def _probs(delta: float) -> dict:
     return {f"p_{k}": round(v, 4) for k, v in p.items()}
 
 
-def solve_path(c: dict, r0: float, k_spread: float, meetings: list[date], assumed: set[date] | None = None) -> list[dict]:
+def solve_path(c: dict, r0: float, k_spread: float, meetings: list[date]) -> list[dict]:
     """1개월 OIS로 다음 회의, 3개월 OIS로 그다음 회의를 차례로 푼다(부트스트래핑).
-    회의별 확률은 Δ_k = E_k − E_(k−1)로 CD 91일 모형과 같은 규칙. 미지수가 둘 이상 남으면 풀지 않는다.
-    assumed(일정 공지 전 가정 회의)는 만기 안 남은 일수와 상관없이 변화 없음 꼬리로 둔다."""
+    회의별 확률은 Δ_k = E_k − E_(k−1)로 CD 91일 모형과 같은 규칙.
+    3개월 만기 안에 아직 모르는 회의가 둘 이상이면 식이 하나뿐이라 앞 회의만 풀고, 뒤 회의는 변화 없음(꼬리)으로 둔다.
+    뒤 회의는 min_change_estimate가 참고 추정으로 따로 낸다."""
     known: dict[date, float] = {}
     out = []
     first = next_meeting(c, r0, k_spread, meetings)
@@ -151,11 +151,9 @@ def solve_path(c: dict, r0: float, k_spread: float, meetings: list[date], assume
     if not ms:
         return out
     unknown = [m for m in ms if m not in known]
-    tail = [m for m in unknown[1:] if (end - m).days <= TAIL_DAYS or m in (assumed or ())]
-    core = [m for m in unknown if m not in tail]
-    if len(core) != 1:
+    if not unknown:
         return out
-    target = core[0]
+    target, tail = unknown[0], unknown[1:]
     # T×OIS = 회의 전×(r0+k) + Σ 구간 일수×(E_i + k). 대상 회의와 그 뒤 꼬리 회의 구간은 같은 E로 둔다.
     bounds = ms + [end]
     lhs = T * x["ois"] - (ms[0] - start).days * (r0 + k_spread)
@@ -177,18 +175,17 @@ def solve_path(c: dict, r0: float, k_spread: float, meetings: list[date], assume
     prev = known[prev_m] if prev_m else r0
     out.append({"meeting": target.isoformat(), "source": "3개월 OIS" + (" + 1개월 OIS" if known else ""), "post_days": coef, "tenor_days": T,
                 "kofr_base": round(k_spread, 4), "expected": round(e, 4), "delta_bp": round((e - prev) * 100, 2),
-                "tail_assumed": [m.isoformat() for m in tail],
-                "tail_unscheduled": [m.isoformat() for m in tail if m in (assumed or ())], **_probs(e - prev)})
+                "tail_assumed": [m.isoformat() for m in tail], **_probs(e - prev)})
     return out
 
 
-def min_change_estimate(c: dict, r0: float, k_spread: float, meetings: list[date], assumed: set[date] | None,
+def min_change_estimate(c: dict, r0: float, k_spread: float, meetings: list[date],
                         late: dict[date, date] | None = None) -> dict | None:
-    """참고 추정(실험): 3개월 OIS 한 식에 미지수 회의가 둘 이상일 때(일정 미정인 가정 회의가 만기 안에 든 경우),
-    회의별 변화폭의 제곱합이 가장 작은 해를 쓴다. 같은 가격이 가정 회의의 인상 확률 0~100%와 모두 맞아서 값이 정해지지는 않는다.
-    가정 회의 날짜는 가정 일정(early)과 늦은 쪽 날짜(late) 두 경우로 풀어 범위로 낸다."""
+    """참고 추정(실험): 3개월 OIS 한 식에 아직 모르는 회의가 둘 이상일 때, 회의별 변화폭의 제곱합이 가장 작은 해를 쓴다.
+    같은 가격이 뒤 회의의 인상 확률 0~100%와 모두 맞아서 값이 정해지지는 않는다(뒤 회의가 만기 끝에 가까울수록 더 그렇다).
+    late(일정 미정 회의의 늦은 쪽 날짜)를 주면 두 날짜로 풀어 범위로 낸다."""
     x = c.get("m3")
-    if not x or not assumed:
+    if not x:
         return None
     start = model.settlement_start(d(x["cd_date"]))
     T = x["tenor_days"]
@@ -218,25 +215,27 @@ def min_change_estimate(c: dict, r0: float, k_spread: float, meetings: list[date
     res = [r for r in (solve(v) for v in variants) if r]
     if not res or len({len(r) for r in res}) != 1:
         return None
-    out = {"assumed": [], "targets": [], "basis": "3개월 OIS 한 식, 회의별 변화폭 최소(참고 추정·가정 의존)"}
-    for col in zip(*res):
+    out = {"later": [], "targets": [], "basis": "3개월 OIS 한 식, 회의별 변화폭 최소(참고 추정·가정 의존)"}
+    for i, col in enumerate(zip(*res)):
         deltas = [v for _, v in col]
         ps = [_probs(v)["p_hike"] for v in deltas]
         it = {"date": col[0][0].isoformat(), "late": col[-1][0].isoformat(),
               "delta_bp": [round(min(deltas) * 100, 1), round(max(deltas) * 100, 1)],
               "p_hike": [round(min(ps), 4), round(max(ps), 4)]}
-        (out["assumed"] if col[0][0] in assumed else out["targets"]).append(it)
-    return out if out["assumed"] else None
+        (out["targets"] if i == 0 else out["later"]).append(it)  # 첫 번째는 solve_path가 푸는 회의, 나머지가 뒤 회의
+    return out if out["later"] else None
 
 
 def compute(o: OIS, day: date, r0: float, k_spread: float, meetings: list[date], max_stale: int = 5,
-            assumed: set[date] | None = None, late: dict[date, date] | None = None) -> dict | None:
+            late: dict[date, date] | None = None) -> dict | None:
     c = o.curve_on(day, max_stale)
     if not c:
         return None
-    path = solve_path(c, r0, k_spread, meetings, assumed)
+    path = solve_path(c, r0, k_spread, meetings)
+    for x in path:
+        x["tail_unscheduled"] = [m for m in (x.get("tail_assumed") or []) if late and d(m) in late]
     return {"curve": c, "next": next_meeting(c, r0, k_spread, meetings), "path": path,
-            "jan_est": min_change_estimate(c, r0, k_spread, meetings, assumed, late)}
+            "later_est": min_change_estimate(c, r0, k_spread, meetings, late)}
 
 
 # ---------------------------------------------------------------- 백테스트

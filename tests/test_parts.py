@@ -338,7 +338,7 @@ def test_kofr_ois_next_meeting_needs_enough_days_after_meeting():
     row = {"m1": {"cd_date": "2026-10-27", "tenor_days": 30, "ois": 3.0759}}
     assert kofr_ois.next_meeting(row, 3.00, 0.0515, [date(2026, 11, 26)]) is None
     c = {**row, "m3": {"cd_date": "2026-10-27", "tenor_days": 91, "ois": 3.1391}}
-    path = kofr_ois.solve_path(c, 3.00, 0.0515, [date(2026, 11, 26), date(2027, 1, 11)], {date(2027, 1, 11)})
+    path = kofr_ois.solve_path(c, 3.00, 0.0515, [date(2026, 11, 26), date(2027, 1, 11)])
     assert [x["meeting"] for x in path] == ["2026-11-26"] and path[0]["source"] == "3개월 OIS"
     assert 0.3 < path[0]["p_hike"] < 0.8
 
@@ -358,15 +358,14 @@ def test_kofr_ois_bootstrap_second_meeting():
     assert abs(path[1]["delta_bp"] - (e2 - e1) * 100) < 0.01
 
 
-def test_kofr_ois_assumed_meeting_is_tail_even_when_long():
+def test_kofr_ois_later_meeting_is_tail_even_when_long():
     from datetime import date
     from bokwatch import kofr_ois
     c = {"m1": {"cd_date": "2026-10-20", "tenor_days": 30, "ois": 3.0762},
          "m3": {"cd_date": "2026-10-20", "tenor_days": 91, "ois": 3.1389}}
     ms = [date(2026, 10, 22), date(2026, 11, 26), date(2027, 1, 11)]
-    # 만기 1/20, 1/11 뒤 9일(> TAIL_DAYS): 가정 회의 표시가 없으면 풀지 못한다
-    assert [x["meeting"] for x in kofr_ois.solve_path(c, 3.00, 0.05, ms)] == ["2026-10-22"]
-    path = kofr_ois.solve_path(c, 3.00, 0.05, ms, {date(2027, 1, 11)})
+    # 만기 1/20, 1/11 뒤 9일: 3개월 식 하나로 11월·1월을 함께 풀 수 없어 앞 회의(11월)만 풀고 1월은 변화 없음으로 둔다
+    path = kofr_ois.solve_path(c, 3.00, 0.05, ms)
     assert [x["meeting"] for x in path] == ["2026-10-22", "2026-11-26"]
     assert path[1]["tail_assumed"] == ["2027-01-11"]
 
@@ -393,17 +392,19 @@ def test_review_hits_and_ties():
     assert build_review({"meetings": []}, [], [], [], date(2026, 10, 23)) is None
 
 
-def test_kofr_ois_min_change_estimate_for_unscheduled_meeting():
+def test_kofr_ois_min_change_estimate_for_later_meeting():
     from datetime import date
     from bokwatch import kofr_ois
     c = {"m3": {"cd_date": "2026-10-22", "tenor_days": 91, "ois": 3.1391}}
     ms = [date(2026, 11, 26), date(2027, 1, 11)]
-    est = kofr_ois.min_change_estimate(c, 3.00, 0.05, ms, {date(2027, 1, 11)}, {date(2027, 1, 11): date(2027, 1, 16)})
-    a, n = est["assumed"][0], est["targets"][0]
+    est = kofr_ois.min_change_estimate(c, 3.00, 0.05, ms, {date(2027, 1, 11): date(2027, 1, 16)})
+    a, n = est["later"][0], est["targets"][0]
     assert a["date"] == "2027-01-11" and a["late"] == "2027-01-16" and n["date"] == "2026-11-26"
     assert 0.05 < a["p_hike"][0] < a["p_hike"][1] < 0.12           # 가정 회의의 변화폭은 11월보다 훨씬 작게 배정된다
     assert 0.5 < n["p_hike"][0] <= n["p_hike"][1] < 0.6
-    assert kofr_ois.min_change_estimate({"m3": c["m3"]}, 3.0, 0.05, [date(2026, 11, 26)], set()) is None
+    assert kofr_ois.min_change_estimate({"m3": c["m3"]}, 3.0, 0.05, [date(2026, 11, 26)]) is None
+    fixed = kofr_ois.min_change_estimate(c, 3.00, 0.05, [date(2026, 11, 26), date(2027, 1, 14)])   # 날짜가 확정이면 범위가 아닌 한 값
+    assert fixed["later"][0]["p_hike"][0] == fixed["later"][0]["p_hike"][1] and fixed["later"][0]["late"] == "2027-01-14"
 
 
 def test_memo_lint_skips_direct_quotes():
