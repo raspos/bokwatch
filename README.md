@@ -88,7 +88,7 @@ API 키는 PC의 환경변수나 `.env` 파일에 둔다(`ECOS_API_KEY` 등). `.
 |---|---|
 | Cloudflare 크론 `cron/`(주 실행) | 워커 `bokwatch-cron`이 09:40·10:30 KST에 `daily.yml`을 `workflow_dispatch`(skip_if_done=true)로 호출한다. 비밀 값 `GITHUB_TOKEN`(Actions 쓰기 권한)은 Cloudflare에만 둔다 |
 | GitHub Actions `daily.yml`(보조) | 예약 cron 09:43·10:13 KST지만 실제로는 14:15~15:10 KST에 시작한다(4시간 넘게 지연). 오늘 기록이 있으면 건너뛴다. 끝나면 `_deploy.yml`로 배포 |
-| PC 예약 작업(선택) | Windows 작업 스케줄러에서 매일 10:00에 `python run_daily.py` |
+| PC 예약 작업 | Windows 작업 스케줄러가 매일 09:50에 `scripts/local_daily.ps1`(최신 코드 받기 → `run_daily.py` → 변경 커밋·푸시). 로그는 `%LOCALAPPDATA%okwatch`. 오늘 기록이 있으면 건너뛴다 |
 | `test.yml` | push 때 테스트 |
 
 - 시장금리는 10시 기준 직전 영업일 종가다(ECOS 일별 금리는 장 마감 뒤 반영).
