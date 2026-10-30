@@ -98,10 +98,13 @@ def test_series_file_consistency():
 
 
 def test_live_nov26_matches_site_ois_and_blend():
-    """2026-11-26 회의의 10/28 기준 값 검산: OIS는 사이트 기존 값(58.4%)과 일치, M5는 그 평균."""
+    """2026-11-26 회의의 10/28 기준 값 검산: OIS는 사이트 이력 값과 일치, M5는 그 평균."""
     from bokwatch import awm_data
     inp = awm_data.Inputs()
     r = awm_series.one_day(inp, date(2026, 11, 26), date(2026, 10, 28))
-    assert abs(r["ois"]["hike"] - 0.5841) < 0.0006
+    # 사이트 이력(history.csv)의 같은 날 값과 같아야 한다. 값 자체는 늦게 공시되는 KOFR 때문에 며칠 사이 조금 바뀔 수 있다(10/28: 58.4% → 58.7%)
+    site = next(float(x["p_hike"]) for x in __import__("csv").DictReader(open(ROOT / "site" / "data" / "history.csv", encoding="utf-8"))
+                if x["date"] == "2026-10-28" and x["scenario"] == "0" and x["meeting"] == "2026-11-26")
+    assert abs(r["ois"]["hike"] - site) < 0.0006
     assert abs(r["m5"]["hike"] - 0.5 * (r["ois"]["hike"] + r["msb91"]["hike"])) < 6e-4
     assert abs(sum(r["m5"].values()) - 1) < 1e-3
