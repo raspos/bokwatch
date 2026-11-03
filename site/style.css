@@ -415,3 +415,8 @@ a.brand:hover h1 { opacity: .8; }
 .pcdetail ul { margin: 4px 0; padding-left: 18px; }
 .tabs .area { align-self: center; padding: 0 6px 0 10px; margin-left: 6px; font-size: 10px; letter-spacing: .04em; color: var(--ink-3); white-space: nowrap; border-left: 1px solid var(--line); }
 .tabs .area:first-child { border-left: 0; margin-left: 0; padding-left: 0; }
+.stc, .spkev { overflow-wrap: anywhere; min-width: 0; }
+.stc .stcol { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.stc .stcol > div { min-width: 0; }
+@media (max-width: 600px) { .stc .stcol { grid-template-columns: minmax(0, 1fr); } }
+#stmtChanges p, #speechEvents p, #speechEvents li, #fcEval li, #lab p { overflow-wrap: anywhere; }
