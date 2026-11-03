@@ -94,12 +94,12 @@
 
   // ------------------------------------------------------------ 로드
   async function load() {
-    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review, awmSeries, awmBt, speechEv, stmtCh, fcEval, probEv] = await Promise.all([
+    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review, awmSeries, awmBt, speechEv, stmtCh, fcEval, probEv, labSt] = await Promise.all([
       getJSON("data/meta.json"), getJSON("data/status.json"), getJSON("data/guidance.json"),
       getJSON("data/reports.json"), getJSON("data/minutes.json"), getJSON("data/news.json"),
       getJSON("data/backtest.json"), getText("data/history.csv"),
       getJSON("data/events.json"), getJSON("data/qual.json"), getJSON("data/prob_log.json"), getJSON("data/decision.json"),
-      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"), getJSON("data/awm_series.json"), getJSON("data/awm_backtest.json"), getJSON("data/speech_events.json"), getJSON("data/statement_changes.json"), getJSON("data/forecast_eval.json"), getJSON("data/prob_events.json"),
+      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"), getJSON("data/awm_series.json"), getJSON("data/awm_backtest.json"), getJSON("data/speech_events.json"), getJSON("data/statement_changes.json"), getJSON("data/forecast_eval.json"), getJSON("data/prob_events.json"), getJSON("data/lab_status.json"),
     ]);
     Object.assign(D, { meta: meta || {}, status: status || {}, guidance: guidance || { meetings: [], dotplots: [], speeches: [] },
       reports: reports || { reports: [], consensus: { by_meeting: {} } }, minutes: minutes || { meetings: [] },
@@ -111,6 +111,7 @@
     D.stmtCh = stmtCh;
     D.fcEval = fcEval;
     D.probEv = probEv;
+    D.lab = labSt;
     initRep(awmSeries);
   }
   // 대표 확률 모형: m5 = BOK WATCH 종합 예측(합성 OIS 50% + 통안채 91일 50%), ois = 합성 KOFR OIS 단독.
@@ -1303,6 +1304,25 @@
 
   // ------------------------------------------------------------ 방법·검증
   const methodOpen = new Set();
+  // BOK LAB: 어떤 금리를 쓰고 쓰지 않는지, ACM·AFNS 연구가 어디까지 왔는지, 모형이 언제 어떻게 바뀌었는지
+  function renderLab() {
+    const el = $("#lab");
+    if (!el) return;
+    const L = D.lab;
+    if (!L) { el.replaceChildren(); return; }
+    const tbl = (head, rows) => h("div", { class: "tbl-wrap" }, h("table", { class: "grid" }, h("thead", {}, h("tr", {}, ...head.map((t) => h("th", { class: "l" }, t)))), h("tbody", {}, ...rows)));
+    el.replaceChildren(h("h2", {}, "BOK LAB ", h("small", {}, "데이터 구분 · 연구 현황 · 변경 이력")),
+      h("h3", {}, "금리 데이터 구분"),
+      tbl(["항목", "성격", "상태", "기간(관측 수)", "쓰임·비고"], L.data.map((x) => h("tr", {}, h("td", { class: "l" }, x.name), h("td", { class: "l" }, x.kind), h("td", { class: "l" }, x.status),
+        h("td", { class: "l" }, x.n ? `${ymd(x.first)}~${ymd(x.last)} (${x.n})` : "–"), h("td", { class: "l" }, x.use)))),
+      h("p", { class: "note" }, "합성 OIS는 실제 거래 가격이 아니다. KOFR 자체의 거래 유동성과 KOFR-OIS 시장의 유동성은 다르며, 후자의 호가·거래량 자료는 없다."),
+      h("h3", {}, "ACM·AFNS 연구 진행 상태"),
+      tbl(["단계", "내용", "상태", "비고"], L.acm_afns.map((a) => h("tr", {}, h("td", { class: "l" }, a.step), h("td", { class: "l" }, a.name), h("td", { class: "l" }, a.status), h("td", { class: "l" }, a.note)))),
+      h("p", { class: "note" }, L.note),
+      h("h3", {}, "모형 버전·변경 이력"),
+      tbl(["날짜", "대상", "내용", "공식 확률 영향"], L.changelog.map((c) => h("tr", {}, h("td", { class: "l" }, ymd(c.date)), h("td", { class: "l" }, c.target), h("td", { class: "l" }, c.change), h("td", { class: "l" }, c.official_effect)))));
+  }
+
   // AWM 실험: OIS와 통안채 91일 확률의 통계적 결합(시장가격 아님, 기본 확률을 대체하지 않음)
   async function renderAwm() {
     const el = $("#awm");
@@ -1747,6 +1767,7 @@
     renderQual();
     renderMethod();
     renderAwm();
+    renderLab();
     writeHash();
   }
 

@@ -308,6 +308,11 @@ def main(argv=None):
         from bokwatch.review import build_review
         raw = load_reports()
         write_json(SITE_DATA / "review.json", build_review(guidance, plog, raw["reports"], raw["kofia_survey"], today, series) or {})
+        try:  # BOK LAB: 데이터 구분·ACM/AFNS 진행 상태·모형 변경 이력
+            from bokwatch import lab_status
+            write_json(SITE_DATA / "lab_status.json", lab_status.build())
+        except Exception as e:  # noqa: BLE001
+            print(f"BOK LAB 현황 생성 실패: {e}")
         try:  # 확률이 크게 움직인 날과 동시에 있었던 이벤트(원인 아님)
             from bokwatch import prob_events
             up = [m for m in (read_json(SITE_DATA / "meta.json", {}) or {}).get("upcoming", []) if m > today.isoformat()]
