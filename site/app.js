@@ -94,12 +94,12 @@
 
   // ------------------------------------------------------------ 로드
   async function load() {
-    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review, awmSeries, awmBt, speechEv, stmtCh] = await Promise.all([
+    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review, awmSeries, awmBt, speechEv, stmtCh, fcEval] = await Promise.all([
       getJSON("data/meta.json"), getJSON("data/status.json"), getJSON("data/guidance.json"),
       getJSON("data/reports.json"), getJSON("data/minutes.json"), getJSON("data/news.json"),
       getJSON("data/backtest.json"), getText("data/history.csv"),
       getJSON("data/events.json"), getJSON("data/qual.json"), getJSON("data/prob_log.json"), getJSON("data/decision.json"),
-      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"), getJSON("data/awm_series.json"), getJSON("data/awm_backtest.json"), getJSON("data/speech_events.json"), getJSON("data/statement_changes.json"),
+      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"), getJSON("data/awm_series.json"), getJSON("data/awm_backtest.json"), getJSON("data/speech_events.json"), getJSON("data/statement_changes.json"), getJSON("data/forecast_eval.json"),
     ]);
     Object.assign(D, { meta: meta || {}, status: status || {}, guidance: guidance || { meetings: [], dotplots: [], speeches: [] },
       reports: reports || { reports: [], consensus: { by_meeting: {} } }, minutes: minutes || { meetings: [] },
@@ -109,6 +109,7 @@
     D.awmBt = awmBt;
     D.speechEv = speechEv;
     D.stmtCh = stmtCh;
+    D.fcEval = fcEval;
     initRep(awmSeries);
   }
   // 대표 확률 모형: m5 = BOK WATCH 종합 예측(합성 OIS 50% + 통안채 91일 50%), ois = 합성 KOFR OIS 단독.
@@ -1040,6 +1041,23 @@
     return frag;
   }
 
+  // 기관 전망 수집 현황과 적중률(시점 통일: 금통위 30·7·1일 전). 표본 수를 함께 보이고, 표본이 작으면 순위를 만들지 않는다.
+  function renderForecastEval() {
+    const el = $("#fcEval");
+    if (!el) return;
+    const F = D.fcEval;
+    if (!F || !F.n_forecasts) { el.replaceChildren(h("p", { class: "note" }, "수집된 전망이 없어 평가하지 않는다.")); return; }
+    const A = { hike: "인상", hold: "동결", cut: "인하" };
+    const rows = (F.table || []).filter((t) => t.n_institutions).map((t) => h("tr", {}, h("td", {}, ymd(t.meeting)), h("td", {}, `${t.horizon}일 전`), h("td", {}, A[t.actual]),
+      h("td", {}, `${t.n_institutions}곳`), h("td", {}, `${t.hits}/${t.n_institutions} (${pct(t.hit_rate, 0)})`),
+      h("td", {}, t.bokwatch ? `${t.bokwatch.top ? A[t.bokwatch.top] : "동률"} ${t.bokwatch.hit ? "적중" : "빗나감"} · 실제 결과 확률 ${pct(t.bokwatch.p_actual, 0)} · ${t.bokwatch.kind === "stored" ? "당시 저장 예측" : "사후 재계산"}` : "–")));
+    el.replaceChildren(
+      h("p", { class: "note" }, `전망 ${F.n_forecasts}건 · 기관 ${F.n_institutions}곳 · 평가된 금통위 ${F.meetings_evaluated}회`),
+      rows.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "grid" }, h("thead", {}, h("tr", {}, ...["회의", "시점", "실제", "전망 낸 기관", "방향 적중", "BOK WATCH(종합 예측)"].map((x) => h("th", {}, x)))), h("tbody", {}, ...rows))) : "",
+      (F.revisions || []).length ? h("p", { class: "note" }, "전망 수정: " + F.revisions.map((r) => `${r.institution} ${md(r.meeting)}회의 ${r.from}→${r.to}(${md(r.date)})`).join(" · ")) : "",
+      h("ul", { class: "note" }, ...(F.notes || []).map((n) => h("li", {}, n))));
+  }
+
   function renderNews() {
     // 기사 목록은 뺐다(총재 발언은 가이던스 탭 타임라인의 기사 링크로 본다)
     // 보고서 표
@@ -1067,6 +1085,7 @@
     $("#repTable").replaceChildren(thead, h("tbody", {}, tb));
 
     renderConsensus();
+    renderForecastEval();
     const K = D.reports.kofia || [];
     const pc = (v) => v == null ? "–" : v + "%";
     $("#kofia").replaceChildren(K.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },

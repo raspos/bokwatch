@@ -308,6 +308,12 @@ def main(argv=None):
         from bokwatch.review import build_review
         raw = load_reports()
         write_json(SITE_DATA / "review.json", build_review(guidance, plog, raw["reports"], raw["kofia_survey"], today, series) or {})
+        try:  # 기관 전망 수집 현황·적중률(표본 수 공개, 순위는 표본이 충분할 때만)
+            from bokwatch import awm_data, forecast_eval
+            outcomes = {m["meeting"].isoformat(): m["actual"] for m in awm_data.meeting_table(cfg) if m["meeting"] <= today}
+            write_json(SITE_DATA / "forecast_eval.json", forecast_eval.evaluate(raw["reports"], outcomes, series or {}))
+        except Exception as e:  # noqa: BLE001
+            print(f"기관 전망 평가 실패: {e}")
 
         warnings = [stalled] if stalled else []
         for y, ds in cfg["meetings"].items():
