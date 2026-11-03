@@ -416,15 +416,12 @@
     const unsched = it.late !== it.date;
     const exp = prevE != null && it.delta_bp ? prevE + (it.delta_bp[0] + it.delta_bp[1]) / 200 : null;
     return h("div", { class: "gauge decision" },
-      h("span", { class: "badge warn", title: "같은 가격이 인상 0~100%와 모두 맞아 정해진 값이 아니다" }, "참고 추정"),
+      h("span", { class: "badge warn" }, "참고 추정"),
       h("h4", {}, unsched ? `${+it.date.slice(5, 7)}월 중(날짜 미정) 금리 결정 전망` : `${dmon(it.date)} 금리 결정 전망`),
       decisionGaugeSVG(os, top, []),
       h("div", { class: "dlegend" }, ...os.map((o) => h("span", {}, h("i", { class: o.cls }), `${o.name} ${pct(o.p)}`))),
-      exp != null ? h("div", { class: "sub" }, `회의 뒤 기대 금리 ${fx(exp, 3)}%(앞 회의 뒤 수준에서 변화폭 최소 가정)`) : "",
-      more("근거",
-        h("div", { class: "sub" }, "3개월 OIS는 식이 하나라 11월 회의와 이 회의를 함께 나눌 수 없다. 회의별 변화폭이 가장 작다고 두고 낸 참고 추정이며, 같은 가격이 인상 0~100%와 모두 맞는다."),
-        h("div", { class: "sub" }, "6개월·1년 CD 금리가 3개월보다 높게 형성돼 이후 추가 인상 기대를 시사할 수 있으나 기간 프리미엄과 구분되지 않아 반영하지 않았다."),
-        h("div", { class: "sub parts" }, "전문가 전망은 보고서 탭의 1월 칸 참조")));
+      exp != null ? h("div", { class: "sub" }, `회의 뒤 기대 금리 ${fx(exp, 3)}%`) : "",
+      more("근거", h("div", { class: "sub" }, "3개월 OIS로 추정한 참고 값"), h("div", { class: "sub parts" }, "전문가 전망은 보고서 탭의 1월 칸 참조")));
   }
 
   // 기본 추정치가 멈춘 날이면 마지막으로 산출된 날의 스냅샷을 쓴다
@@ -466,8 +463,7 @@
       rows.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },
         h("thead", {}, h("tr", {}, h("th", { class: "l" }, "예측"), h("th", { class: "l" }, "당시 전망"), h("th", {}, "결과"))),
         h("tbody", {}, rows.map((r) => h("tr", {}, h("td", { class: "l" }, r[0]), h("td", { class: "l" }, r[1]), h("td", {}, r[2])))))) : "",
-      change ? h("p", { class: "note" }, change) : "",
-      h("p", { class: "note" }, "적중: 가장 높은 확률을 준 결과가 실제와 같음. 최고 확률이 같으면 적중으로 치지 않는다.")));
+      change ? h("p", { class: "note" }, change) : ""));
   }
 
   async function renderMarket(snap) {
@@ -557,15 +553,18 @@
       prevE = ex;
       return r;
     });
+    const lastMq = ms[ms.length - 1];
+    const lastEq = lastMq ? (lastMq.ois_only ? lastMq.ois_only.expected : lastMq.expected) : snap.r0;      // 1월 카드와 같은 기준(OIS 기준 앞 회의 기대금리)
     for (const it of ((((snap.components || {}).kofr_ois || {}).later_est || {}).later || [])) {
+      const dl = (it.delta_bp[0] + it.delta_bp[1]) / 2 / 100, exq = lastEq + dl;
       const unsched = it.late !== it.date;
       const cj = (D.reports.consensus.by_meeting || {})[it.date];
       const ex = cj && cj.n ? ["동결", "인상", "열어둠", "인하"].filter((k) => cj.counts[k]).map((k) => `${k} ${cj.counts[k]}곳`).join(" · ") : "";
       const rng = (lo, hi) => (lo === hi ? pct(lo) : `${pct(lo)}~${pct(hi)}`);
       const est = `동결 ${rng(1 - it.p_hike[1], 1 - it.p_hike[0])} · 25bp 인상 ${rng(it.p_hike[0], it.p_hike[1])} (참고 추정)`;
-      rows.push(h("tr", {}, h("td", {}, unsched ? `${it.date.slice(0, 4)}년 ${+it.date.slice(5, 7)}월 중(날짜 미정)` : ymd(it.date)), h("td", {}, "–"), h("td", {}, "–"), h("td", {}, "–"),
+      rows.push(h("tr", {}, h("td", {}, unsched ? `${it.date.slice(0, 4)}년 ${+it.date.slice(5, 7)}월 중(날짜 미정)` : ymd(it.date)), h("td", {}, fx(exq, 3) + "%"), h("td", {}, bp(exq - snap.r0)), h("td", {}, bp(dl)),
         h("td", {}, est + (ex ? ` · 전문가 ${ex}` : "")),
-        h("td", { class: "l" }, "3개월 OIS 한 식, 회의별 변화폭 최소 가정. 같은 가격이 인상 0~100%와 모두 맞아 정해진 값이 아님")));
+        h("td", { class: "l" }, "3개월 OIS")));
     }
     $("#probTable").replaceChildren(thead, h("tbody", {}, rows));
     // 두 회의 누적 결과: 회의별 확률(동결·같은 방향 25bp)만 주어지면 '두 번 모두 변경' 확률은 [max(0, p1+p2−1), min(p1, p2)] 사이 어디든 가능하다
@@ -631,24 +630,24 @@
     $("#cdRangeTable").replaceChildren(h("thead", {}, h("tr", {}, h("th", {}, "회의"), ...["스프레드 −5bp", "기본", "+5bp"].map((x) => h("th", {}, `${x} 인상 확률 범위`)))), h("tbody", {}, cdRows));
 
     // 투입 금리표
-    const ih = h("thead", {}, h("tr", {}, ...["상품", "금리", "기준일", "기준금리 대비", "전일 대비", "스프레드", "쓰임", "출처"].map((t, i) => h("th", { class: i === 7 ? "l" : null }, t))));
+    const ih = h("thead", {}, h("tr", {}, ...["상품", "금리", "기준일", "기준금리 대비", "전일 대비", "스프레드", "쓰임"].map((t) => h("th", {}, t))));
     const vb = (x) => x == null ? "–" : (x >= 0 ? "+" : "") + x + "bp";
     const useOf = (i) => i.id === "cd91" ? "3개월 OIS · CD 91일 참고 범위" : i.id === "kofr" ? "OIS 스프레드·KOFR 보정" : "참고";
     const ib = snap.inputs.map((i) => h("tr", {},
       h("td", {}, i.label), h("td", {}, fx(i.rate, 3) + "%"), h("td", {}, ymd(i.date)), h("td", {}, vb(i.vs_base_bp)), h("td", {}, vb(i.chg_bp)),
       h("td", { title: i.spread_how }, i.id === "cd91" && ko && ko.curve && ko.curve.m3
         ? `OIS ${(ko.curve.m3.spread * 100).toFixed(1)}bp · 참고 범위 ${(i.spread * 100 + (i.used ? +S.s : 0)).toFixed(0)}bp` : i.used ? (i.spread * 100 + +S.s).toFixed(0) + "bp" : "–"),
-      h("td", {}, useOf(i)), h("td", { class: "l" }, i.source)));
+      h("td", {}, useOf(i))));
     if (ko && ko.curve) {
       for (const x of ["w1", "w2", "m1"].filter((z) => ko.curve[z])) {
         const c = ko.curve[x];
         ib.push(h("tr", {}, h("td", {}, `CD ${c.label}(AAA 평가)`), h("td", {}, fx(c.cd, 2) + "%"), h("td", {}, ymd(c.cd_date)),
           h("td", {}, vb(Math.round((c.cd - snap.r0) * 1000) / 10)), h("td", {}, "–"), h("td", {}, `OIS ${(c.spread * 100).toFixed(1)}bp`),
-          h("td", {}, x === "m1" ? "1개월 OIS(다음 회의)" : "OIS 곡선(참고)"), h("td", { class: "l" }, "금융투자협회 CD시가평가수익률 5사 평균")));
+          h("td", {}, x === "m1" ? "1개월 OIS(다음 회의)" : "OIS 곡선(참고)")));
       }
       const k0 = (ko.path || [])[0];
       if (k0) ib.push(h("tr", {}, h("td", {}, "KOFR − 기준금리 보정"), h("td", {}, (k0.kofr_base * 100).toFixed(1) + "bp"), h("td", {}, "–"), h("td", {}, "–"), h("td", {}, "–"),
-        h("td", {}, "–"), h("td", {}, "OIS → 기준금리 환산"), h("td", { class: "l" }, ko.kofr_base_how || "60일 중앙값")));
+        h("td", {}, "–"), h("td", {}, "OIS → 기준금리 환산")));
     }
     $("#inputTable").replaceChildren(ih, h("tbody", {}, ib));
     const used = snap.inputs.find((i) => i.used);
@@ -695,7 +694,6 @@
     const meets = [...new Set(L.filter((r) => r.status === "산출" && days.includes(r.date)).map((r) => r.meeting))].sort().slice(0, 3);
     if (!days.length) {
       $("#logTable").replaceChildren();
-      $("#logNote").textContent = "아직 기록이 없습니다. 매일 10시 갱신 때 하루 한 줄씩 쌓입니다.";
       return;
     }
     const head = h("thead", {}, h("tr", {}, h("th", {}, "기록일"), h("th", {}, "금리 기준일"),
@@ -722,7 +720,6 @@
     }).filter(Boolean);
     $("#logMemoBody").replaceChildren(...notes);
     $("#logMemo").hidden = !notes.length;
-    $("#logNote").textContent = "기록일 아침 10시에 그 전 영업일 종가로 계산해 화면에 낸 값이다. 이후 가정이 바뀌어도 고치지 않는다. '추가' 줄은 정기 기록 밖에서 모형을 바꾼 시점의 값이다." + (REP.mode === "m5" ? " 종합 예측은 당시 저장한 값이 아니라 같은 기준일 자료로 다시 계산한 값(사후 재계산)이다. 당시 저장한 OIS 값은 주소 끝에 ?model=ois를 붙여 본다. 1월은 OIS 기준 참고 추정." : "");
   }
 
   function renderEvents() {
@@ -820,10 +817,8 @@
       h("div", { class: "pcchg" }, `인상 ${pct(lastRow.hike)} · 전일 ${fmt(chg(1))} · 7일 ${fmt(chg(7))} · 30일 ${fmt(chg(30))}`),
       h("div", { class: "chart" }, svg.node()),
       h("div", { class: "pclegend" }, h("span", {}, "━ 인상"), h("span", {}, "╌ 동결"), h("span", {}, "··· 인하"), h("span", {}, "▲ 주요 이벤트(동시 발생, 원인 아님)")),
-      bigs.length ? h("div", { class: "pcturn" }, h("h4", {}, "전환점 ", h("small", {}, "확률이 전일보다 5%p 이상 움직인 날 · 그날 있었던 이벤트(원인으로 단정하지 않음)")),
-        h("ol", {}, ...bigs.map((r) => h("li", {}, h("b", {}, `${md(r.date)} ${r.delta >= 0 ? "+" : "−"}${Math.abs(r.delta * 100).toFixed(1)}%p`), " ",
-          (r.events.length || r.speeches.length) ? [...r.events.map((e) => (e.link ? ext(e.link, e.label) : e.label)), ...r.speeches.map((s) => `한은 발언(${s.venue})`)]
-            .reduce((acc, x, i) => (i ? [...acc, " · ", x] : [x]), []) : h("span", { class: "note" }, "기록된 주요 이벤트 없음"))))) : "",
+      bigs.length ? h("div", { class: "pcturn" }, h("h4", {}, "전환점 ", h("small", {}, "확률이 전일보다 5%p 이상 움직인 날")),
+        h("ol", {}, ...bigs.map((r) => h("li", {}, h("b", {}, `${md(r.date)} ${r.delta >= 0 ? "+" : "−"}${Math.abs(r.delta * 100).toFixed(1)}%p`), "  ", (r.lines || []).length ? r.lines.join(" · ") : "이벤트 없음")))) : "",
       h("div", { class: "note", id: "probTip", "aria-live": "polite" }, tip(lastRow)),
       "");
   }
@@ -899,14 +894,11 @@
     const toneLbl = { hawk: "매파", neutral: "중립", dove: "비둘기파" };
     const cards = SE.events.slice(0, 8).map((e) => h("details", { class: "spkev" },
       h("summary", {}, h("b", {}, `${md(e.date)} ${e.venue}`), ` · ${e.speakers.join(", ")} · `, h("span", { class: "tag " + ({ 매파: "hawk", 비둘기파: "dove" }[e.verdict] || "neutral") }, e.verdict),
-        e.change ? h("span", { class: "note" }, ` · 이전 대비 ${e.change.label}`) : "", h("span", { class: "note" }, ` · 인용 ${e.n_quotes}개 · 신뢰도 ${e.confidence}`)),
+        e.change && e.change.label !== "변화 없음" ? ` · ${e.change.label}` : ""),
       h("div", { class: "spkbody" },
-        Object.keys(e.topics).length ? h("p", {}, h("b", {}, "정책 신호 "), Object.entries(e.topics).map(([k, v]) => `${k} ${v.tone}(${v.n})`).join(" · ")) : "",
-        e.risk_terms.length ? h("p", {}, h("b", {}, "강조된 위험 "), e.risk_terms.join(", ")) : "",
-        e.change ? h("p", {}, h("b", {}, "표현 변화 "), `(${e.change.vs} 대비, 표현 사전 기준) 새로 등장: ${e.new_terms.join(", ") || "없음"} · 사라짐: ${e.gone_terms.join(", ") || "없음"}`) : "",
-        h("ul", {}, ...e.quotes.map((q) => h("li", {}, `[${toneLbl[q.tone] || q.tone}] “${q.quote}” `, q.link ? ext(q.link, "원문") : "", q.verify ? h("span", { class: "badge verify" }, "확인 필요") : "", q.note ? h("small", {}, ` — ${q.note}`) : ""))))));
-    el.replaceChildren(h("h3", {}, "행사별 요약 ", h("small", {}, "같은 행사 발언을 하나로 묶음 · 분석은 규칙 기반, 인용은 원문 그대로")), ...cards,
-      h("p", { class: "note" }, SE.method + " 인용이 1개뿐인 행사는 논조를 단정하지 않는다. 표현 변화는 사전에 있는 표현의 유무 비교라 문장 의미 변화를 모두 잡지는 못한다."));
+        Object.keys(e.topics).length ? h("p", {}, Object.entries(e.topics).map(([k, v]) => `${k} ${v.tone}`).join(" · ")) : "",
+        h("ul", {}, ...e.quotes.map((q) => h("li", {}, `[${toneLbl[q.tone] || q.tone}] “${q.quote}” `, q.link ? ext(q.link, "원문") : ""))))));
+    el.replaceChildren(h("h3", {}, "행사별 요약"), ...cards);
   }
 
   // 통방문 핵심 변화 3~5개(범주별, 규칙 기반). 전체 문장 비교는 아래 회의 카드에 그대로 있다.
@@ -916,11 +908,11 @@
     const P = D.stmtCh && (D.stmtCh.pairs || [])[0];
     if (!P) { el.replaceChildren(); return; }
     const cards = P.top.filter((r) => r.change !== "변화 없음").slice(0, 5).map((r) => h("div", { class: "stc" },
-      h("div", {}, h("b", {}, r.category), h("span", { class: "badge" }, r.change), r.new_terms.length ? h("span", { class: "note" }, ` 새로 나온 표현: ${r.new_terms.slice(0, 6).join(", ")}`) : "", r.gone_terms.length ? h("span", { class: "note" }, ` · 빠진 표현: ${r.gone_terms.slice(0, 6).join(", ")}`) : ""),
+      h("div", {}, h("b", {}, r.category), h("span", { class: "badge" }, r.change)),
       h("div", { class: "stcol" }, h("div", {}, h("small", {}, `이전(${md(P.prev)})`), h("p", {}, r.prev || "–")), h("div", {}, h("small", {}, `이번(${md(P.cur)})`), h("p", {}, r.cur || "–"))),
-      h("div", { class: "note" }, "가능한 의미: " + (r.reads.length ? r.reads.join(" / ") : "–") + " (해석이며 단정 아님)")));
-    el.replaceChildren(h("h3", {}, `${md(P.cur)} 통방문 핵심 변화 `, h("small", {}, `${md(P.prev)} 대비 · 변경된 범주 ${P.n_changed}개 중 상위 ${cards.length}개`)), ...cards,
-      h("p", { class: "note" }, `${D.stmtCh.method} 출처: ${P.source_cur || "원문 파일"}${P.provisional ? " (임시본 — 공식 원문 확인 필요)" : ""}`));
+      r.reads.length ? h("div", {}, r.reads.join(" / ")) : ""));
+    el.replaceChildren(h("h3", {}, `${md(P.cur)} 통방문 핵심 변화`), ...cards,
+      P.provisional ? h("p", { class: "note" }, "임시본 — 공식 원문 확인 필요") : "");
   }
 
   function renderGuidance() {
@@ -1065,7 +1057,6 @@
     const SHOW = 8;       // 처음에는 최근 8건만, 나머지는 펼쳐서
     $("#repTable").replaceChildren(thead, h("tbody", {}, reps.slice(0, SHOW).map(rowOf)));
     $("#repRest").replaceChildren(reps.length > SHOW ? more(`나머지 ${reps.length - SHOW}건 보기`, h("div", { class: "tbl-wrap" }, h("table", { class: "grid" }, thead.cloneNode(true), h("tbody", {}, reps.slice(SHOW).map(rowOf))))) : "");
-    $("#repNote").textContent = `이번·다음 회의(${meets.map(md).join(", ")}) 전망만 표시. 지난 회의 전망 ${hiddenPast}건은 숨김. 출처는 허용 38개 매체 기사로 제한(밖 출처 ${D.reports.press_excluded || 0}건 제외).`;
 
     renderConsensus();
     const K = D.reports.kofia || [];
@@ -1120,7 +1111,7 @@
     const S_ = Q.synthesis, P = Q.pressure || {};
     const dirCls = { "인상 압력": "hawk", "인하 압력": "dove", "중립": "neutral" };
     const byId = Object.fromEntries((Q.articles || []).map((a) => [a.id, a]));
-    const kids = [h("p", { class: "note warnline" }, `AI 자동 판단 · 참고용 — ${Q.model} · 기사 제목·검색 요약만 입력 · 근거 기사 원문을 반드시 확인`)];
+    const kids = [];
     if (S_) {
       const scale = h("div", { class: "lean", role: "img", "aria-label": `정성 판단 ${LEAN[S_.lean]}` },
         ...[-2, -1, 0, 1, 2].map((v) => h("span", { class: "lean-cell" + (v === S_.lean ? " on" : "") + (v > 0 ? " up" : v < 0 ? " down" : "") }, LEAN[v])));
@@ -1200,7 +1191,7 @@
         h("h4", {}, "제외한 출처(상위)"), h("p", { class: "note" }, Object.entries(PF.excluded_top || {}).map(([k, v]) => `${k} ${v}`).join(" · ") || "–")));
     }
     if ((Q.events || []).length) {
-      kids.push(h("h3", {}, "많이 보도된 사건 ", h("small", {}, "같은 사건 보도는 지수에 한 번만 들어가고, 보도 수는 가중치로 최대 2배까지만 반영")));
+      kids.push(h("h3", {}, "많이 보도된 사건 ",));
       kids.push(h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },
         h("thead", {}, h("tr", {}, ...["사건", "보도 수", "대표 요인", "기사별 방향", "대상", "시점", "대표 방향"].map((x) => h("th", {}, x)))),
         h("tbody", {}, ...Q.events.slice(0, 12).map((g) => {
@@ -1274,7 +1265,7 @@
     const L = D.lab;
     if (!L) { el.replaceChildren(); return; }
     const tbl = (head, rows) => h("div", { class: "tbl-wrap" }, h("table", { class: "grid" }, h("thead", {}, h("tr", {}, ...head.map((t) => h("th", { class: "l" }, t)))), h("tbody", {}, ...rows)));
-    el.replaceChildren(h("h2", {}, "BOK LAB ", h("small", {}, "데이터 구분 · 연구 현황 · 변경 이력")),
+    el.replaceChildren(more("BOK LAB · 데이터 구분 · 연구 현황 · 변경 이력",
       h("h3", {}, "금리 데이터 구분"),
       tbl(["항목", "성격", "상태", "기간(관측 수)", "쓰임·비고"], L.data.map((x) => h("tr", {}, h("td", { class: "l" }, x.name), h("td", { class: "l" }, x.kind), h("td", { class: "l" }, x.status),
         h("td", { class: "l" }, x.n ? `${ymd(x.first)}~${ymd(x.last)} (${x.n})` : "–"), h("td", { class: "l" }, x.use)))),
@@ -1283,7 +1274,7 @@
       tbl(["단계", "내용", "상태", "비고"], L.acm_afns.map((a) => h("tr", {}, h("td", { class: "l" }, a.step), h("td", { class: "l" }, a.name), h("td", { class: "l" }, a.status), h("td", { class: "l" }, a.note)))),
       h("p", { class: "note" }, L.note),
       h("h3", {}, "모형 버전·변경 이력"),
-      tbl(["날짜", "대상", "내용", "공식 확률 영향"], L.changelog.map((c) => h("tr", {}, h("td", { class: "l" }, ymd(c.date)), h("td", { class: "l" }, c.target), h("td", { class: "l" }, c.change), h("td", { class: "l" }, c.official_effect)))));
+      tbl(["날짜", "대상", "내용", "공식 확률 영향"], L.changelog.map((c) => h("tr", {}, h("td", { class: "l" }, ymd(c.date)), h("td", { class: "l" }, c.target), h("td", { class: "l" }, c.change), h("td", { class: "l" }, c.official_effect))))));
   }
 
   // AWM 실험: OIS와 통안채 91일 확률의 통계적 결합(시장가격 아님, 기본 확률을 대체하지 않음)
@@ -1311,7 +1302,7 @@
     const wr = Object.entries(L.models).filter(([, m]) => m.ok && m.w_ois != null).map(([n, m]) => h("tr", {}, h("td", { class: "l" }, short(n)), h("td", {}, pct(m.w_ois, 0)), h("td", {}, pct(1 - m.w_ois, 0))));
     sec.push(h("h3", {}, "현재 가중치"), tbl(["모형", "OIS", "통안채 91일"], wr),
       h("p", { class: "note" }, "적응형 가중치는 50:50에서 크게 벗어나지 않는다. 표본이 적을 때 50:50 쪽으로 당기도록 만들었고, 과거 성적 차이가 통계적으로 뚜렷하지 않기 때문이다."));
-    if (!B) { el.replaceChildren(...sec); return; }
+    if (!B) { el.replaceChildren(more("종합 예측 검증 · 과거 성적", ...sec.slice(1))); return; }
     // D. 시점별 가중치
     const wh = B.weight_by_horizon || {}, Ds = ["30", "20", "10", "5", "3", "1"];
     const wrows = Object.entries(wh).map(([n, o]) => h("tr", {}, h("td", { class: "l" }, short(n)), ...Ds.map((k) => h("td", {}, o[k] ? pct(o[k].mean, 0) : "–"))));
@@ -1344,7 +1335,7 @@
       + "OIS는 실제 OIS 호가가 아니라 CD 시가평가와 KOFR로 만든 합성 값이며, 합성 OIS가 없는 칸은 CD91로 채우지 않고 예측에서 뺀다. "
       + `백테스트는 금통위 순서의 확장 창 검증이지만 모형 후보와 구간 나누기는 자료를 본 뒤 정했으므로 사후 검증에 가깝다. 초기 ${B.primary_burn_in}회는 학습에만 쓴다. `
       + "민감도: " + Object.entries(B.sensitivity || {}).map(([k, v]) => `초기 ${k}회 제외 시 50:50 Brier ${fx((v.brier || {})[base], 3)}`).join(", ") + "."));
-    el.replaceChildren(...sec);
+    el.replaceChildren(more("종합 예측 검증 · 과거 성적", ...sec.slice(1)));
   }
 
   function renderMethod() {
@@ -1402,23 +1393,9 @@
         table(["구분", "내용", "상태"], [
           ...(REP.mode === "m5" ? [
             ["대표 확률(종합 예측)", "합성 KOFR OIS와 통안채 91일물 확률을 각각 50% 섞은 통계적 결합모형(M5)", "화면 카드·추이·지난 회의 결과에 쓰는 값. 시장 거래 확률이 아니며 과거 날짜는 사후 재계산"],
-            ["합성 KOFR OIS 단독", "1개월·3개월물로 푸는 회의. 풀리지 않는 회의는 CD 91일 모형", "종합 예측의 한 요소. 기록 파일에는 당시 저장 값이 남아 있음(2026-10-15 교체)"],
+            ["합성 KOFR OIS 단독", "1개월·3개월물로 푸는 회의", "종합 예측의 한 요소. 기록 파일에는 당시 저장 값이 남아 있음(2026-10-15 교체)"],
           ] : [["기본 추정치", "자체 산출 KOFR OIS(1개월·3개월물로 푸는 회의). 풀리지 않는 회의는 CD 91일 모형", "화면 게이지·날짜별 기록에 쓰는 값(2026-10-15 교체)"]]),
-          ["실험값 1", "KOFR 3개월 선물 모형(한국거래소 정산가격)", "따로 표시·기록, 기본값에 섞지 않음"],
-          ["실험값 2", "CD 모형과 KOFR 선물 모형 가중평균(KOFR 50%)", "따로 표시·기록, 채택 기준 충족 전까지 실험"],
-        ]),
-        h("h3", {}, "CME FedWatch 방식과의 차이"),
-      table(["항목", "CME FedWatch", "BOK워치"], [
-        ["입력 가격", "30일 연방기금 선물(ZQ) 체결 가격 → 그달 평균 실효금리(EFFR)",
-          REP.mode === "m5" ? "① 자체 합성 KOFR OIS(금투협 CD 평가금리 − 스프레드), ② 통안증권 91일 금리(−정상 스프레드). 둘 다 거래 가격이 아닌 평가·추정 값이고 1bp 단위"
-            : "자체 합성 KOFR OIS(금투협 CD 평가금리 − 스프레드). 거래 가격이 아니고 1bp 단위"],
-        ["회의 전후 나누기", "회의 있는 달을 회의 전 N일·뒤 M일로 나눠 그달 시작·끝 금리를 역산", "1개월·3개월 OIS 기간(통안채 91일은 91일 구간)을 회의 전·뒤 일수로 나눠 회의 뒤 기대 금리를 역산(같은 원리)"],
-        ["시작점", "회의 없는 달(기준월) 선물로 앞뒤 달의 시작·끝 금리를 이어 붙임", "회의 전 구간은 '현재 기준금리 + KOFR−기준금리 차이'로 둠. 1개월물로 다음 회의, 3개월물로 그다음 회의"],
-        ["회의별 확률", "Δ/25bp를 정수와 소수로 나눠 두 결과(예: 50bp 10%·75bp 90%)", "같음(Δ = 그 회의 뒤 기대 금리 − 직전 회의 뒤 기대 금리)" + (REP.mode === "m5" ? ". 상품별로 구한 뒤 50:50으로 평균해 'BOK WATCH 종합 예측'으로 쓴다(통계적 결합, 시장 내재확률 아님. 과거 평가에서 OIS 단독보다 Brier가 작았다)" : "")],
-        ["정책금리와 시장금리 차이", "EFFR이 목표금리 변화에 비례해 움직인다고 가정", "KOFR − 기준금리 차이(60일 중앙값)가 일정하다고 가정"],
-        ["여러 회의 누적 분포", "회의별 확률을 곱함(이진 확률 트리, 회의 사이 독립 가정)", "회의별 확률만으로는 정해지지 않아 가능 범위로 보이고, 독립 가정(FedWatch 방식) 값을 함께 보인다"],
-      ]),
-      p(h("span", { class: "note" }, "출처: CME Group 'Understanding the CME Group FedWatch Tool Methodology'(2025-01-23). BOK워치는 CME Group과 관계없다."))),
+        ])),
       ...(REP.mode === "m5" ? sec("0. BOK WATCH 종합 예측 (대표 확률)", (() => {
         const T = (D.awmBt || {}).table || {}, P = (D.awmBt || {}).paired || {}, SM = (D.awmBt || {}).sample || {};
         const m5 = T["M5 OIS+통안채 50:50"], m2 = T["M2 합성 OIS 단독"], m3 = T["M3 통안채 91일 단독"], m0 = T["M0 항상 동결"];
@@ -1522,18 +1499,12 @@
       ...sec("5. 기본값 교체 기록과 기준",
         h("ul", {},
           ...(REP.mode === "m5" ? [li("2026-10-29 교체: 대표 확률을 합성 KOFR OIS 단독에서 종합 예측(OIS 50% + 통안채 91일 50%)으로 바꿨다. 근거와 한계는 1절(대표 확률). 합성 OIS 단독 기록과 시계열은 그대로 두었고, 종합 예측의 과거 값은 사후 재계산으로 표시한다. 당시 저장 예측이 쌓이면 같은 방식으로 평가한다.")] : []),
-          li("2026-10-15 교체: 기본값을 CD 91일 모형에서 자체 산출 KOFR OIS로 바꿨다. 근거: 같은 회의 백테스트 Brier 다음 회의 0.394 대 0.557(27회), 그다음 회의 0.465 대 0.665(26회). 한계: 인상 2회·인하 4회로 표본이 작고, 같은 자료로 CD 단기물 방식 3개를 먼저 시험했다. '항상 동결'과의 차이는 확실하지 않다(다음 회의 0.394 대 0.444, 그다음 0.465 대 0.462)."),
-          li("OIS로 풀리지 않는 회의(1개월물 안에 회의가 없고 3개월물 안에 회의가 둘 이상인 날 등)는 CD 91일 모형 가능 범위를 쓴다."),
-          li("2026-10-22 회의부터 날짜별 확률 기록의 회의 3영업일 전 값으로 순차 평가한다. 8회 뒤 OIS의 평균 Brier가 CD 91일 모형이나 '항상 동결'보다 높으면 교체를 다시 검토한다."),
-          li("실험값(KOFR 선물·혼합·AI 정성)은 같은 기록으로 평가한다. 금통위 8회 동안 평균 Brier가 기본값(OIS)과 '항상 동결'보다 모두 낮을 때만 교체를 검토한다. KOFR 선물은 거래 반영 조건(거래 빈도·거래량·미결제약정)을 따로 본다."),
           li("앞으로 판정 기준은 결과를 본 뒤 바꾸지 않는다. 바꿀 때는 날짜와 이유를 이 절에 남긴다."))),
       ...sec("6. 한계",
         h("ul", {},
           ...(REP.mode === "m5" ? [li("종합 예측은 두 상품의 확률을 섞은 통계 값이다. 시장 내재확률이 아니며, 인용할 때는 '합성 KOFR OIS와 통안채 91일 50:50 결합'과 사후 재계산 여부를 밝힌다. 기대 기준금리 표와 1월 참고 추정은 합성 OIS 기준이다.")] : []),
           li("자체 합성 KOFR OIS는 거래된 OIS 금리가 아니다. CD 평가금리에서 과거 'CD − 실제 KOFR' 차이의 중앙값을 뺀 추정치라, 그 차이가 지금 평소와 다르면 확률이 치우친다. CD 공시값이 1bp 단위라 회의 확률에 5~7%p 안팎 오차가 늘 있다."),
           li("OIS로는 회의별 확률만 나온다. 두 회의 이상 누적 분포(예: 두 번 모두 인상)는 정해지지 않아 가능 범위로만 보인다."),
-          li("CD 금리에는 은행 자금사정과 신용 웃돈이 섞이고, 그 폭이 시기마다 크게 다르다(CD 91일 참고 범위의 한계)."),
-          li("CD 91일 참고 범위의 '최소 인상 경로'는 한 만기 안의 회의 사이 배정을 가정으로 정한다. 2026-08-27 인상처럼 가까운 회의를 놓칠 수 있다."),
           li("3개월 OIS는 식이 하나라 만기 안에 아직 모르는 회의가 둘 이상이면 앞 회의만 풀고, 뒤 회의(2027년 1월 14일 등)는 변화 없음으로 둔다. 뒤 회의의 인상 확률은 회의별 변화폭이 가장 작다고 두고 따로 낸 '참고 추정'이며, 같은 가격이 인상 0~100%와 모두 맞아 정해진 값이 아니다. 6개월 OIS 같은 더 긴 만기가 있으면 값이 정해진다. 한은은 2027년 통화정책방향 회의를 1/14, 2/25, 4/9, 5/27, 7/15, 8/26, 10/15, 11/25로 공지했다(2026-10-29)."),
           li("보도 인용 값(기관 전망·발언)은 원문 대조가 필요하다. 매파·비둘기 점수와 의사록 입장 분류는 자동 산출이다."),
           li("AI 정성 판단은 기사 제목·검색 요약만 보고 내린 자동 판단이다. 기본 확률 계산에 넣지 않는다."))),
@@ -1561,7 +1532,8 @@
       const d = secs.find((x) => x.querySelector("summary").textContent.startsWith(key) && !placed.includes(x));
       if (d) { d.querySelector("summary").textContent = name; placed.push(d); }
     }
-    el.replaceChildren(...el.querySelectorAll(":scope > section.msec-open"), ...placed, ...secs.filter((x) => !placed.includes(x)));
+    const keep = (x) => !x.querySelector("summary").textContent.startsWith("참고 · ");      // CD 91일·선물·혼합 등 이전 방식 설명은 뺐다
+    el.replaceChildren(...el.querySelectorAll(":scope > section.msec-open"), ...placed.filter(keep), ...secs.filter((x) => !placed.includes(x) && keep(x)));
   }
 
   // 결정 예측 모형(실험): 회의 1건 = 표본 1개, 순서형 로지스틱

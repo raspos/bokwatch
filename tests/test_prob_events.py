@@ -33,3 +33,13 @@ def test_note_does_not_claim_causation_and_missing_series_is_empty():
     r = P.build(series([0.5, 0.7]), "2026-11-26", EV, [], [], Path("없음.csv"))
     assert "원인" in r["note"] and "확인되지 않았다" in r["note"]
     assert P.build({"meetings": {}}, "2026-11-26", EV, [], [], Path("없음.csv"))["rows"] == []
+
+
+def test_lines_are_short_summaries_and_empty_when_no_event():
+    ev = [{"date": "2026-10-22", "kind": "bok", "label": "금통위 통화정책방향 결정", "importance": 3},
+          {"date": "2026-10-22", "kind": "gdp", "label": "한국 3분기 GDP 속보치 전기비 +1.0%(8월 한은 전망 0.3%)", "importance": 3}]
+    sp = [{"date": "2026-10-22", "venue": "금통위 간담회", "verdict": "매파"}]
+    r = P.build(series([0.50, 0.50, 0.60, 0.60, 0.40]), "2026-11-26", ev, sp, [], Path("없음.csv"), meetings=[{"date": "2026-10-22", "rate": 3.0, "decision": "동결"}])
+    by = {x["date"]: x["lines"] for x in r["rows"]}
+    assert by["2026-10-22"] == ["금통위 결정: 기준금리 3.00% 동결", "한국 3분기 GDP 속보치 전기비 +1.0%", "총재 금통위 간담회 발언(매파)"]
+    assert by["2026-10-24"] == []                       # 그 날·전날에 이벤트가 없으면 화면에서 '이벤트 없음'

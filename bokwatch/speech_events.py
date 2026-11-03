@@ -39,6 +39,20 @@ def terms(texts: list[str], vocab=EXPRS) -> set[str]:
     return {w for w in vocab if w in blob}
 
 
+KEYS = ("인상", "긴축", "물가", "기준금리", "동결", "인하")
+
+
+def pick_reason(items: list[dict], ver: str) -> str:
+    """행사의 한 줄 이유: 종합 논조와 같은 방향의 발언 중 정책 키워드가 가장 많은 발언의 요지(gist). 요지가 없으면 인용 첫 절을 줄인다."""
+    want = {"매파": "hawk", "비둘기파": "dove"}.get(ver)
+    pool = [x for x in items if want is None or x.get("tone") == want] or items
+
+    def text(x):
+        return x.get("gist") or (x["quote"].split(",")[0][:30])
+    best = max(reversed(pool), key=lambda x: sum(k in text(x) for k in KEYS))     # 동점이면 뒤에 입력한 발언
+    return text(best)
+
+
 def group_events(speeches: list[dict]) -> list[dict]:
     """같은 날짜·같은 장소는 한 이벤트. 날짜가 같아도 장소가 다르면 별도."""
     by: dict[tuple, list[dict]] = {}
@@ -76,6 +90,7 @@ def build(speeches: list[dict]) -> dict:
             "verdict": "판단 유보(인용 1개)" if low else verdict(sc), "score": round(sc, 2), "confidence": "낮음" if low else "보통",
             "n_quotes": len(its), "change": change, "topics": topics,
             "new_terms": new_t, "gone_terms": gone_t, "risk_terms": sorted(terms([s["quote"] for s in its], RISK)),
+            "reason": pick_reason(its, "판단 유보" if low else verdict(sc)),
             "quotes": [{k: s.get(k) for k in ("speaker", "tone", "quote", "link", "note", "verify")} for s in its],
         })
     return {"events": out, "method": "규칙 기반(발언 tone 평균·주제어·표현 사전). 발언 원문은 data/guidance.yaml 인용 그대로이며 AI 요약이 아니다."}
