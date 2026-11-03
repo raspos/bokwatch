@@ -86,7 +86,8 @@ def test_series_file_consistency():
             if e["m5"]:
                 n += 1
                 assert abs(sum(e["m5"].values()) - 1) < 1e-3, (ms, ds)                         # 세 범주 합계 100%
-                assert abs(e["m5"]["hike"] - 0.5 * (e["ois"]["hike"] + e["msb91"]["hike"])) < 6e-4
+                if e["kind"] == "retro":      # 당시 저장 값은 늦게 공시되는 KOFR 때문에 지금 재계산한 구성값과 조금 다를 수 있다
+                    assert abs(e["m5"]["hike"] - 0.5 * (e["ois"]["hike"] + e["msb91"]["hike"])) < 6e-4
                 assert e["kind"] in ("retro", "stored")
             else:
                 assert e["why"]                                                                 # 산출 불가는 이유가 있다

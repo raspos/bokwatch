@@ -17,6 +17,7 @@ import re as _re
 import sys
 from datetime import datetime, timedelta
 
+from .press import default_index
 from .common import DATA, SITE_DATA, load_config, now_kst, read_json, record_status, redact, write_json
 
 TAGS = DATA / "ai_tags.jsonl"
@@ -25,6 +26,7 @@ SIGNALS = ("추가 인상 신호", "높은 금리 유지", "이번 회의 동결
 QUAL = SITE_DATA / "qual.json"
 HIST = DATA / "qual_history.csv"
 DIRS = {"인상 압력": 1, "중립": 0, "인하 압력": -1}
+SOURCE_TYPES = ("직접발언", "전문가해석", "기자분석", "사실전달")
 
 CLASSIFY_SYSTEM = """당신은 한국은행 통화정책을 취재하는 경제부 데스크의 보조 분석가다.
 <articles> 안의 기사(제목·검색 요약)를 하나씩 읽고, 한국은행 기준금리 결정에 주는 함의를 분류한다.
@@ -50,6 +52,10 @@ CLASSIFY_SYSTEM = """당신은 한국은행 통화정책을 취재하는 경제�
 - '긴축 기조 유지'만으로 direction을 '인상 압력' 강도 3으로 두지 않는다. 다음 회의 인상과 직접 연결될 때만 강하게 준다.
 - 한은의 다음 결정과 직접 연결되지 않는 칼럼·인물·제도 기사(예: 노벨상 해설, 총재 연봉)는 relevant=false.
   기관 전망('시장·기관 전망')은 한은 결정에 대한 제3자의 예상이므로 최대 2.
+- source_type: 이 기사가 무엇을 근거로 하는지 하나 고른다.
+  직접발언(한은 총재·금통위원 등 정책결정자 본인의 인용 발언이 핵심) / 전문가해석(증권사·은행·연구기관 등의 전망·해석) /
+  기자분석(언론사 자체 분석·해설) / 사실전달(발표 수치·사건 전달). 화자가 한은 관계자가 아니면 직접발언으로 쓰지 않는다.
+- 단어가 아니라 문맥과 실제 전망 방향으로 판단한다. 예) '물가 상승 압력이 커졌지만 한은은 당분간 동결할 전망'은 '물가 상승'만 보고 인상 압력으로 두지 않는다.
 - reason: 한국어 40자 이내, 사실과 해석을 섞지 말고 기사에 적힌 근거를 짧게.
 - 입력의 모든 id에 대해 정확히 하나씩 결과를 낸다."""
 
@@ -133,8 +139,9 @@ def classify_schema(factors: list[str]) -> dict:
                 "signal": {"type": "string", "enum": ["추가 인상 신호", "높은 금리 유지", "이번 회의 동결 신호", "인하 신호", "중기 경로", "배경 요인", "해당 없음"]},
                 "target_bank": {"type": "string", "enum": ['한은', '연준', '기타 해외', '해당 없음']},
                 "fed_direction": {"type": "string", "enum": ['인상 압력', '중립', '인하 압력', '해당 없음']},
+                "source_type": {"type": "string", "enum": list(SOURCE_TYPES)},
             },
-            "required": ["id", "relevant", "factor", "direction", "strength", "reason", "signal", "target_bank", "fed_direction"],
+            "required": ["id", "relevant", "factor", "direction", "strength", "reason", "signal", "target_bank", "fed_direction", "source_type"],
             "additionalProperties": False,
         }}},
         "required": ["items"],
@@ -269,12 +276,24 @@ def load_articles() -> list[dict]:
             by[x["link"]] = {"id": x["id"], "title": x["title"], "summary": x.get("summary", ""), "link": x["link"],
                              "press": "yna.co.kr", "published": x["published"], "queries": x.get("keywords", []),
                              "origin": "yna"}
+    from .press import default_index
+    idx = default_index()
+    for a in by.values():
+        r = idx.identify(a)
+        o = idx.outlets.get(r["outlet"]) if r["outlet"] else None
+        a.update({"press_id": r["outlet"], "press_name": o["name"] if o else None, "press_type": o["type"] if o else None,
+                  "press_status": r["status"], "press_reason": r["reason"]})
     return sorted(by.values(), key=lambda x: x["published"], reverse=True)
+
+
+def official_only(articles: list[dict]) -> list[dict]:
+    """공식 정성평가 대상: 허용 38개 언론사 기사만(data/press.yaml). 나머지는 점수에 넣지 않고 제외 사유와 함께 남긴다."""
+    return [a for a in articles if a.get("press_status") == "allowed"]
 
 
 # ---------------------------------------------------------------- 1단계: 태깅
 def classify(client, cfg_ai: dict, articles: list[dict], tags: dict) -> tuple[int, list[str]]:
-    todo = [a for a in articles if a["id"] not in tags][: cfg_ai["max_new_per_run"]]
+    todo = [a for a in official_only(articles) if a["id"] not in tags][: cfg_ai["max_new_per_run"]]   # 허용 언론사 기사만 분석(토큰 절감)
     errors, n = [], 0
     schema = classify_schema(cfg_ai["factors"])
     for i in range(0, len(todo), cfg_ai["batch_size"]):
@@ -564,7 +583,48 @@ def update_signal_history(day: str, summ: dict) -> None:
         w.writerows(rows)
 
 
-def build_qual(articles, tags, cfg_ai, synthesis, errors, now, groups=None, probs=None) -> dict:
+def source_mix(articles: list[dict], tags: dict, since: datetime) -> dict:
+    """근거 유형별(직접발언·전문가해석·기자분석·사실전달) 기사 수와 방향. 서로 다른 신호를 한 점수로 섞지 않고 따로 본다.
+    source_type은 이 기능 도입(2026-11-03) 뒤 새로 태깅한 기사에만 있다. 이전 태그는 유형 미분류로 센다."""
+    out = {k: {"n": 0, "인상 압력": 0, "중립": 0, "인하 압력": 0} for k in (*SOURCE_TYPES, "미분류")}
+    for a in articles:
+        t = tags.get(a["id"], {})
+        if not t.get("relevant") or datetime.fromisoformat(a["published"]) < since:
+            continue
+        d = out[t.get("source_type") if t.get("source_type") in SOURCE_TYPES else "미분류"]
+        d["n"] += 1
+        d[t["direction"]] += 1
+    return out
+
+
+def press_report(all_articles, tags, since) -> dict:
+    """언론사 필터 결과: 기사 수·제외 사유·언론사 유형별 방향. 화이트리스트 전후 압력지수를 같은 규칙(제목 묶음)으로 비교한다."""
+    win = [a for a in all_articles if datetime.fromisoformat(a["published"]) >= since]
+    st = {k: sum(1 for a in win if a.get("press_status") == k) for k in ("allowed", "excluded", "review")}
+    excl = {}
+    for a in win:
+        if a.get("press_status") != "allowed":
+            h = (a.get("press") or "?")
+            excl[h] = excl.get(h, 0) + 1
+    allowed = official_only(win)
+    by_outlet, by_type = {}, {}
+    for a in allowed:
+        t = tags.get(a["id"], {})
+        by_outlet[a["press_name"]] = by_outlet.get(a["press_name"], 0) + 1
+        if t.get("relevant"):
+            d = by_type.setdefault(a["press_type"], {"인상 압력": 0, "중립": 0, "인하 압력": 0, "n": 0})
+            d[t["direction"]] = d.get(t["direction"], 0) + 1
+            d["n"] += 1
+    rel_all = [a for a in win if tags.get(a["id"], {}).get("relevant")]
+    rel_ok = official_only(rel_all)
+    return {"window_articles": len(win), **st, "outlets_used": len(by_outlet), "outlets_total": len(default_index().outlets),
+            "by_outlet": dict(sorted(by_outlet.items(), key=lambda x: -x[1])), "by_type": by_type,
+            "excluded_top": dict(sorted(excl.items(), key=lambda x: -x[1])[:12]),
+            "compare_same_rule": {"all_outlets": pressure_index(rel_all, tags, since, group_by_title(rel_all)),
+                                  "allowed_only": pressure_index(rel_ok, tags, since, group_by_title(rel_ok))}}
+
+
+def build_qual(articles, tags, cfg_ai, synthesis, errors, now, groups=None, probs=None, all_articles=None) -> dict:
     since = now - timedelta(hours=cfg_ai["window_hours"])
     idx = pressure_index(articles, tags, since, groups)
     ev_of = {i: g for g in (groups or []) for i in g["ids"]}
@@ -577,7 +637,7 @@ def build_qual(articles, tags, cfg_ai, synthesis, errors, now, groups=None, prob
         t = tags.get(a["id"])
         if t and t["relevant"] and datetime.fromisoformat(a["published"]) >= now - timedelta(days=7):
             g = ev_of.get(a["id"])
-            recent.append({k: a.get(k) for k in ("id", "title", "link", "press", "published", "origin", "dup_press")} |
+            recent.append({k: a.get(k) for k in ("id", "title", "link", "press", "press_id", "press_name", "press_type", "published", "origin", "dup_press")} |
                           {k: t[k] for k in ("factor", "direction", "strength", "reason")} | {"signal": t.get("signal")} |
                           ({"event": g["label"], "event_n": g.get("n_reports", len(g["ids"]))} if g else {}))
     prev = read_json(QUAL, {}) or {}
@@ -594,6 +654,8 @@ def build_qual(articles, tags, cfg_ai, synthesis, errors, now, groups=None, prob
                           | event_mix(g["ids"], tags) for g in (groups or []) if g.get("n_reports")], key=lambda g: -g["n_reports"])[:40],
         "counts": {"total": len(articles), "tagged": sum(1 for a in articles if a["id"] in tags),
                    "relevant": sum(1 for a in articles if tags.get(a["id"], {}).get("relevant"))},
+        "source_mix": source_mix(articles, tags, since),
+        "press_filter": press_report(all_articles if all_articles is not None else articles, tags, since),
         "errors": [redact(e)[:300] for e in errors],
     }
 
@@ -606,7 +668,8 @@ def main(argv=None, client=None) -> int:
     a = ap.parse_args(argv)
     cfg_ai = load_config()["ai"]
     now = now_kst()
-    articles = load_articles()
+    all_articles = load_articles()
+    articles = official_only(all_articles)      # 공식 정성평가는 허용 38개 언론사 기사만
     tags = load_tags()
     errors = []
     synthesis = None
@@ -617,7 +680,7 @@ def main(argv=None, client=None) -> int:
             record_status("ai", False, f"{why} — 직전 판단 유지")
             since = now - timedelta(hours=cfg_ai["window_hours"])
             rel = [x for x in articles if tags.get(x["id"], {}).get("relevant") and datetime.fromisoformat(x["published"]) >= since]
-            write_json(QUAL, build_qual(articles, tags, cfg_ai, None, [why], now, group_by_title(rel)))
+            write_json(QUAL, build_qual(articles, tags, cfg_ai, None, [why], now, group_by_title(rel), all_articles=all_articles))
             return 1
         import openai
         client = openai.OpenAI()
@@ -631,7 +694,7 @@ def main(argv=None, client=None) -> int:
         print(f"다시 태깅 대상 {len(stale)}건")
     n, errs = classify(client, cfg_ai, articles, tags)
     errors += errs
-    save_tags(tags, {x["id"] for x in articles})
+    save_tags(tags, {x["id"] for x in all_articles})     # 제외된 기사의 기존 태그도 보존(비교용)
     since = now - timedelta(hours=cfg_ai["window_hours"])
     rel = [x for x in articles if tags.get(x["id"], {}).get("relevant") and datetime.fromisoformat(x["published"]) >= since]
     groups, gerr = group_events(client, cfg_ai, rel)
@@ -650,7 +713,7 @@ def main(argv=None, client=None) -> int:
                 probs = qual_probs(client, cfg_ai, articles, tags, since, groups, nxt)
             except Exception as e:
                 errors.append(f"정성 확률: {type(e).__name__}: {e}")
-    write_json(QUAL, build_qual(articles, tags, cfg_ai, synthesis, errors, now, groups, probs))
+    write_json(QUAL, build_qual(articles, tags, cfg_ai, synthesis, errors, now, groups, probs, all_articles=all_articles))
     used = save_usage(now)
     record_status("ai", not errors, ("; ".join(errors) or f"새 태깅 {n}건" + ("" if a.no_synth else ", 종합 갱신")) + used)
     return 0

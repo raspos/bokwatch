@@ -1031,7 +1031,7 @@
         h("h4", {}, "주요 요인"),
         h("ul", { class: "drivers" }, ...(S_.drivers || []).map((d) => h("li", {},
           h("span", { class: `tag ${dirCls[d.direction]}` }, d.direction), " ", h("b", {}, d.factor), " — ", d.point, " ",
-          ...d.article_ids.filter((i) => byId[i]).map((i, k) => h("span", {}, k ? ", " : "[", ext(byId[i].link, byId[i].press || "기사"), k === d.article_ids.filter((j) => byId[j]).length - 1 ? "]" : ""))))),
+          ...d.article_ids.filter((i) => byId[i]).map((i, k) => h("span", {}, k ? ", " : "[", ext(byId[i].link, byId[i].press_name || byId[i].press || "기사"), k === d.article_ids.filter((j) => byId[j]).length - 1 ? "]" : ""))))),
         (S_.counterpoints || []).length ? [h("h4", {}, "반대 근거"), h("ul", {}, ...S_.counterpoints.map((c) => h("li", {}, c)))] : "",
         (S_.watch || []).length ? [h("h4", {}, "관전 포인트"), h("ul", {}, ...S_.watch.map((c) => h("li", {}, c)))] : ""));
     } else kids.push(h("p", { class: "note" }, "종합 판단 없음"));
@@ -1058,6 +1058,27 @@
     kids.push(h("div", { class: "qgrid" }, h("div", { class: "tile" }, h("div", { class: "k" }, "현재"), h("div", { class: "v" }, P.index == null ? "–" : (P.index >= 0 ? "+" : "") + P.index.toFixed(2)),
       h("div", { class: "s" }, `태깅 ${Q.counts.tagged}/${Q.counts.total}건 · 관련 ${Q.counts.relevant}건`)), h("div", { id: "qualTrend", class: "chart" })));
     kids.push(h("h3", {}, P.unit === "사건" ? "요인별 사건 수 " : "요인별 기사 수 ", h("small", {}, `주황=인상 압력, 파랑=인하 압력, ${P.unit === "사건" ? "사건" : "기사"} 수 기준`)), factorBars(P.factors || []));
+    // 분석 대상 언론사(38곳 화이트리스트): 수집·제외·유형별 논조·화이트리스트 전후 비교
+    const PF = Q.press_filter;
+    if (PF) {
+      const sm = (x) => x ? `${x.index >= 0 ? "+" : ""}${(x.index || 0).toFixed(3)} (사건 ${x.n})` : "–";
+      const tm = PF.by_type || {};
+      kids.push(more(`분석 대상 언론사 · ${PF.outlets_used}/${PF.outlets_total}곳 사용 · 기사 ${PF.allowed}/${PF.window_articles}건 반영`,
+        h("p", { class: "note" }, `최근 ${Q.window_hours}시간 수집 ${PF.window_articles}건 중 허용 38개 언론사 기사 ${PF.allowed}건만 정성평가에 쓴다. 제외 ${PF.excluded}건`
+          + (PF.review ? `, 원출처 확인 불가 ${PF.review}건(검토 대상)` : "") + ". 허용 목록 밖 기사는 점수에 넣지 않는다. 한국은행 등 공식 기관 자료는 이 제한과 별개다."),
+        PF.compare_same_rule ? h("p", { class: "note" }, `같은 규칙(제목 묶음)으로 비교한 압력지수 — 전체 매체 ${sm(PF.compare_same_rule.all_outlets)} · 허용 38곳만 ${sm(PF.compare_same_rule.allowed_only)}`) : "",
+        h("h4", {}, "매체 유형별 방향(관련 기사 수)"),
+        h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },
+          h("thead", {}, h("tr", {}, ...["매체 유형", "기사", "인상 압력", "중립", "인하 압력"].map((x) => h("th", {}, x)))),
+          h("tbody", {}, ...Object.entries(tm).sort((a, b) => b[1].n - a[1].n).map(([k, v]) => h("tr", {}, h("td", {}, k), h("td", {}, v.n), h("td", {}, v["인상 압력"]), h("td", {}, v["중립"]), h("td", {}, v["인하 압력"])))))),
+        Q.source_mix ? [h("h4", {}, "근거 유형별(직접발언·전문가해석·기자분석·사실전달)"),
+          h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },
+            h("thead", {}, h("tr", {}, ...["근거 유형", "기사", "인상 압력", "중립", "인하 압력"].map((x) => h("th", {}, x)))),
+            h("tbody", {}, ...Object.entries(Q.source_mix).filter(([, v]) => v.n).map(([k, v]) => h("tr", {}, h("td", {}, k), h("td", {}, v.n), h("td", {}, v["인상 압력"]), h("td", {}, v["중립"]), h("td", {}, v["인하 압력"])))))),
+          h("p", { class: "note" }, "근거 유형은 2026-11-03 이후 새로 분류한 기사부터 채워진다. 그 전 기사는 '미분류'로 센다. 분류는 제목·검색 요약만 보고 한 것이라 신뢰도가 낮다.")] : "",
+        h("h4", {}, "사용한 언론사"), h("p", { class: "note" }, Object.entries(PF.by_outlet || {}).map(([k, v]) => `${k} ${v}`).join(" · ") || "–"),
+        h("h4", {}, "제외한 출처(상위)"), h("p", { class: "note" }, Object.entries(PF.excluded_top || {}).map(([k, v]) => `${k} ${v}`).join(" · ") || "–")));
+    }
     if ((Q.events || []).length) {
       kids.push(h("h3", {}, "많이 보도된 사건 ", h("small", {}, "같은 사건 보도는 지수에 한 번만 들어가고, 보도 수는 가중치로 최대 2배까지만 반영")));
       kids.push(h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },

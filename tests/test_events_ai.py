@@ -76,7 +76,7 @@ class FakeClient:
 CFG = {"model": "test-model", "classify_effort": "low", "synth_effort": "medium", "batch_size": 2,
        "max_new_per_run": 10, "window_hours": 72, "factors": ["물가", "환율", "성장·경기", "기타"]}
 NOW = datetime(2026, 10, 14, 18, tzinfo=KST)
-ARTS = [{"id": f"a{i}", "title": f"t{i}", "summary": "", "press": "p", "link": f"L{i}",
+ARTS = [{"id": f"a{i}", "title": f"t{i}", "summary": "", "press": "p", "link": f"L{i}", "press_status": "allowed",   # 허용 언론사로 판정된 기사만 분석한다
          "published": (NOW - timedelta(hours=i)).isoformat(timespec="minutes")} for i in range(3)]
 
 

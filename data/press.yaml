@@ -1,0 +1,54 @@
+# 뉴스 정성평가 허용 언론사 38곳(화이트리스트). 이 38곳 밖의 기사는 공식 정성평가 점수에 넣지 않는다.
+# 공식 기관(한국은행·국가데이터처·기획재정부·금융위원회 등) 자료·발언은 별도 1차 자료 흐름으로 다루며 이 목록의 제한을 받지 않는다.
+#
+# 필드: id(고유), name(표준명), name_en, type(매체 유형), aliases(별칭·표기 변형), allowed(수집 허용 여부)
+# 도메인은 여기에 적지 않는다. `python -m bokwatch.press_verify`가 대표 페이지·수집 기사 페이지에서 매체명을 확인한 도메인만
+# data/press_verified.json에 남기고, 로더가 그것만 읽는다(추측 등록 금지). 확인되지 않은 도메인은 정성평가에 쓰지 않고 검토 대상으로 저장한다.
+outlets:
+  # A. 종합일간지 7
+  - {id: chosun, name: 조선일보, name_en: Chosun Ilbo, type: 종합일간지, aliases: [조선일보, 조선, Chosun Ilbo, The Chosun Ilbo], allowed: true}
+  - {id: donga, name: 동아일보, name_en: Dong-A Ilbo, type: 종합일간지, aliases: [동아일보, 동아, Dong-A Ilbo, The Dong-A Ilbo], allowed: true}
+  - {id: joongang, name: 중앙일보, name_en: JoongAng Ilbo, type: 종합일간지, aliases: [중앙일보, 중앙, JoongAng Ilbo, Joongang Ilbo, 중앙일보 JTBC], allowed: true}
+  - {id: seoul, name: 서울신문, name_en: Seoul Shinmun, type: 종합일간지, aliases: [서울신문, Seoul Shinmun, The Seoul Shinmun], allowed: true}
+  - {id: segye, name: 세계일보, name_en: Segye Ilbo, type: 종합일간지, aliases: [세계일보, Segye Ilbo, The Segye Times], allowed: true}
+  - {id: hankookilbo, name: 한국일보, name_en: Hankook Ilbo, type: 종합일간지, aliases: [한국일보, Hankook Ilbo, The Hankook Ilbo], allowed: true}
+  - {id: kmib, name: 국민일보, name_en: Kukmin Ilbo, type: 종합일간지, aliases: [국민일보, Kukmin Ilbo, Kookmin Ilbo, The Kukmin Ilbo], allowed: true}
+  # B. 지상파 3
+  - {id: kbs, name: KBS, name_en: KBS News, type: 지상파방송, aliases: [KBS, KBS뉴스, KBS News, 한국방송공사], allowed: true}
+  - {id: mbc, name: MBC, name_en: MBC News, type: 지상파방송, aliases: [MBC, MBC뉴스, MBC News, 문화방송], allowed: true}
+  - {id: sbs, name: SBS, name_en: SBS News, type: 지상파방송, aliases: [SBS, SBS뉴스, SBS News, 서울방송], allowed: true}
+  # C. 경제지 10
+  - {id: sedaily, name: 서울경제, name_en: Seoul Economic Daily, type: 경제지, aliases: [서울경제, 서울경제신문, Seoul Economic Daily, Seoul Economy], allowed: true}
+  - {id: mk, name: 매일경제, name_en: Maeil Business, type: 경제지, aliases: [매일경제, 매경, 매일경제신문, Maeil Business, Maeil Business Newspaper, MK], allowed: true}
+  - {id: hankyung, name: 한국경제, name_en: Korea Economic Daily, type: 경제지, aliases: [한국경제, 한경, 한국경제신문, Korea Economic Daily, Hankyung], allowed: true}
+  - {id: edaily, name: 이데일리, name_en: Edaily, type: 경제지, aliases: [이데일리, Edaily, e데일리], allowed: true}
+  - {id: etoday, name: 이투데이, name_en: Etoday, type: 경제지, aliases: [이투데이, Etoday, e투데이], allowed: true}
+  - {id: asiae, name: 아시아경제, name_en: Asia Economy, type: 경제지, aliases: [아시아경제, Asia Economy, Asiae], allowed: true}
+  - {id: fnnews, name: 파이낸셜뉴스, name_en: Financial News, type: 경제지, aliases: [파이낸셜뉴스, 파이낸셜, Financial News, FNNews, fn뉴스], allowed: true}
+  - {id: heraldcorp, name: 헤럴드경제, name_en: Herald Business, type: 경제지, aliases: [헤럴드경제, 헤럴드, Herald Business, Herald Economy, 헤럴드POP], allowed: true}
+  - {id: ajunews, name: 아주경제, name_en: Ajunews, type: 경제지, aliases: [아주경제, 아주뉴스, Ajunews, AJU News, 아주경제신문], allowed: true}
+  - {id: mt, name: 머니투데이, name_en: Money Today, type: 경제지, aliases: [머니투데이, 머투, Money Today, MoneyToday, mt.co.kr], allowed: true}
+  # D. 종합편성채널 3
+  - {id: jtbc, name: JTBC, name_en: JTBC News, type: 종합편성채널, aliases: [JTBC, JTBC뉴스, JTBC News], allowed: true}
+  - {id: tvchosun, name: TV조선, name_en: TV Chosun, type: 종합편성채널, aliases: [TV조선, TV 조선, TV Chosun, TVCHOSUN, 티브이조선], allowed: true}
+  - {id: channela, name: 채널A, name_en: Channel A, type: 종합편성채널, aliases: [채널A, 채널 A, 채널에이, Channel A, ChannelA], allowed: true}
+  # E. 통신·경제정보 5
+  - {id: yna, name: 연합뉴스, name_en: Yonhap News Agency, type: 통신사, aliases: [연합뉴스, 연합, Yonhap, Yonhap News, Yonhap News Agency], allowed: true}
+  - {id: newsis, name: 뉴시스, name_en: Newsis, type: 통신사, aliases: [뉴시스, Newsis, NEWSIS], allowed: true}
+  - {id: news1, name: 뉴스1, name_en: News1, type: 통신사, aliases: [뉴스1, 뉴스원, News1, NEWS1], allowed: true}
+  - {id: newspim, name: 뉴스핌, name_en: Newspim, type: 통신사, aliases: [뉴스핌, Newspim, NEWSPIM], allowed: true}
+  - {id: einfomax, name: 연합인포맥스, name_en: Yonhap Infomax, type: 경제정보, aliases: [연합인포맥스, 인포맥스, Infomax, Yonhap Infomax, einfomax], allowed: true}
+  # F. IT·산업 전문 3
+  - {id: etnews, name: 전자신문, name_en: Electronic Times, type: IT산업전문, aliases: [전자신문, ET뉴스, Electronic Times, etnews], allowed: true}
+  - {id: zdnet, name: ZD넷코리아, name_en: ZDNet Korea, type: IT산업전문, aliases: [ZD넷코리아, ZD넷, 지디넷코리아, 지디넷, ZDNet Korea, ZDNet, ZDNET Korea], allowed: true}
+  - {id: inews24, name: 아이뉴스24, name_en: inews24, type: IT산업전문, aliases: [아이뉴스24, 아이뉴스, inews24, iNews24, i뉴스24], allowed: true}
+  # G. 방송·보도채널 3
+  - {id: yonhapnewstv, name: 연합뉴스TV, name_en: Yonhap News TV, type: 보도채널, aliases: [연합뉴스TV, 연합뉴스 TV, 연합TV, Yonhap News TV, YonhapnewsTV], allowed: true}
+  - {id: ytn, name: YTN, name_en: YTN, type: 보도채널, aliases: [YTN, 와이티엔, YTN뉴스], allowed: true}
+  - {id: sbsbiz, name: SBS비즈, name_en: SBS Biz, type: 보도채널, aliases: [SBS비즈, SBS 비즈, SBS Biz, SBSBiz, SBS Biz뉴스, 에스비에스비즈], allowed: true}
+  # H. 경제·전문매체 3
+  - {id: chosunbiz, name: 조선비즈, name_en: Chosun Biz, type: 경제전문, aliases: [조선비즈, Chosun Biz, ChosunBiz, 조선 비즈], allowed: true}
+  - {id: econovill, name: 이코노믹리뷰, name_en: Economic Review, type: 경제전문, aliases: [이코노믹리뷰, ER 이코노믹리뷰, Economic Review, econovill, 이코노빌], allowed: true}
+  - {id: joseilbo, name: 조세일보, name_en: Joseilbo, type: 경제전문, aliases: [조세일보, 조세, Joseilbo, Jose Ilbo], allowed: true}
+  # I. 종합 인터넷매체 1
+  - {id: nocutnews, name: 노컷뉴스, name_en: CBS Nocut News, type: 종합인터넷, aliases: [노컷뉴스, CBS노컷뉴스, 노컷, Nocut News, Nocutnews, CBS Nocut News], allowed: true}
