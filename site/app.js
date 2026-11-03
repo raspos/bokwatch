@@ -1254,6 +1254,16 @@
 
   // ------------------------------------------------------------ 방법·검증
   const methodOpen = new Set();
+  // 방법·검증 탭의 번호 절: 번호 순서에 맞는 자리에 끼워 넣는다(비동기로 나중에 그려지는 절 포함)
+  function placeMethodSection(n, title, kids) {
+    const host = $("#method");
+    if (!host) return;
+    host.querySelectorAll(`[data-msec="${n}"]`).forEach((x) => x.remove());
+    const det = h("details", { class: "msec", "data-msec": String(n) }, h("summary", {}, title), ...kids.flat(Infinity));
+    const nxt = [...host.children].find((x) => { const s = x.querySelector && x.querySelector(":scope > summary"); const m = s && /^(\d+)\./.exec(s.textContent); return m && +m[1] > n; });
+    host.insertBefore(det, nxt || null);
+  }
+
   // BOK LAB: 어떤 금리를 쓰고 쓰지 않는지, ACM·AFNS 연구가 어디까지 왔는지, 모형이 언제 어떻게 바뀌었는지
   function renderLab() {
     const el = $("#lab");
@@ -1261,7 +1271,7 @@
     const L = D.lab;
     if (!L) { el.replaceChildren(); return; }
     const tbl = (head, rows) => h("div", { class: "tbl-wrap" }, h("table", { class: "grid" }, h("thead", {}, h("tr", {}, ...head.map((t) => h("th", { class: "l" }, t)))), h("tbody", {}, ...rows)));
-    el.replaceChildren(more("BOK LAB · 데이터 구분 · 연구 현황 · 변경 이력",
+    el.replaceChildren(); placeMethodSection(7, "7. BOK LAB · 데이터 구분 · 연구 현황 · 변경 이력", [
       h("h3", {}, "금리 데이터 구분"),
       tbl(["항목", "성격", "상태", "기간(관측 수)", "쓰임·비고"], L.data.map((x) => h("tr", {}, h("td", { class: "l" }, x.name), h("td", { class: "l" }, x.kind), h("td", { class: "l" }, x.status),
         h("td", { class: "l" }, x.n ? `${ymd(x.first)}~${ymd(x.last)} (${x.n})` : "–"), h("td", { class: "l" }, x.use)))),
@@ -1270,7 +1280,7 @@
       tbl(["단계", "내용", "상태", "비고"], L.acm_afns.map((a) => h("tr", {}, h("td", { class: "l" }, a.step), h("td", { class: "l" }, a.name), h("td", { class: "l" }, a.status), h("td", { class: "l" }, a.note)))),
       h("p", { class: "note" }, L.note),
       h("h3", {}, "모형 버전·변경 이력"),
-      tbl(["날짜", "대상", "내용", "공식 확률 영향"], L.changelog.map((c) => h("tr", {}, h("td", { class: "l" }, ymd(c.date)), h("td", { class: "l" }, c.target), h("td", { class: "l" }, c.change), h("td", { class: "l" }, c.official_effect))))));
+      tbl(["날짜", "대상", "내용", "공식 확률 영향"], L.changelog.map((c) => h("tr", {}, h("td", { class: "l" }, ymd(c.date)), h("td", { class: "l" }, c.target), h("td", { class: "l" }, c.change), h("td", { class: "l" }, c.official_effect))))]);
   }
 
   // AWM 실험: OIS와 통안채 91일 확률의 통계적 결합(시장가격 아님, 기본 확률을 대체하지 않음)
@@ -1298,7 +1308,7 @@
     const wr = Object.entries(L.models).filter(([, m]) => m.ok && m.w_ois != null).map(([n, m]) => h("tr", {}, h("td", { class: "l" }, short(n)), h("td", {}, pct(m.w_ois, 0)), h("td", {}, pct(1 - m.w_ois, 0))));
     sec.push(h("h3", {}, "현재 가중치"), tbl(["모형", "OIS", "통안채 91일"], wr),
       h("p", { class: "note" }, "적응형 가중치는 50:50에서 크게 벗어나지 않는다. 표본이 적을 때 50:50 쪽으로 당기도록 만들었고, 과거 성적 차이가 통계적으로 뚜렷하지 않기 때문이다."));
-    if (!B) { el.replaceChildren(more("종합 예측 검증 · 과거 성적", ...sec.slice(1))); return; }
+    if (!B) { el.replaceChildren(); placeMethodSection(6, "6. 종합 예측 검증 · 과거 성적", sec.slice(1)); return; }
     // D. 시점별 가중치
     const wh = B.weight_by_horizon || {}, Ds = ["30", "20", "10", "5", "3", "1"];
     const wrows = Object.entries(wh).map(([n, o]) => h("tr", {}, h("td", { class: "l" }, short(n)), ...Ds.map((k) => h("td", {}, o[k] ? pct(o[k].mean, 0) : "–"))));
@@ -1331,7 +1341,7 @@
       + "OIS는 실제 OIS 호가가 아니라 CD 시가평가와 KOFR로 만든 합성 값이며, 합성 OIS가 없는 칸은 CD91로 채우지 않고 예측에서 뺀다. "
       + `백테스트는 금통위 순서의 확장 창 검증이지만 모형 후보와 구간 나누기는 자료를 본 뒤 정했으므로 사후 검증에 가깝다. 초기 ${B.primary_burn_in}회는 학습에만 쓴다. `
       + "민감도: " + Object.entries(B.sensitivity || {}).map(([k, v]) => `초기 ${k}회 제외 시 50:50 Brier ${fx((v.brier || {})[base], 3)}`).join(", ") + "."));
-    el.replaceChildren(more("종합 예측 검증 · 과거 성적", ...sec.slice(1)));
+    el.replaceChildren(); placeMethodSection(6, "6. 종합 예측 검증 · 과거 성적", sec.slice(1));
   }
 
   function renderMethod() {
@@ -1517,7 +1527,7 @@
     const order = [...(k ? [["0. BOK WATCH 종합 예측", "1. 대표 확률: BOK WATCH 종합 예측"]] : []),
       ["1-1. 자체 산출 KOFR OIS", `${1 + k}. ${k ? "구성 요소" : "기본 추정"}: 자체 합성 KOFR OIS`],
       ["5. 기본값 교체", `${2 + k}. ${k ? "대표 확률" : "기본값"} 교체 기록과 기준`], ["6. 한계", `${3 + k}. 한계`], ["데이터 출처", `${4 + k}. 데이터 출처`],
-      ["AI 정성 판단 방식", `${5 + k}. AI 정성 판단 방식`],
+      ["AI 정성 판단 방식", `${k ? 8 : 5}. AI 정성 판단 방식`],
       ["1. CD 91일 모형", "참고 · CD 91일 모형(참고 범위)"], ["4. 검증", "참고 · CD 91일·KOFR 선물·혼합 백테스트"],
       ["2. KOFR 3개월 선물", "참고 · KOFR 3개월 선물 모형(실험)"], ["3. 혼합", "참고 · CD·KOFR 혼합(실험)"],
       ["3-1. AI 정성 확률", "참고 · AI 정성 확률(실험)"], ["4-1. 결정 예측 모형", "참고 · 결정 예측 모형(실험)"],
