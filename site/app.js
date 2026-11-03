@@ -6,7 +6,7 @@
   const $ = (s, el = document) => el.querySelector(s);
   const D = {};                 // 로드된 데이터
   const S = { tab: "market", d: null, s: "0", chip: "", spk: "", ven: "", dot: "", q: "", sort: "", qf: "", qd: "" };
-  const TABS = ["market", "guidance", "minutes", "news", "qual", "method"];
+  const TABS = ["market", "guidance", "events", "minutes", "news", "qual", "method"];
 
   function h(tag, attrs, ...kids) {
     const el = document.createElement(tag);
@@ -94,12 +94,12 @@
 
   // ------------------------------------------------------------ 로드
   async function load() {
-    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review, awmSeries, awmBt, speechEv, stmtCh, fcEval, probEv, labSt] = await Promise.all([
+    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review, awmSeries, awmBt, speechEv, stmtCh, probEv, labSt] = await Promise.all([
       getJSON("data/meta.json"), getJSON("data/status.json"), getJSON("data/guidance.json"),
       getJSON("data/reports.json"), getJSON("data/minutes.json"), getJSON("data/news.json"),
       getJSON("data/backtest.json"), getText("data/history.csv"),
       getJSON("data/events.json"), getJSON("data/qual.json"), getJSON("data/prob_log.json"), getJSON("data/decision.json"),
-      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"), getJSON("data/awm_series.json"), getJSON("data/awm_backtest.json"), getJSON("data/speech_events.json"), getJSON("data/statement_changes.json"), getJSON("data/forecast_eval.json"), getJSON("data/prob_events.json"), getJSON("data/lab_status.json"),
+      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"), getJSON("data/awm_series.json"), getJSON("data/awm_backtest.json"), getJSON("data/speech_events.json"), getJSON("data/statement_changes.json"), getJSON("data/prob_events.json"), getJSON("data/lab_status.json"),
     ]);
     Object.assign(D, { meta: meta || {}, status: status || {}, guidance: guidance || { meetings: [], dotplots: [], speeches: [] },
       reports: reports || { reports: [], consensus: { by_meeting: {} } }, minutes: minutes || { meetings: [] },
@@ -109,7 +109,6 @@
     D.awmBt = awmBt;
     D.speechEv = speechEv;
     D.stmtCh = stmtCh;
-    D.fcEval = fcEval;
     D.probEv = probEv;
     D.lab = labSt;
     initRep(awmSeries);
@@ -755,19 +754,6 @@
 
   // ------------------------------------------------------------ 확률 변화 그래프(다음 회의, 7일·30일·90일·전체)
   const PC = { range: 30 };
-  // 확률이 크게 움직인 날의 상세: 동시 발생 이벤트·시장금리·발언·기사(원인으로 단정하지 않는다)
-  function showProbEvent(r) {
-    const el = $("#probEv");
-    if (!el) return;
-    const bp = Object.entries(r.rates_bp || {}).map(([k, v]) => `${({ cd91: "CD 91일", msb91: "통안채 91일", kofr: "KOFR", ktb3y: "국고채 3년" })[k] || k} ${v >= 0 ? "+" : ""}${v}bp`).join(" · ");
-    el.replaceChildren(h("div", { class: "pcdetail" },
-      h("h4", {}, `${ymd(r.date)} 인상 확률 ${pct(r.p_before)} → ${pct(r.p_after)} `, h("small", {}, `${r.delta >= 0 ? "+" : "−"}${Math.abs(r.delta * 100).toFixed(1)}%p · ${r.kind === "stored" ? "당시 저장 예측" : "사후 재계산"}`)),
-      h("p", { class: "note" }, "동시 발생한 이벤트 — 시간적으로 겹친 것이며 원인으로 확인되지 않았다. 발표 시각과 이벤트 전후 가격을 알 수 없어 일간 변화만 본다."),
-      r.events.length ? h("ul", {}, ...r.events.map((e) => h("li", {}, `${ymd(e.date)} ${e.time || ""} ${e.country === "KR" ? "한국" : e.country === "US" ? "미국" : e.country || ""} · `, e.link ? ext(e.link, e.label) : e.label, e.source ? h("small", {}, ` — ${e.source}`) : ""))) : h("p", { class: "note" }, "같은 날·전날의 주요 이벤트 없음"),
-      r.speeches.length ? h("p", {}, "한은 발언 행사: " + r.speeches.map((s) => `${md(s.date)} ${s.venue}(${s.verdict})`).join(", ")) : "",
-      bp ? h("p", {}, "시장금리 일간 변화: " + bp) : "",
-      r.articles.length ? [h("p", {}, "같은 날 허용 언론사 주요 기사"), h("ul", {}, ...r.articles.map((a) => h("li", {}, `${a.press_name} `, ext(a.link, a.title), h("small", {}, ` — ${a.direction} · 강도 ${a.strength}`))))] : ""));
-  }
   function renderProbChart() {
     const el = $("#probChart");
     if (!el) return;
@@ -803,10 +789,14 @@
       svg.append("path").attr("d", d3.line().x((r) => x(new Date(r.d))).y((r) => y(r[k]))(vis)).attr("fill", "none").attr("stroke", c).attr("stroke-width", k === "hike" ? 2.5 : 1.8).attr("stroke-dasharray", dash);
     });
     evs.forEach((e) => svg.append("path").attr("d", d3.symbol().type(d3.symbolTriangle).size(46)()).attr("transform", `translate(${x(new Date(e.date))},${H - m.b + 2})`).attr("fill", "var(--ink-2)")
-      .style("cursor", "pointer").on("click", () => { $("#probEv").textContent = `동시 발생한 이벤트 · ${ymd(e.date)} ${e.time || ""} ${e.label}`; }).append("title").text(`${ymd(e.date)} ${e.label}`));
-    const bigs = (D.probEv && D.probEv.meeting === meet ? D.probEv.rows : []).filter((r) => vis.some((v) => v.d === r.date));
-    bigs.forEach((r) => svg.append("circle").attr("cx", x(new Date(r.date))).attr("cy", y(vis.find((v) => v.d === r.date).hike)).attr("r", 5).attr("fill", "none").attr("stroke", "var(--ink)").attr("stroke-width", 2)
-      .style("cursor", "pointer").on("click", () => showProbEvent(r)).append("title").text(`${ymd(r.date)} 인상 확률 ${r.delta >= 0 ? "+" : "−"}${Math.abs(r.delta * 100).toFixed(1)}%p`));
+      .append("title").text(`${ymd(e.date)} ${e.label}`));
+    // 전환점(전일 대비 5%p 이상 움직인 날): 그래프에 번호로 표시하고, 아래에 그날 있었던 이벤트를 그대로 적는다(인과를 따지지 않는다)
+    const bigs = (D.probEv && D.probEv.meeting === meet ? D.probEv.rows : []).filter((r) => vis.some((v) => v.d === r.date)).slice().sort((a, b) => a.date.localeCompare(b.date));
+    bigs.forEach((r, i) => {
+      const cx = x(new Date(r.date)), cy = y(vis.find((v) => v.d === r.date).hike);
+      svg.append("circle").attr("cx", cx).attr("cy", cy).attr("r", 8).attr("fill", "var(--surface)").attr("stroke", "var(--ink)").attr("stroke-width", 1.5);
+      svg.append("text").attr("x", cx).attr("y", cy + 3.5).attr("text-anchor", "middle").attr("font-size", 10).attr("font-weight", 700).attr("fill", "var(--ink)").text(i + 1);
+    });
     const hov = svg.append("g").style("display", "none");
     hov.append("line").attr("y1", m.t).attr("y2", H - m.b).attr("stroke", "var(--ink-3)");
     const dots = hov.append("circle").attr("r", 4).attr("fill", "var(--hike)");
@@ -830,14 +820,18 @@
       h("div", { class: "pcchg" }, `인상 ${pct(lastRow.hike)} · 전일 ${fmt(chg(1))} · 7일 ${fmt(chg(7))} · 30일 ${fmt(chg(30))}`),
       h("div", { class: "chart" }, svg.node()),
       h("div", { class: "pclegend" }, h("span", {}, "━ 인상"), h("span", {}, "╌ 동결"), h("span", {}, "··· 인하"), h("span", {}, "▲ 주요 이벤트(동시 발생, 원인 아님)")),
-      bigs.length ? h("div", { class: "pclegend" }, h("span", {}, "○ 확률이 크게 움직인 날(5%p 이상):"), ...bigs.slice(0, 6).map((r) => h("button", { type: "button", class: "chipbtn", onclick: () => showProbEvent(r) }, `${md(r.date)} ${r.delta >= 0 ? "+" : "−"}${Math.abs(r.delta * 100).toFixed(1)}%p`))) : "",
+      bigs.length ? h("div", { class: "pcturn" }, h("h4", {}, "전환점 ", h("small", {}, "확률이 전일보다 5%p 이상 움직인 날 · 그날 있었던 이벤트(원인으로 단정하지 않음)")),
+        h("ol", {}, ...bigs.map((r) => h("li", {}, h("b", {}, `${md(r.date)} ${r.delta >= 0 ? "+" : "−"}${Math.abs(r.delta * 100).toFixed(1)}%p`), " ",
+          (r.events.length || r.speeches.length) ? [...r.events.map((e) => (e.link ? ext(e.link, e.label) : e.label)), ...r.speeches.map((s) => `한은 발언(${s.venue})`)]
+            .reduce((acc, x, i) => (i ? [...acc, " · ", x] : [x]), []) : h("span", { class: "note" }, "기록된 주요 이벤트 없음"))))) : "",
       h("div", { class: "note", id: "probTip", "aria-live": "polite" }, tip(lastRow)),
-      h("div", { class: "note", id: "probEv" }, ""));
+      "");
   }
 
   function renderTrend() {
     // 다가오는 회의만, 최신값과 변화폭을 한 줄로. 미니 추이선은 최근 20영업일.
     const el = $("#trend");
+    if (!el) return;                       // 첫 화면에서 뺐다(확률 변화 그래프와 중복)
     const key = (v) => v instanceof Date ? v.toISOString().slice(0, 10) : String(v);
     const rows = D.hist.filter((r) => String(r.scenario) === S.s).map((r) => ({ d: key(r.date), m: key(r.meeting), p: +r.p_hike }));
     if (!rows.length) { el.replaceChildren(h("div", { class: "empty" }, "추이 데이터 없음")); return; }
@@ -962,8 +956,7 @@
       add("포워드 가이던스", fg ? `3개월 내 인상 열어둔 위원 ${fg.hike ?? "–"} · 동결 ${fg.hold ?? "–"} · 인하 ${fg.cut ?? "–"}` : "미입력");
       if (m.press_quotes.length) add("간담회", ...m.press_quotes.map((q) => h("div", {}, `${q.speaker}: “${q.text}”`)));
       if (m.outlook) add("전망", `성장률 2026년 ${m.outlook.gdp_2026}% · 2027년 ${m.outlook.gdp_2027}%`);
-      if (m.diff) add("통방문 변화", h("ul", { class: "diff" }, ...m.diff.map((x) => h("li", { class: x.op }, x.text))),
-        m.statement_provisional ? h("div", { class: "note" }, "보도 인용 문구만 담은 임시본 — 원문 대조 필요") : "");
+      if (m.statement_provisional) add("통방문", h("div", { class: "note" }, "보도 인용 문구만 담은 임시본 — 원문 대조 필요"));
       else if (!m.has_statement) add("통방문", "원문 미입력 (data/statements/)");
       const L = m.links || {};
       const doc = (k, label) => L[k] ? ext(L[k].url, label) : null;
@@ -976,24 +969,6 @@
         dl);
     });
     $("#meetCards").replaceChildren(...cards);
-
-    // 타임라인
-    const fill = (selEl, vals, cur, all) => selEl.replaceChildren(h("option", { value: "" }, all), ...vals.map((v) => h("option", { value: v, selected: v === cur }, v)));
-    // 기본은 총재 발언만. '발언자 전체'를 고르면 부총재·위원 발언도 함께
-    const isGov = (s) => / 총재$/.test(s) && !s.includes("부총재");
-    $("#spkSel").replaceChildren(h("option", { value: "" }, "총재"), h("option", { value: "*", selected: S.spk === "*" }, "발언자 전체"),
-      ...(G.speakers || []).filter((v) => !isGov(v)).map((v) => h("option", { value: v, selected: v === S.spk }, v)));
-    fill($("#venSel"), G.venues || [], S.ven, "장소 전체");
-    const tn = { hawk: "매파", dove: "비둘기", neutral: "중립" };
-    const since = new Date(Date.now() + 9 * 3600e3 - 92 * 864e5).toISOString().slice(0, 10);  // 최근 3개월
-    const sp = (G.speeches || []).filter((s) => s.date >= since && (!S.spk ? isGov(s.speaker) : S.spk === "*" || s.speaker === S.spk) && (!S.ven || s.venue === S.ven));
-    $("#timeline").replaceChildren(...sp.map((s) => h("li", { class: s.tone },
-      h("div", { class: "when" }, `${ymd(s.date)} · ${s.venue} · ${s.speaker}`, h("span", { class: `tag ${s.tone}` }, tn[s.tone] || s.tone)),
-      h("div", {}, "“" + s.quote + "”", s.note ? h("small", {}, s.note) : ""),
-      h("div", { class: "note" }, s.link ? ext(s.link, "인용 기사") : ""),
-      (s.articles || []).length ? more(`관련 기사 ${s.articles.length}건`, h("ul", { class: "rel" }, ...s.articles.map((a) =>
-        h("li", {}, `${a.published.slice(5, 16).replace("T", " ").replace("-", "/")} · ${a.press} `, ext(a.link, a.title))))) : null)));
-    if (!sp.length) $("#timeline").replaceChildren(h("li", {}, "해당 발언 없음"));
 
     renderTone();
   }
@@ -1060,23 +1035,6 @@
     return frag;
   }
 
-  // 기관 전망 수집 현황과 적중률(시점 통일: 금통위 30·7·1일 전). 표본 수를 함께 보이고, 표본이 작으면 순위를 만들지 않는다.
-  function renderForecastEval() {
-    const el = $("#fcEval");
-    if (!el) return;
-    const F = D.fcEval;
-    if (!F || !F.n_forecasts) { el.replaceChildren(h("p", { class: "note" }, "수집된 전망이 없어 평가하지 않는다.")); return; }
-    const A = { hike: "인상", hold: "동결", cut: "인하" };
-    const rows = (F.table || []).filter((t) => t.n_institutions).map((t) => h("tr", {}, h("td", {}, ymd(t.meeting)), h("td", {}, `${t.horizon}일 전`), h("td", {}, A[t.actual]),
-      h("td", {}, `${t.n_institutions}곳`), h("td", {}, `${t.hits}/${t.n_institutions} (${pct(t.hit_rate, 0)})`),
-      h("td", {}, t.bokwatch ? `${t.bokwatch.top ? A[t.bokwatch.top] : "동률"} ${t.bokwatch.hit ? "적중" : "빗나감"} · 실제 결과 확률 ${pct(t.bokwatch.p_actual, 0)} · ${t.bokwatch.kind === "stored" ? "당시 저장 예측" : "사후 재계산"}` : "–")));
-    el.replaceChildren(
-      h("p", { class: "note" }, `전망 ${F.n_forecasts}건 · 기관 ${F.n_institutions}곳 · 평가된 금통위 ${F.meetings_evaluated}회`),
-      rows.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "grid" }, h("thead", {}, h("tr", {}, ...["회의", "시점", "실제", "전망 낸 기관", "방향 적중", "BOK WATCH(종합 예측)"].map((x) => h("th", {}, x)))), h("tbody", {}, ...rows))) : "",
-      (F.revisions || []).length ? h("p", { class: "note" }, "전망 수정: " + F.revisions.map((r) => `${r.institution} ${md(r.meeting)}회의 ${r.from}→${r.to}(${md(r.date)})`).join(" · ")) : "",
-      h("ul", { class: "note" }, ...(F.notes || []).map((n) => h("li", {}, n))));
-  }
-
   function renderNews() {
     // 기사 목록은 뺐다(총재 발언은 가이던스 탭 타임라인의 기사 링크로 본다)
     // 보고서 표
@@ -1087,24 +1045,29 @@
       { k: "dissent", t: "소수의견" }, { k: "terminal", t: "최종금리" }, { k: "path", t: "경로", l: 1 }, { k: "rationale", t: "근거", l: 1 }, { k: "source", t: "출처", l: 1 },
     ];
     const val = (r, k) => k.startsWith("call:") ? ((r.calls || {})[k.slice(5)] || {}).call || "" : r[k] ?? "";
-    let reps = D.reports.reports.filter((r) => !S.q || JSON.stringify(r).includes(S.q));
+    // 이번·다음 회의 전망만 보인다. 지난 회의에 대한 전망은 숨긴다(출처는 허용 38개 매체 기사로 제한)
+    const hasNext = (r) => meets.some((m) => (r.calls || {})[m]);
+    const hiddenPast = D.reports.reports.filter((r) => !hasNext(r)).length;
+    let reps = D.reports.reports.filter((r) => hasNext(r) && (!S.q || JSON.stringify(r).includes(S.q)));
     const [sk, sd] = (S.sort || "published:desc").split(":");
     reps = reps.slice().sort((a, b) => { const x = val(a, sk), y = val(b, sk); return (x > y ? 1 : x < y ? -1 : 0) * (sd === "asc" ? 1 : -1); });
     const thead = h("thead", {}, h("tr", {}, ...cols.map((c) => h("th", { class: c.l ? "l" : null, "aria-sort": c.k === sk ? (sd === "asc" ? "ascending" : "descending") : null,
       onclick: () => setS({ sort: `${c.k}:${c.k === sk && sd === "desc" ? "asc" : "desc"}` }) }, c.t))));
-    const tb = reps.map((r) => h("tr", { class: r.in_window === false || r.superseded ? "out" : null,
+    const rowOf = (r) => h("tr", { class: r.in_window === false || r.superseded ? "out" : null,
       title: r.superseded ? "같은 기관의 새 전망이 있어 집계에서 뺌" : r.in_window === false ? "최근 5영업일보다 오래돼 전망 집계에서 뺌" : null }, ...cols.map((c) => {
       if (c.k.startsWith("call:")) { const x = (r.calls || {})[c.k.slice(5)]; return h("td", { class: x ? "call-" + x.call : null, title: x && x.note || null }, x ? x.call + (x.size ? ` ${Math.round(x.size * 100)}bp` : "") + (x.note ? "*" : "") : "–"); }
       if (c.k === "terminal") return h("td", {}, r.terminal != null ? fx(r.terminal) + "%" : "–");
-      if (c.k === "source") return h("td", { class: "l" }, r.link ? ext(r.link, r.source) : r.source || "–");
+      if (c.k === "source") return h("td", { class: "l", title: r.source || null }, r.link ? ext(r.link, r.press_name || "기사") : "–");   // 출처는 허용 38개 매체의 표준명으로, 자세한 표기는 마우스를 올리면
       if (c.k === "published") return h("td", {}, ymd(r.published), (D.reports.new || []).includes(r.institution) && !r.superseded ? h("span", { class: "badge new" }, "새") : "",
         r.superseded ? h("span", { class: "badge" }, "이전 전망") : r.in_window === false ? h("span", { class: "badge" }, "집계 제외") : "");
       return h("td", { class: c.l ? "l" : null }, r[c.k] || "–");
-    })));
-    $("#repTable").replaceChildren(thead, h("tbody", {}, tb));
+    }));
+    const SHOW = 8;       // 처음에는 최근 8건만, 나머지는 펼쳐서
+    $("#repTable").replaceChildren(thead, h("tbody", {}, reps.slice(0, SHOW).map(rowOf)));
+    $("#repRest").replaceChildren(reps.length > SHOW ? more(`나머지 ${reps.length - SHOW}건 보기`, h("div", { class: "tbl-wrap" }, h("table", { class: "grid" }, thead.cloneNode(true), h("tbody", {}, reps.slice(SHOW).map(rowOf))))) : "");
+    $("#repNote").textContent = `이번·다음 회의(${meets.map(md).join(", ")}) 전망만 표시. 지난 회의 전망 ${hiddenPast}건은 숨김. 출처는 허용 38개 매체 기사로 제한(밖 출처 ${D.reports.press_excluded || 0}건 제외).`;
 
     renderConsensus();
-    renderForecastEval();
     const K = D.reports.kofia || [];
     const pc = (v) => v == null ? "–" : v + "%";
     $("#kofia").replaceChildren(K.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },
@@ -1785,8 +1748,6 @@
     $("#spreadToggle").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setS({ s: b.dataset.s }); });
     $("#snapDate").addEventListener("change", (e) => setS({ d: e.target.value }));
     $("#dotSel").addEventListener("change", (e) => setS({ dot: e.target.value }));
-    $("#spkSel").addEventListener("change", (e) => setS({ spk: e.target.value }));
-    $("#venSel").addEventListener("change", (e) => setS({ ven: e.target.value }));
     let tm; $("#repSearch").addEventListener("input", (e) => { clearTimeout(tm); tm = setTimeout(() => setS({ q: e.target.value.trim() }), 200); });
     $("#copyLink").addEventListener("click", () => copy(location.href, $("#copyLink"), "링크 복사"));
     $("#themeBtn").addEventListener("click", () => {

@@ -570,7 +570,7 @@ def signal_summary(articles, tags, groups, since) -> dict:
             continue
         top = max((a for a in ms if tags[a["id"]]["signal"] == sig), key=lambda a: (tags[a["id"]]["strength"], a["published"]))
         out[sig]["events"] += 1
-        out[sig]["examples"].append({"title": top["title"], "link": top["link"], "press": top.get("press", ""),
+        out[sig]["examples"].append({"title": top["title"], "link": top["link"], "press": top.get("press_name") or top.get("press", ""),
                                      "published": top["published"][:16], "reports": len(ms), "reason": tags[top["id"]]["reason"],
                                      "strength": tags[top["id"]]["strength"]})
     for s in out.values():

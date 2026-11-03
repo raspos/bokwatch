@@ -14,6 +14,23 @@ def load_reports() -> dict:
     return r
 
 
+def annotate_press(reports: list[dict]) -> list[dict]:
+    """보고서 출처(link)가 허용 38개 매체 기사인지 표시한다. 링크가 없거나 허용 목록 밖이면 'excluded'(원출처 확인 불가 포함)."""
+    from .press import default_index
+    idx = default_index()
+    for x in reports:
+        res = idx.identify({"link": x.get("link") or ""})
+        o = idx.outlets.get(res["outlet"]) if res["outlet"] else None
+        x["press_status"] = res["status"] if x.get("link") else "excluded"
+        x["press_name"] = o["name"] if o else None
+        x["press_reason"] = res["reason"] if x.get("link") else "링크 없음: 출처 확인 불가"
+    return reports
+
+
+def allowed_reports(reports: list[dict]) -> list[dict]:
+    return [x for x in annotate_press(reports) if x["press_status"] == "allowed"]
+
+
 WINDOW_BD = 5  # 집계에 넣는 보고서: 기준일 포함 최근 5영업일 안에 나온 것
 
 
@@ -57,7 +74,8 @@ def new_reports(reports: list[dict], today: date, days: int = 2) -> list[dict]:
 
 def build_reports(meetings: list[str], today: date) -> dict:
     r = load_reports()
-    reps = sorted(r["reports"], key=lambda x: x["published"], reverse=True)
+    all_reps = annotate_press(sorted(r["reports"], key=lambda x: x["published"], reverse=True))
+    reps = [x for x in all_reps if x["press_status"] == "allowed"]       # 보고서 표·집계는 허용 38개 매체 출처만
     since = window_start(today).isoformat()
     newest = {}
     for x in sorted(reps, key=lambda z: z["published"]):
@@ -68,6 +86,7 @@ def build_reports(meetings: list[str], today: date) -> dict:
     return {
         "asof": r.get("asof"),
         "reports": reps,
+        "press_excluded": len(all_reps) - len(reps),
         "consensus": consensus(reps, meetings, today),
         "new": [x["institution"] for x in new_reports(reps, today)],
         "kofia": r["kofia_survey"],

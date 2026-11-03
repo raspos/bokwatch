@@ -304,10 +304,10 @@ def main(argv=None):
             series = awm_series.write_series(SITE_DATA, DATA / "awm_log.csv", today, (cfg.get("awm") or {}).get("representative", "m5"))
         except Exception as e:  # noqa: BLE001
             print(f"AWM 시계열 생성 실패: {e}")
-        from bokwatch.reports import load_reports
+        from bokwatch.reports import allowed_reports, load_reports
         from bokwatch.review import build_review
         raw = load_reports()
-        write_json(SITE_DATA / "review.json", build_review(guidance, plog, raw["reports"], raw["kofia_survey"], today, series) or {})
+        write_json(SITE_DATA / "review.json", build_review(guidance, plog, allowed_reports(raw["reports"]), raw["kofia_survey"], today, series) or {})
         try:  # BOK LAB: 데이터 구분·ACM/AFNS 진행 상태·모형 변경 이력
             from bokwatch import lab_status
             write_json(SITE_DATA / "lab_status.json", lab_status.build())
@@ -324,12 +324,6 @@ def main(argv=None):
                 write_json(SITE_DATA / "prob_events.json", prob_events.build(series, nm, ev_all, sp_ev, qa, DATA / "rates.csv"))
         except Exception as e:  # noqa: BLE001
             print(f"확률 변화 이벤트 생성 실패: {e}")
-        try:  # 기관 전망 수집 현황·적중률(표본 수 공개, 순위는 표본이 충분할 때만)
-            from bokwatch import awm_data, forecast_eval
-            outcomes = {m["meeting"].isoformat(): m["actual"] for m in awm_data.meeting_table(cfg) if m["meeting"] <= today}
-            write_json(SITE_DATA / "forecast_eval.json", forecast_eval.evaluate(raw["reports"], outcomes, series or {}))
-        except Exception as e:  # noqa: BLE001
-            print(f"기관 전망 평가 실패: {e}")
 
         warnings = [stalled] if stalled else []
         for y, ds in cfg["meetings"].items():

@@ -22,7 +22,7 @@
 <meta name="twitter:title" content="BOK워치 — 한국은행 금통위 금리 결정 모니터">
 <meta name="twitter:description" content="모형 추정 확률 · 총재 발언 · 의사록 · 전문가 전망. 매일 오전 10시 갱신.">
 <meta name="twitter:image" content="https://bokwatch.pages.dev/og.png">
-<link rel="stylesheet" href="style.css?v=20261103c">
+<link rel="stylesheet" href="style.css?v=20261103d">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 </head>
 <body>
@@ -60,6 +60,7 @@
   <button role="tab" data-tab="market">확률 추정</button>
   <span class="area" aria-hidden="true">BOK INTELLIGENCE</span>
   <button role="tab" data-tab="guidance">가이던스</button>
+  <button role="tab" data-tab="events">지표·이벤트</button>
   <button role="tab" data-tab="minutes">의사록</button>
   <button role="tab" data-tab="news">보고서</button>
   <button role="tab" data-tab="qual">정성 판단(AI)</button>
@@ -95,12 +96,6 @@
       <div class="tbl-wrap"><table class="grid" id="cdRangeTable"></table></div>
       <p class="note spread-note" id="spreadNote"></p>
     </details>
-    <h3>경제지표·이벤트 <small>다음 45일</small></h3>
-    <div class="cons" id="indicators"></div>
-    <div class="tbl-wrap" style="margin-top:10px"><table class="grid" id="eventTable"></table></div>
-    <details class="more"><summary>설명</summary><p class="note" id="eventNote"></p></details>
-    <h3 class="no-print">인상 확률 최근 흐름</h3>
-    <div id="trend"></div>
     <h3>날짜별 확률 기록</h3>
     <div class="tbl-wrap"><table class="grid" id="logTable"></table></div>
     <details class="more" id="logMore" hidden><summary id="logMoreSum">이전 기록</summary><div class="tbl-wrap"><table class="grid" id="logTableRest"></table></div></details>
@@ -118,17 +113,16 @@
     <div id="review"></div>
   </section>
 
+  <section class="panel" id="tab-events" role="tabpanel" hidden>
+    <h2>경제지표·이벤트 <small>다음 45일</small></h2>
+    <div class="cons" id="indicators"></div>
+    <div class="tbl-wrap" style="margin-top:10px"><table class="grid" id="eventTable"></table></div>
+    <details class="more"><summary>설명</summary><p class="note" id="eventNote"></p></details>
+  </section>
+
   <section class="panel" id="tab-guidance" role="tabpanel" hidden>
-    <div class="row-head">
-      <h2>총재 발언 타임라인 <small>최근 3개월</small></h2>
-      <div class="filters">
-        <select id="spkSel" aria-label="발언자"><option value="">발언자 전체</option></select>
-        <select id="venSel" aria-label="장소"><option value="">장소 전체</option></select>
-      </div>
-    </div>
+    <h2>한국은행 발언</h2>
     <div id="speechEvents"></div>
-    <h3>개별 발언 전체 <small>기존 목록 · 발언자·장소로 거르기</small></h3>
-    <ol class="timeline" id="timeline"></ol>
     <div class="row-head">
       <h2>점도표 <small>6개월 뒤 조건부 전망</small></h2>
       <label class="no-print">공개분 <select id="dotSel"></select></label>
@@ -139,7 +133,6 @@
     <div id="tone" class="chart small"></div>
     <h2>회의별 결정·문구 변화</h2>
     <div id="stmtChanges"></div>
-    <h3>회의별 전체 문장 비교 <small>기존 · 결정문 전체</small></h3>
     <div id="meetCards"></div>
   </section>
 
@@ -154,10 +147,10 @@
     <h2>보고서 전망</h2>
     <input id="repSearch" type="search" placeholder="기관·작성자·근거 검색" aria-label="보고서 검색">
     <div class="tbl-wrap"><table class="grid sortable" id="repTable"></table></div>
+    <div id="repRest"></div>
+    <p class="note" id="repNote"></p>
     <h3>전문가 전망 vs 모형 추정</h3>
     <div id="consensus" class="cons"></div>
-    <h3>전망 적중률 <small>시점 통일 · 표본 수 공개</small></h3>
-    <div id="fcEval"></div>
     <h3>금투협 채권시장지표 설문</h3>
     <div id="kofia"></div>
   </section>
@@ -184,6 +177,6 @@
 </footer>
 <div id="tip" class="tip" role="tooltip" hidden></div>
 <script src="vendor/d3.v7.9.0.min.js"></script>
-<script src="app.js?v=20261103g"></script>
+<script src="app.js?v=20261103h"></script>
 </body>
 </html>
