@@ -655,6 +655,7 @@
       ...(snap.warnings || [])].filter(Boolean).join(" ");
     renderFutures(live);
     renderTrend();
+    renderProbChart();
     renderEvents();
     renderLog();
   }
@@ -745,6 +746,71 @@
     $("#eventTable").replaceChildren(head, h("tbody", {}, up.length ? up.map(row) : [h("tr", {}, h("td", { colspan: 5 }, "예정 이벤트 없음"))]));
     $("#eventNote").textContent = (E.skeleton ? "경제지표 일정 수집 전 — 금통위·의사록 일정만 표시. " : "") +
       "미국 일정은 BLS·연준 발표 시각(미 동부)을 한국 시간으로 바꾼 값.";
+  }
+
+  // ------------------------------------------------------------ 확률 변화 그래프(다음 회의, 7일·30일·90일·전체)
+  const PC = { range: 30 };
+  function renderProbChart() {
+    const el = $("#probChart");
+    if (!el) return;
+    const key = (v) => String(v);
+    // 선택한 날짜까지의 기록만 쓴다(그 뒤 자료가 과거 화면에 들어가지 않는다)
+    const all = D.hist.filter((r) => String(r.scenario) === "0" && (!S.d || key(r.date) <= S.d));
+    if (!all.length) { el.replaceChildren(h("div", { class: "empty" }, "확률 변화 데이터 없음")); return; }
+    const last = all.reduce((a, r) => (key(r.date) > a ? key(r.date) : a), "");
+    const meet = [...new Set(all.filter((r) => key(r.meeting) > last).map((r) => key(r.meeting)))].sort()[0];
+    if (!meet) { el.replaceChildren(h("div", { class: "empty" }, "다가오는 회의의 확률 변화 데이터 없음")); return; }
+    const rows = all.filter((r) => key(r.meeting) === meet).map((r) => ({ d: key(r.date), hike: +r.p_hike, hold: +r.p_hold, cut: +r.p_cut }))
+      .sort((a, b) => a.d.localeCompare(b.d));
+    const dayMs = (d) => Date.parse(d + "T00:00:00Z");
+    const lastRow = rows[rows.length - 1];
+    const back = (n) => { const t = dayMs(lastRow.d) - n * 864e5; const c = rows.filter((r) => dayMs(r.d) <= t); return c.length ? c[c.length - 1] : null; };
+    const chg = (n) => { const b = n === 1 ? rows[rows.length - 2] : back(n); return b ? lastRow.hike - b.hike : null; };
+    const fmt = (x) => x == null ? "–" : (x > 0.0005 ? "+" : x < -0.0005 ? "−" : "±") + Math.abs(x * 100).toFixed(1) + "%p";
+    const vis = PC.range ? rows.filter((r) => dayMs(r.d) >= dayMs(lastRow.d) - PC.range * 864e5) : rows;
+    const evs = ((D.events && D.events.all) || []).filter((e) => vis.length && e.date >= vis[0].d && e.date <= lastRow.d && (e.importance || 1) >= 3);
+    const W = 640, H = 250, m = { l: 40, r: 12, t: 12, b: 34 };
+    const x = d3.scaleTime().domain([new Date(vis[0].d), new Date(lastRow.d)]).range([m.l, W - m.r]);
+    const y = d3.scaleLinear().domain([0, 1]).range([H - m.b, m.t]);
+    const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img")
+      .attr("aria-label", `${md(meet)} 금통위 인상·동결·인하 확률 변화, 최근 ${PC.range || "전체"}${PC.range ? "일" : " 기간"}`);
+    y.ticks(5).forEach((t) => {
+      svg.append("line").attr("x1", m.l).attr("x2", W - m.r).attr("y1", y(t)).attr("y2", y(t)).attr("stroke", "var(--line)");
+      svg.append("text").attr("x", m.l - 6).attr("y", y(t) + 4).attr("text-anchor", "end").attr("font-size", 10).attr("fill", "var(--ink-3)").text(Math.round(t * 100) + "%");
+    });
+    x.ticks(Math.min(6, vis.length)).forEach((t) => svg.append("text").attr("x", x(t)).attr("y", H - 16).attr("text-anchor", "middle").attr("font-size", 10).attr("fill", "var(--ink-3)").text(`${t.getUTCMonth() + 1}/${t.getUTCDate()}`));
+    const L = [["hike", "var(--hike)", null, "인상"], ["hold", "var(--hold)", "5 3", "동결"], ["cut", "var(--cut)", "1.5 3", "인하"]];
+    L.forEach(([k, c, dash]) => {
+      if (k === "cut" && !vis.some((r) => r.cut > 0.005)) return;
+      svg.append("path").attr("d", d3.line().x((r) => x(new Date(r.d))).y((r) => y(r[k]))(vis)).attr("fill", "none").attr("stroke", c).attr("stroke-width", k === "hike" ? 2.5 : 1.8).attr("stroke-dasharray", dash);
+    });
+    evs.forEach((e) => svg.append("path").attr("d", d3.symbol().type(d3.symbolTriangle).size(46)()).attr("transform", `translate(${x(new Date(e.date))},${H - m.b + 2})`).attr("fill", "var(--ink-2)")
+      .style("cursor", "pointer").on("click", () => { $("#probEv").textContent = `동시 발생한 이벤트 · ${ymd(e.date)} ${e.time || ""} ${e.label}`; }).append("title").text(`${ymd(e.date)} ${e.label}`));
+    const hov = svg.append("g").style("display", "none");
+    hov.append("line").attr("y1", m.t).attr("y2", H - m.b).attr("stroke", "var(--ink-3)");
+    const dots = hov.append("circle").attr("r", 4).attr("fill", "var(--hike)");
+    const tip = (r) => {
+      const e = repEntry(meet, r.d);
+      return `${ymd(r.d)} · 인상 ${pct(r.hike)} · 동결 ${pct(r.hold)}${r.cut > 0.0005 ? ` · 인하 ${pct(r.cut)}` : ""}` + (e && REP.mode === "m5" ? ` · ${repKind(e.kind)}` : "");
+    };
+    svg.append("rect").attr("x", m.l).attr("y", m.t).attr("width", W - m.l - m.r).attr("height", H - m.t - m.b).attr("fill", "transparent").style("touch-action", "pan-y")
+      .on("pointermove pointerdown", (ev) => {
+        const [px] = d3.pointer(ev);
+        const t = x.invert(px).getTime();
+        const r = vis.reduce((a, b) => (Math.abs(dayMs(b.d) - t) < Math.abs(dayMs(a.d) - t) ? b : a));
+        hov.style("display", null); hov.select("line").attr("x1", x(new Date(r.d))).attr("x2", x(new Date(r.d)));
+        dots.attr("cx", x(new Date(r.d))).attr("cy", y(r.hike));
+        $("#probTip").textContent = tip(r);
+      }).on("pointerleave", () => { hov.style("display", "none"); $("#probTip").textContent = tip(lastRow); });
+    const seg = h("div", { class: "seg", role: "group", "aria-label": "기간 선택" }, ...[[7, "7일"], [30, "30일"], [90, "90일"], [0, "전체"]].map(([n, t]) =>
+      h("button", { type: "button", "aria-pressed": PC.range === n, onclick: () => { PC.range = n; renderProbChart(); } }, t)));
+    el.replaceChildren(
+      h("div", { class: "pchead" }, h("div", {}, h("b", {}, `${dmon(meet)} 금통위 확률 변화`), h("span", { class: "note" }, ` · ${REP.mode === "m5" ? "BOK WATCH 종합 예측" : "합성 KOFR OIS"} · 기준일 ${ymd(lastRow.d)}`)), seg),
+      h("div", { class: "pcchg" }, `인상 ${pct(lastRow.hike)} · 전일 ${fmt(chg(1))} · 7일 ${fmt(chg(7))} · 30일 ${fmt(chg(30))}`),
+      h("div", { class: "chart" }, svg.node()),
+      h("div", { class: "pclegend" }, h("span", {}, "━ 인상"), h("span", {}, "╌ 동결"), h("span", {}, "··· 인하"), h("span", {}, "▲ 주요 이벤트(동시 발생, 원인 아님)")),
+      h("div", { class: "note", id: "probTip", "aria-live": "polite" }, tip(lastRow)),
+      h("div", { class: "note", id: "probEv" }, ""));
   }
 
   function renderTrend() {
