@@ -94,12 +94,12 @@
 
   // ------------------------------------------------------------ 로드
   async function load() {
-    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review, awmSeries, awmBt, speechEv] = await Promise.all([
+    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review, awmSeries, awmBt, speechEv, stmtCh] = await Promise.all([
       getJSON("data/meta.json"), getJSON("data/status.json"), getJSON("data/guidance.json"),
       getJSON("data/reports.json"), getJSON("data/minutes.json"), getJSON("data/news.json"),
       getJSON("data/backtest.json"), getText("data/history.csv"),
       getJSON("data/events.json"), getJSON("data/qual.json"), getJSON("data/prob_log.json"), getJSON("data/decision.json"),
-      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"), getJSON("data/awm_series.json"), getJSON("data/awm_backtest.json"), getJSON("data/speech_events.json"),
+      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"), getJSON("data/awm_series.json"), getJSON("data/awm_backtest.json"), getJSON("data/speech_events.json"), getJSON("data/statement_changes.json"),
     ]);
     Object.assign(D, { meta: meta || {}, status: status || {}, guidance: guidance || { meetings: [], dotplots: [], speeches: [] },
       reports: reports || { reports: [], consensus: { by_meeting: {} } }, minutes: minutes || { meetings: [] },
@@ -108,6 +108,7 @@
     D.snaps = {};
     D.awmBt = awmBt;
     D.speechEv = speechEv;
+    D.stmtCh = stmtCh;
     initRep(awmSeries);
   }
   // 대표 확률 모형: m5 = BOK WATCH 종합 예측(합성 OIS 50% + 통안채 91일 50%), ois = 합성 KOFR OIS 단독.
@@ -894,8 +895,23 @@
       h("p", { class: "note" }, SE.method + " 인용이 1개뿐인 행사는 논조를 단정하지 않는다. 표현 변화는 사전에 있는 표현의 유무 비교라 문장 의미 변화를 모두 잡지는 못한다."));
   }
 
+  // 통방문 핵심 변화 3~5개(범주별, 규칙 기반). 전체 문장 비교는 아래 회의 카드에 그대로 있다.
+  function renderStatementChanges() {
+    const el = $("#stmtChanges");
+    if (!el) return;
+    const P = D.stmtCh && (D.stmtCh.pairs || [])[0];
+    if (!P) { el.replaceChildren(); return; }
+    const cards = P.top.filter((r) => r.change !== "변화 없음").slice(0, 5).map((r) => h("div", { class: "stc" },
+      h("div", {}, h("b", {}, r.category), h("span", { class: "badge" }, r.change), r.new_terms.length ? h("span", { class: "note" }, ` 새로 나온 표현: ${r.new_terms.slice(0, 6).join(", ")}`) : "", r.gone_terms.length ? h("span", { class: "note" }, ` · 빠진 표현: ${r.gone_terms.slice(0, 6).join(", ")}`) : ""),
+      h("div", { class: "stcol" }, h("div", {}, h("small", {}, `이전(${md(P.prev)})`), h("p", {}, r.prev || "–")), h("div", {}, h("small", {}, `이번(${md(P.cur)})`), h("p", {}, r.cur || "–"))),
+      h("div", { class: "note" }, "가능한 의미: " + (r.reads.length ? r.reads.join(" / ") : "–") + " (해석이며 단정 아님)")));
+    el.replaceChildren(h("h3", {}, `${md(P.cur)} 통방문 핵심 변화 `, h("small", {}, `${md(P.prev)} 대비 · 변경된 범주 ${P.n_changed}개 중 상위 ${cards.length}개`)), ...cards,
+      h("p", { class: "note" }, `${D.stmtCh.method} 출처: ${P.source_cur || "원문 파일"}${P.provisional ? " (임시본 — 공식 원문 확인 필요)" : ""}`));
+  }
+
   function renderGuidance() {
     renderSpeechEvents();
+    renderStatementChanges();
     const G = D.guidance;
     const dps = G.dotplots || [];
     const sel = $("#dotSel");
