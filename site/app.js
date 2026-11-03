@@ -746,8 +746,6 @@
     const head = h("thead", {}, h("tr", {}, ...["날짜", "시각(KST)", "국가", "이벤트", "중요도"].map((t, i) => h("th", { class: i === 3 ? "l" : null }, t))));
     const up = (E.upcoming || []).filter((e) => !(e.kind === "bok" && e.date === (D.meta.upcoming || [])[0] && false));
     $("#eventTable").replaceChildren(head, h("tbody", {}, up.length ? up.map(row) : [h("tr", {}, h("td", { colspan: 5 }, "예정 이벤트 없음"))]));
-    $("#eventNote").textContent = (E.skeleton ? "경제지표 일정 수집 전 — 금통위·의사록 일정만 표시. " : "") +
-      "미국 일정은 BLS·연준 발표 시각(미 동부)을 한국 시간으로 바꾼 값.";
   }
 
   // ------------------------------------------------------------ 확률 변화 그래프(다음 회의, 7일·30일·90일·전체)
@@ -816,7 +814,7 @@
       h("div", { class: "pchead" }, h("div", {}, h("b", {}, `${dmon(meet)} 금통위 확률 변화`), h("span", { class: "note" }, ` · ${REP.mode === "m5" ? "BOK WATCH 종합 예측" : "합성 KOFR OIS"} · 기준일 ${ymd(lastRow.d)}`)), seg),
       h("div", { class: "pcchg" }, `인상 ${pct(lastRow.hike)} · 전일 ${fmt(chg(1))} · 7일 ${fmt(chg(7))} · 30일 ${fmt(chg(30))}`),
       h("div", { class: "chart" }, svg.node()),
-      h("div", { class: "pclegend" }, h("span", {}, "━ 인상"), h("span", {}, "╌ 동결"), h("span", {}, "··· 인하"), h("span", {}, "▲ 주요 이벤트(동시 발생, 원인 아님)")),
+      h("div", { class: "pclegend" }, h("span", { style: "color:var(--hike)" }, "━ 인상"), h("span", { style: "color:var(--hold)" }, "╌ 동결"), h("span", { style: "color:var(--cut)" }, "··· 인하"), h("span", {}, "▲ 주요 이벤트")),
       bigs.length ? h("div", { class: "pcturn" }, h("h4", {}, "전환점 ", h("small", {}, "확률이 전일보다 5%p 이상 움직인 날")),
         h("ol", {}, ...bigs.map((r) => h("li", {}, h("b", {}, `${md(r.date)} ${r.delta >= 0 ? "+" : "−"}${Math.abs(r.delta * 100).toFixed(1)}%p`), "  ", (r.lines || []).length ? r.lines.join(" · ") : "이벤트 없음")))) : "",
       h("div", { class: "note", id: "probTip", "aria-live": "polite" }, ""),
