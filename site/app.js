@@ -543,14 +543,13 @@
 
     // 회의 뒤 기대 기준금리표(분포가 아니라 기대값). 누적 분포는 회의별 확률만으로 정해지지 않아 가능 범위로 따로 보인다.
     const bp = (x) => `${x >= 0 ? "+" : ""}${(x * 100).toFixed(1)}bp`;
-    const thead = h("thead", {}, h("tr", {}, ...["회의", "기대 기준금리", "현재 대비", "직전 회의 대비", "결정 확률", "계산"].map((x, i) => h("th", { class: i === 5 ? "l" : null }, x))));
+    const thead = h("thead", {}, h("tr", {}, ...["회의", "기대 기준금리", "현재 대비", "직전 회의 대비", "결정 확률"].map((x) => h("th", {}, x))));
     let prevE = snap.r0;
     const rows = ms.map((m) => {
       const ex = m.method === "kofr_ois" ? m.expected : (m.range && m.range.max_expected != null ? m.range.max_expected : m.expected);
       const os = outcomes(m);
       const r = h("tr", {}, h("td", {}, ymd(m.date)), h("td", {}, fx(ex, 3) + "%"), h("td", {}, bp(ex - snap.r0)), h("td", {}, bp(ex - prevE)),
-        h("td", {}, os.map((o) => `${o.name} ${pct(o.p)}`).join(" · ")),
-        h("td", { class: "l" }, m.method === "kofr_ois" ? m.ois_source.replace(" OIS + ", "·") : "CD 91일"));
+        h("td", {}, os.map((o) => `${o.name} ${pct(o.p)}`).join(" · ")));
       prevE = ex;
       return r;
     });
@@ -564,8 +563,7 @@
       const rng = (lo, hi) => (lo === hi ? pct(lo) : `${pct(lo)}~${pct(hi)}`);
       const est = `동결 ${rng(1 - it.p_hike[1], 1 - it.p_hike[0])} · 25bp 인상 ${rng(it.p_hike[0], it.p_hike[1])} (참고 추정)`;
       rows.push(h("tr", {}, h("td", {}, unsched ? `${it.date.slice(0, 4)}년 ${+it.date.slice(5, 7)}월 중(날짜 미정)` : ymd(it.date)), h("td", {}, fx(exq, 3) + "%"), h("td", {}, bp(exq - snap.r0)), h("td", {}, bp(dl)),
-        h("td", {}, est + (ex ? ` · 전문가 ${ex}` : "")),
-        h("td", { class: "l" }, "3개월 OIS")));
+        h("td", {}, est + (ex ? ` · 전문가 ${ex}` : ""))));
     }
     $("#probTable").replaceChildren(thead, h("tbody", {}, rows));
     // 두 회의 누적 결과: 회의별 확률(동결·같은 방향 25bp)만 주어지면 '두 번 모두 변경' 확률은 [max(0, p1+p2−1), min(p1, p2)] 사이 어디든 가능하다
