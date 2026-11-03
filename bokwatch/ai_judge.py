@@ -283,7 +283,16 @@ def load_articles() -> list[dict]:
         o = idx.outlets.get(r["outlet"]) if r["outlet"] else None
         a.update({"press_id": r["outlet"], "press_name": o["name"] if o else None, "press_type": o["type"] if o else None,
                   "press_status": r["status"], "press_reason": r["reason"]})
+    from . import dedupe
+    recent = [a for a in by.values() if a["press_status"] == "allowed" and a["published"] >= (now_kst() - timedelta(days=5)).isoformat()]
+    dedupe.mark(recent)               # 허용 언론사 최근 5일 기사: 재수집·전재·제목 변경·수정은 가장 먼저 나온 기사만 남긴다
     return sorted(by.values(), key=lambda x: x["published"], reverse=True)
+
+
+def analysis_only(articles: list[dict]) -> list[dict]:
+    """실제 분석 대상: 허용 언론사 기사 중 중복(재수집·통신사 전재·제목 변경·수정)이 아닌 것."""
+    from .dedupe import unique
+    return unique(official_only(articles))
 
 
 def official_only(articles: list[dict]) -> list[dict]:
@@ -293,7 +302,7 @@ def official_only(articles: list[dict]) -> list[dict]:
 
 # ---------------------------------------------------------------- 1단계: 태깅
 def classify(client, cfg_ai: dict, articles: list[dict], tags: dict) -> tuple[int, list[str]]:
-    todo = [a for a in official_only(articles) if a["id"] not in tags][: cfg_ai["max_new_per_run"]]   # 허용 언론사 기사만 분석(토큰 절감)
+    todo = [a for a in analysis_only(articles) if a["id"] not in tags][: cfg_ai["max_new_per_run"]]   # 허용 언론사의 중복 아닌 기사만 분석(토큰 절감)
     errors, n = [], 0
     schema = classify_schema(cfg_ai["factors"])
     for i in range(0, len(todo), cfg_ai["batch_size"]):
@@ -607,6 +616,10 @@ def press_report(all_articles, tags, since) -> dict:
             h = (a.get("press") or "?")
             excl[h] = excl.get(h, 0) + 1
     allowed = official_only(win)
+    dups = {}
+    for a_ in allowed:
+        if a_.get("dup_type") and a_["dup_type"] != "독립 보도":
+            dups[a_["dup_type"]] = dups.get(a_["dup_type"], 0) + 1
     by_outlet, by_type = {}, {}
     for a in allowed:
         t = tags.get(a["id"], {})
@@ -615,10 +628,17 @@ def press_report(all_articles, tags, since) -> dict:
             d = by_type.setdefault(a["press_type"], {"인상 압력": 0, "중립": 0, "인하 압력": 0, "n": 0})
             d[t["direction"]] = d.get(t["direction"], 0) + 1
             d["n"] += 1
+    removed = ("재수집", "통신사 전재", "제목 변경", "수정·업데이트")
+    uniq_ok = [a_ for a_ in allowed if a_.get("dup_type") not in removed]
+    reasons = {"허용 목록 밖 언론사": st["excluded"], "원출처 확인 불가": st["review"],
+               "중복(전재·재수집·수정)": len(allowed) - len(uniq_ok),
+               "통화정책 관련성 낮음": sum(1 for a_ in uniq_ok if a_["id"] in tags and not tags[a_["id"]].get("relevant")),
+               "아직 분석 전": sum(1 for a_ in uniq_ok if a_["id"] not in tags)}
     rel_all = [a for a in win if tags.get(a["id"], {}).get("relevant")]
     rel_ok = official_only(rel_all)
     return {"window_articles": len(win), **st, "outlets_used": len(by_outlet), "outlets_total": len(default_index().outlets),
-            "by_outlet": dict(sorted(by_outlet.items(), key=lambda x: -x[1])), "by_type": by_type,
+            "by_outlet": dict(sorted(by_outlet.items(), key=lambda x: -x[1])), "by_type": by_type, "dup_types": dups, "excluded_reasons": reasons,
+            "deduped": len([a_ for a_ in allowed if a_.get("dup_type") in ("재수집", "통신사 전재", "제목 변경", "수정·업데이트")]),
             "excluded_top": dict(sorted(excl.items(), key=lambda x: -x[1])[:12]),
             "compare_same_rule": {"all_outlets": pressure_index(rel_all, tags, since, group_by_title(rel_all)),
                                   "allowed_only": pressure_index(rel_ok, tags, since, group_by_title(rel_ok))}}
@@ -655,6 +675,7 @@ def build_qual(articles, tags, cfg_ai, synthesis, errors, now, groups=None, prob
         "counts": {"total": len(articles), "tagged": sum(1 for a in articles if a["id"] in tags),
                    "relevant": sum(1 for a in articles if tags.get(a["id"], {}).get("relevant"))},
         "source_mix": source_mix(articles, tags, since),
+        "news_metrics": __import__("bokwatch.news_metrics", fromlist=["compute"]).compute(all_articles if all_articles is not None else articles, tags, now, cfg_ai["window_hours"]),
         "press_filter": press_report(all_articles if all_articles is not None else articles, tags, since),
         "errors": [redact(e)[:300] for e in errors],
     }
@@ -669,7 +690,7 @@ def main(argv=None, client=None) -> int:
     cfg_ai = load_config()["ai"]
     now = now_kst()
     all_articles = load_articles()
-    articles = official_only(all_articles)      # 공식 정성평가는 허용 38개 언론사 기사만
+    articles = analysis_only(all_articles)     # 공식 정성평가는 허용 38개 언론사 기사 중 중복을 뺀 것만
     tags = load_tags()
     errors = []
     synthesis = None

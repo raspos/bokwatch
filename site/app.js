@@ -1133,6 +1133,22 @@
         h("p", { class: "note" }, `최근 ${Q.window_hours}시간 수집 ${PF.window_articles}건 중 허용 38개 언론사 기사 ${PF.allowed}건만 정성평가에 쓴다. 제외 ${PF.excluded}건`
           + (PF.review ? `, 원출처 확인 불가 ${PF.review}건(검토 대상)` : "") + ". 허용 목록 밖 기사는 점수에 넣지 않는다. 한국은행 등 공식 기관 자료는 이 제한과 별개다."),
         PF.compare_same_rule ? h("p", { class: "note" }, `같은 규칙(제목 묶음)으로 비교한 압력지수 — 전체 매체 ${sm(PF.compare_same_rule.all_outlets)} · 허용 38곳만 ${sm(PF.compare_same_rule.allowed_only)}`) : "",
+        PF.excluded_reasons ? h("p", { class: "note" }, "제외·미사용 사유: " + Object.entries(PF.excluded_reasons).filter(([, v]) => v).map(([k, v]) => `${k} ${v}건`).join(" · ")) : "",
+        Q.news_metrics ? (() => {
+          const NM = Q.news_metrics, sg = (x) => x == null ? "–" : (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(3), dr = NM.direction || {};
+          const sig = (list) => list.length ? h("ul", {}, ...list.map((e) => h("li", {}, `${e.published.slice(5, 10)} ${e.press} `, ext(e.link, e.title), h("small", {}, ` — ${e.reason} · 강도 ${e.strength} · ${e.source_type}`)))) : h("p", { class: "note" }, "해당 없음");
+          return [h("h4", {}, "뉴스 지표 4종 ", h("small", {}, `최근 ${NM.window_hours}시간 · 보도량과 논조를 따로 본다`)),
+            h("div", { class: "qgrid" },
+              h("div", { class: "tile" }, h("div", { class: "k" }, "관심도(보도량)"), h("div", { class: "v" }, `${NM.interest.reports_now}건`),
+                h("div", { class: "s" }, `직전 ${NM.window_hours}시간 ${NM.interest.reports_prev}건 → ${NM.interest.change_pct == null ? "–" : (NM.interest.change_pct >= 0 ? "+" : "") + (NM.interest.change_pct * 100).toFixed(0) + "%"}`)),
+              h("div", { class: "tile" }, h("div", { class: "k" }, "방향성(사건 비중)"), h("div", { class: "v" }, `인상 ${pct(dr["인상 압력"], 0)}`),
+                h("div", { class: "s" }, `중립 ${pct(dr["중립"], 0)} · 인하 ${pct(dr["인하 압력"], 0)} · 사건 ${dr.n_events}건`)),
+              h("div", { class: "tile" }, h("div", { class: "k" }, "논조 변화"), h("div", { class: "v" }, sg(NM.tone_change.vs_prev_window)),
+                h("div", { class: "s" }, `직전 구간 대비 · 7일 평균 대비 ${sg(NM.tone_change.vs_7d)}`)),
+              h("div", { class: "tile" }, h("div", { class: "k" }, "정책 신호 강도"), h("div", { class: "v" }, `${NM.signal_strength.strong_articles}건`),
+                h("div", { class: "s" }, "강도 3 기사(직접발언 분류는 새 기사부터)"))),
+            h("h4", {}, "주요 매파 신호"), sig(NM.hawk_signals), h("h4", {}, "주요 비둘기파 신호"), sig(NM.dove_signals)];
+        })() : "",
         h("h4", {}, "매체 유형별 방향(관련 기사 수)"),
         h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },
           h("thead", {}, h("tr", {}, ...["매체 유형", "기사", "인상 압력", "중립", "인하 압력"].map((x) => h("th", {}, x)))),
