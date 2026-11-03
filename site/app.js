@@ -94,12 +94,12 @@
 
   // ------------------------------------------------------------ 로드
   async function load() {
-    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review, awmSeries, awmBt] = await Promise.all([
+    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review, awmSeries, awmBt, speechEv] = await Promise.all([
       getJSON("data/meta.json"), getJSON("data/status.json"), getJSON("data/guidance.json"),
       getJSON("data/reports.json"), getJSON("data/minutes.json"), getJSON("data/news.json"),
       getJSON("data/backtest.json"), getText("data/history.csv"),
       getJSON("data/events.json"), getJSON("data/qual.json"), getJSON("data/prob_log.json"), getJSON("data/decision.json"),
-      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"), getJSON("data/awm_series.json"), getJSON("data/awm_backtest.json"),
+      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"), getJSON("data/awm_series.json"), getJSON("data/awm_backtest.json"), getJSON("data/speech_events.json"),
     ]);
     Object.assign(D, { meta: meta || {}, status: status || {}, guidance: guidance || { meetings: [], dotplots: [], speeches: [] },
       reports: reports || { reports: [], consensus: { by_meeting: {} } }, minutes: minutes || { meetings: [] },
@@ -107,6 +107,7 @@
       events: events || { upcoming: [], recent: [], all: [], indicators: {} }, qual, plog: plog || [], decision, cdshort, kois, review });
     D.snaps = {};
     D.awmBt = awmBt;
+    D.speechEv = speechEv;
     initRep(awmSeries);
   }
   // 대표 확률 모형: m5 = BOK WATCH 종합 예측(합성 OIS 50% + 통안채 91일 50%), ois = 합성 KOFR OIS 단독.
@@ -874,7 +875,27 @@
     return svg.node();
   }
 
+  // 같은 행사의 발언을 하나로 묶은 요약(규칙 기반). 개별 발언 원문은 펼쳐서 본다.
+  function renderSpeechEvents() {
+    const el = $("#speechEvents");
+    if (!el) return;
+    const SE = D.speechEv;
+    if (!SE || !(SE.events || []).length) { el.replaceChildren(); return; }
+    const toneLbl = { hawk: "매파", neutral: "중립", dove: "비둘기파" };
+    const cards = SE.events.slice(0, 8).map((e) => h("details", { class: "spkev" },
+      h("summary", {}, h("b", {}, `${md(e.date)} ${e.venue}`), ` · ${e.speakers.join(", ")} · `, h("span", { class: "tag " + ({ 매파: "hawk", 비둘기파: "dove" }[e.verdict] || "neutral") }, e.verdict),
+        e.change ? h("span", { class: "note" }, ` · 이전 대비 ${e.change.label}`) : "", h("span", { class: "note" }, ` · 인용 ${e.n_quotes}개 · 신뢰도 ${e.confidence}`)),
+      h("div", { class: "spkbody" },
+        Object.keys(e.topics).length ? h("p", {}, h("b", {}, "정책 신호 "), Object.entries(e.topics).map(([k, v]) => `${k} ${v.tone}(${v.n})`).join(" · ")) : "",
+        e.risk_terms.length ? h("p", {}, h("b", {}, "강조된 위험 "), e.risk_terms.join(", ")) : "",
+        e.change ? h("p", {}, h("b", {}, "표현 변화 "), `(${e.change.vs} 대비, 표현 사전 기준) 새로 등장: ${e.new_terms.join(", ") || "없음"} · 사라짐: ${e.gone_terms.join(", ") || "없음"}`) : "",
+        h("ul", {}, ...e.quotes.map((q) => h("li", {}, `[${toneLbl[q.tone] || q.tone}] “${q.quote}” `, q.link ? ext(q.link, "원문") : "", q.verify ? h("span", { class: "badge verify" }, "확인 필요") : "", q.note ? h("small", {}, ` — ${q.note}`) : ""))))));
+    el.replaceChildren(h("h3", {}, "행사별 요약 ", h("small", {}, "같은 행사 발언을 하나로 묶음 · 분석은 규칙 기반, 인용은 원문 그대로")), ...cards,
+      h("p", { class: "note" }, SE.method + " 인용이 1개뿐인 행사는 논조를 단정하지 않는다. 표현 변화는 사전에 있는 표현의 유무 비교라 문장 의미 변화를 모두 잡지는 못한다."));
+  }
+
   function renderGuidance() {
+    renderSpeechEvents();
     const G = D.guidance;
     const dps = G.dotplots || [];
     const sel = $("#dotSel");

@@ -250,6 +250,8 @@ def main(argv=None):
             write_json(SITE_DATA / "minutes.json", minutes)
         guidance = build_guidance(cfg, minutes, today)
         write_json(SITE_DATA / "guidance.json", guidance)
+        from bokwatch.speech_events import build as build_speech_events
+        write_json(SITE_DATA / "speech_events.json", build_speech_events(guidance.get("speeches", [])))      # 같은 행사 발언 통합(규칙 기반)
         upcoming = [m.isoformat() for m in all_meetings(cfg) if m > today]
         reports = build_reports(upcoming, today)
         write_json(SITE_DATA / "reports.json", reports)
