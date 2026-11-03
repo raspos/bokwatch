@@ -23,6 +23,7 @@
   const ext = (href, text, cls) => href ? h("a", { href, target: "_blank", rel: "noopener noreferrer", class: cls }, text) : h("span", { class: cls }, text);
   const pct = (x, n = 1) => x == null || isNaN(x) ? "–" : (x * 100).toFixed(n) + "%";
   const pp = (x) => x == null || isNaN(x) ? "" : (x >= 0 ? "+" : "−") + Math.abs(x * 100).toFixed(1) + "%p";
+  const idx100 = (x) => { if (x == null || isNaN(x)) return "–"; const v = Math.round(x * 100); return v === 0 ? "0" : (v > 0 ? "+" : "−") + Math.abs(v); };   // 압력지수는 −100~+100 정수로 보인다
   const fx = (x, n = 2) => x == null || isNaN(x) ? "–" : Number(x).toFixed(n);
   const md = (s) => { if (!s) return "–"; const [y, m, d] = s.slice(0, 10).split("-").map(Number); return `${m}/${d}`; };
   const ymd = (s) => s ? s.slice(0, 10).replaceAll("-", ".") : "–";
@@ -260,7 +261,7 @@
     tiles.splice(3, 0, h("div", { class: "tile ref" }, h("div", { class: "tgt" }, "대상: 다음 회의 · 최근 기사"), h("div", { class: "k" }, "AI 정성 판단(참고)"),
       h("div", { class: "v" }, Q ? LEAN[Q.lean] : "–"),
       h("div", { class: "s" }, Q ? Q.headline : "준비 중",
-        pr && pr.index != null ? ` · 압력지수 ${pr.index >= 0 ? "+" : ""}${pr.index.toFixed(2)}` : "")));
+        pr && pr.index != null ? ` · 압력지수 ${idx100(pr.index)}` : "")));
     // 카드마다 '무엇을, 언제 기준으로' 보여 주는지
     const st = D.status || {};
     const ko = snap && snap.components && snap.components.kofr_ois;
@@ -798,8 +799,7 @@
     hov.append("line").attr("y1", m.t).attr("y2", H - m.b).attr("stroke", "var(--ink-3)");
     const dots = hov.append("circle").attr("r", 4).attr("fill", "var(--hike)");
     const tip = (r) => {
-      const e = repEntry(meet, r.d);
-      return `${ymd(r.d)} · 인상 ${pct(r.hike)} · 동결 ${pct(r.hold)}${r.cut > 0.0005 ? ` · 인하 ${pct(r.cut)}` : ""}` + (e && REP.mode === "m5" ? ` · ${repKind(e.kind)}` : "");
+      return `${ymd(r.d)} · 인상 ${pct(r.hike)} · 동결 ${pct(r.hold)}${r.cut > 0.0005 ? ` · 인하 ${pct(r.cut)}` : ""}`;
     };
     svg.append("rect").attr("x", m.l).attr("y", m.t).attr("width", W - m.l - m.r).attr("height", H - m.t - m.b).attr("fill", "transparent").style("touch-action", "pan-y")
       .on("pointermove pointerdown", (ev) => {
@@ -809,7 +809,7 @@
         hov.style("display", null); hov.select("line").attr("x1", x(new Date(r.d))).attr("x2", x(new Date(r.d)));
         dots.attr("cx", x(new Date(r.d))).attr("cy", y(r.hike));
         $("#probTip").textContent = tip(r);
-      }).on("pointerleave", () => { hov.style("display", "none"); $("#probTip").textContent = tip(lastRow); });
+      }).on("pointerleave", () => { hov.style("display", "none"); $("#probTip").textContent = ""; });
     const seg = h("div", { class: "seg", role: "group", "aria-label": "기간 선택" }, ...[[7, "7일"], [30, "30일"], [90, "90일"], [0, "전체"]].map(([n, t]) =>
       h("button", { type: "button", "aria-pressed": PC.range === n, onclick: () => { PC.range = n; renderProbChart(); } }, t)));
     el.replaceChildren(
@@ -819,7 +819,7 @@
       h("div", { class: "pclegend" }, h("span", {}, "━ 인상"), h("span", {}, "╌ 동결"), h("span", {}, "··· 인하"), h("span", {}, "▲ 주요 이벤트(동시 발생, 원인 아님)")),
       bigs.length ? h("div", { class: "pcturn" }, h("h4", {}, "전환점 ", h("small", {}, "확률이 전일보다 5%p 이상 움직인 날")),
         h("ol", {}, ...bigs.map((r) => h("li", {}, h("b", {}, `${md(r.date)} ${r.delta >= 0 ? "+" : "−"}${Math.abs(r.delta * 100).toFixed(1)}%p`), "  ", (r.lines || []).length ? r.lines.join(" · ") : "이벤트 없음")))) : "",
-      h("div", { class: "note", id: "probTip", "aria-live": "polite" }, tip(lastRow)),
+      h("div", { class: "note", id: "probTip", "aria-live": "polite" }, ""),
       "");
   }
 
@@ -1148,15 +1148,15 @@
 
     // 압력지수 + 요인
     kids.push(h("h3", {}, `뉴스 태그 압력지수 `, h("small", {}, P.unit === "사건"
-      ? `최근 ${Q.window_hours}시간 관련 기사 ${P.n_articles}건 → 같은 사건끼리 묶어 ${P.n}건으로 계산 · +1 인상 압력 ~ −1 인하 압력`
-      : `최근 ${Q.window_hours}시간 관련 기사 ${P.n || 0}건 · +1 인상 압력 ~ −1 인하 압력 · 태그 단순 합산`)));
-    kids.push(h("div", { class: "qgrid" }, h("div", { class: "tile" }, h("div", { class: "k" }, "현재"), h("div", { class: "v" }, P.index == null ? "–" : (P.index >= 0 ? "+" : "") + P.index.toFixed(2)),
+      ? `최근 ${Q.window_hours}시간 관련 기사 ${P.n_articles}건 → 같은 사건끼리 묶어 ${P.n}건으로 계산 · +100 인상 압력 ~ −100 인하 압력`
+      : `최근 ${Q.window_hours}시간 관련 기사 ${P.n || 0}건 · +100 인상 압력 ~ −100 인하 압력 · 태그 단순 합산`)));
+    kids.push(h("div", { class: "qgrid" }, h("div", { class: "tile" }, h("div", { class: "k" }, "현재"), h("div", { class: "v" }, idx100(P.index)),
       h("div", { class: "s" }, `태깅 ${Q.counts.tagged}/${Q.counts.total}건 · 관련 ${Q.counts.relevant}건`)), h("div", { id: "qualTrend", class: "chart" })));
     kids.push(h("h3", {}, P.unit === "사건" ? "요인별 사건 수 " : "요인별 기사 수 ", h("small", {}, `주황=인상 압력, 파랑=인하 압력, ${P.unit === "사건" ? "사건" : "기사"} 수 기준`)), factorBars(P.factors || []));
     // 분석 대상 언론사(38곳 화이트리스트): 수집·제외·유형별 논조·화이트리스트 전후 비교
     const PF = Q.press_filter;
     if (PF) {
-      const sm = (x) => x ? `${x.index >= 0 ? "+" : ""}${(x.index || 0).toFixed(3)} (사건 ${x.n})` : "–";
+      const sm = (x) => x ? `${idx100(x.index)} (사건 ${x.n})` : "–";
       const tm = PF.by_type || {};
       kids.push(more(`분석 대상 언론사 · ${PF.outlets_used}/${PF.outlets_total}곳 사용 · 기사 ${PF.allowed}/${PF.window_articles}건 반영`,
         h("p", { class: "note" }, `최근 ${Q.window_hours}시간 수집 ${PF.window_articles}건 중 허용 38개 언론사 기사 ${PF.allowed}건만 정성평가에 쓴다. 제외 ${PF.excluded}건`
@@ -1164,7 +1164,7 @@
         PF.compare_same_rule ? h("p", { class: "note" }, `같은 규칙(제목 묶음)으로 비교한 압력지수 — 전체 매체 ${sm(PF.compare_same_rule.all_outlets)} · 허용 38곳만 ${sm(PF.compare_same_rule.allowed_only)}`) : "",
         PF.excluded_reasons ? h("p", { class: "note" }, "제외·미사용 사유: " + Object.entries(PF.excluded_reasons).filter(([, v]) => v).map(([k, v]) => `${k} ${v}건`).join(" · ")) : "",
         Q.news_metrics ? (() => {
-          const NM = Q.news_metrics, sg = (x) => x == null ? "–" : (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(3), dr = NM.direction || {};
+          const NM = Q.news_metrics, sg = (x) => idx100(x), dr = NM.direction || {};
           const sig = (list) => list.length ? h("ul", {}, ...list.map((e) => h("li", {}, `${e.published.slice(5, 10)} ${e.press} `, ext(e.link, e.title), h("small", {}, ` — ${e.reason} · 강도 ${e.strength} · ${e.source_type}`)))) : h("p", { class: "note" }, "해당 없음");
           return [h("h4", {}, "뉴스 지표 4종 ", h("small", {}, `최근 ${NM.window_hours}시간 · 보도량과 논조를 따로 본다`)),
             h("div", { class: "qgrid" },
@@ -1247,12 +1247,12 @@
     const y = d3.scaleLinear().domain([-1, 1]).range([H - m.b, m.t]);
     const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img").attr("aria-label", "압력지수 추이");
     svg.append("g").attr("class", "axis").attr("transform", `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%m/%d")));
-    svg.append("g").attr("class", "axis").attr("transform", `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(4)).call((g) => g.select(".domain").remove());
+    svg.append("g").attr("class", "axis").attr("transform", `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(4).tickFormat((v) => idx100(v))).call((g) => g.select(".domain").remove());
     svg.append("line").attr("x1", m.l).attr("x2", W - m.r).attr("y1", y(0)).attr("y2", y(0)).attr("stroke", "var(--ink-3)");
     svg.append("path").datum(pts).attr("fill", "none").attr("stroke", "var(--ink-2)").attr("stroke-width", 2).attr("d", d3.line().x((p) => x(p.d)).y((p) => y(p.v)));
     svg.selectAll(null).data(pts).join("circle").attr("cx", (p) => x(p.d)).attr("cy", (p) => y(p.v)).attr("r", 4)
       .attr("fill", (p) => p.v >= 0 ? "var(--hike)" : "var(--cut)").attr("stroke", "var(--surface)").attr("stroke-width", 2)
-      .on("pointermove", (ev, p) => showTip(ev, [`${d3.timeFormat("%Y.%m.%d")(p.d)} ${p.v >= 0 ? "+" : ""}${p.v.toFixed(2)}`, `관련 기사 ${p.n}건`])).on("pointerleave", hideTip);
+      .on("pointermove", (ev, p) => showTip(ev, [`${d3.timeFormat("%Y.%m.%d")(p.d)} ${idx100(p.v)}`, `관련 기사 ${p.n}건`])).on("pointerleave", hideTip);
     el.replaceChildren(svg.node());
   }
 
