@@ -70,7 +70,8 @@ def test_excluded_articles_do_not_enter_score():
     # 제외 기사는 새로 태깅하지 않는다(토큰 절감)
     class FC:
         calls = []
-    n, errs = ai_judge.classify(FC(), {"max_new_per_run": 10, "batch_size": 5, "factors": ["물가"], "model": "m"}, arts, {})
+    only_a0 = {"a0": tags["a0"]}          # 허용 기사는 이미 태깅됨 → 남은 건 제외·검토 기사뿐이므로 모델을 부르지 않는다
+    n, errs = ai_judge.classify(FC(), {"max_new_per_run": 10, "batch_size": 5, "factors": ["물가"], "model": "m"}, arts, only_a0)
     assert n == 0 and errs == []
 
 
