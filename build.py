@@ -308,6 +308,17 @@ def main(argv=None):
         from bokwatch.review import build_review
         raw = load_reports()
         write_json(SITE_DATA / "review.json", build_review(guidance, plog, raw["reports"], raw["kofia_survey"], today, series) or {})
+        try:  # 확률이 크게 움직인 날과 동시에 있었던 이벤트(원인 아님)
+            from bokwatch import prob_events
+            up = [m for m in (read_json(SITE_DATA / "meta.json", {}) or {}).get("upcoming", []) if m > today.isoformat()]
+            nm = up[0] if up else None
+            if nm and series:
+                ev_all = (read_json(SITE_DATA / "events.json", {}) or {}).get("all", [])
+                sp_ev = (read_json(SITE_DATA / "speech_events.json", {}) or {}).get("events", [])
+                qa = (read_json(SITE_DATA / "qual.json", {}) or {}).get("articles", [])
+                write_json(SITE_DATA / "prob_events.json", prob_events.build(series, nm, ev_all, sp_ev, qa, DATA / "rates.csv"))
+        except Exception as e:  # noqa: BLE001
+            print(f"확률 변화 이벤트 생성 실패: {e}")
         try:  # 기관 전망 수집 현황·적중률(표본 수 공개, 순위는 표본이 충분할 때만)
             from bokwatch import awm_data, forecast_eval
             outcomes = {m["meeting"].isoformat(): m["actual"] for m in awm_data.meeting_table(cfg) if m["meeting"] <= today}

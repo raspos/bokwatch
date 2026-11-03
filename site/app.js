@@ -94,12 +94,12 @@
 
   // ------------------------------------------------------------ 로드
   async function load() {
-    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review, awmSeries, awmBt, speechEv, stmtCh, fcEval] = await Promise.all([
+    const [meta, status, guidance, reports, minutes, news, backtest, hist, events, qual, plog, decision, cdshort, kois, review, awmSeries, awmBt, speechEv, stmtCh, fcEval, probEv] = await Promise.all([
       getJSON("data/meta.json"), getJSON("data/status.json"), getJSON("data/guidance.json"),
       getJSON("data/reports.json"), getJSON("data/minutes.json"), getJSON("data/news.json"),
       getJSON("data/backtest.json"), getText("data/history.csv"),
       getJSON("data/events.json"), getJSON("data/qual.json"), getJSON("data/prob_log.json"), getJSON("data/decision.json"),
-      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"), getJSON("data/awm_series.json"), getJSON("data/awm_backtest.json"), getJSON("data/speech_events.json"), getJSON("data/statement_changes.json"), getJSON("data/forecast_eval.json"),
+      getJSON("data/cd_short.json"), getJSON("data/kofr_ois.json"), getJSON("data/review.json"), getJSON("data/awm_series.json"), getJSON("data/awm_backtest.json"), getJSON("data/speech_events.json"), getJSON("data/statement_changes.json"), getJSON("data/forecast_eval.json"), getJSON("data/prob_events.json"),
     ]);
     Object.assign(D, { meta: meta || {}, status: status || {}, guidance: guidance || { meetings: [], dotplots: [], speeches: [] },
       reports: reports || { reports: [], consensus: { by_meeting: {} } }, minutes: minutes || { meetings: [] },
@@ -110,6 +110,7 @@
     D.speechEv = speechEv;
     D.stmtCh = stmtCh;
     D.fcEval = fcEval;
+    D.probEv = probEv;
     initRep(awmSeries);
   }
   // 대표 확률 모형: m5 = BOK WATCH 종합 예측(합성 OIS 50% + 통안채 91일 50%), ois = 합성 KOFR OIS 단독.
@@ -753,6 +754,19 @@
 
   // ------------------------------------------------------------ 확률 변화 그래프(다음 회의, 7일·30일·90일·전체)
   const PC = { range: 30 };
+  // 확률이 크게 움직인 날의 상세: 동시 발생 이벤트·시장금리·발언·기사(원인으로 단정하지 않는다)
+  function showProbEvent(r) {
+    const el = $("#probEv");
+    if (!el) return;
+    const bp = Object.entries(r.rates_bp || {}).map(([k, v]) => `${({ cd91: "CD 91일", msb91: "통안채 91일", kofr: "KOFR", ktb3y: "국고채 3년" })[k] || k} ${v >= 0 ? "+" : ""}${v}bp`).join(" · ");
+    el.replaceChildren(h("div", { class: "pcdetail" },
+      h("h4", {}, `${ymd(r.date)} 인상 확률 ${pct(r.p_before)} → ${pct(r.p_after)} `, h("small", {}, `${r.delta >= 0 ? "+" : "−"}${Math.abs(r.delta * 100).toFixed(1)}%p · ${r.kind === "stored" ? "당시 저장 예측" : "사후 재계산"}`)),
+      h("p", { class: "note" }, "동시 발생한 이벤트 — 시간적으로 겹친 것이며 원인으로 확인되지 않았다. 발표 시각과 이벤트 전후 가격을 알 수 없어 일간 변화만 본다."),
+      r.events.length ? h("ul", {}, ...r.events.map((e) => h("li", {}, `${ymd(e.date)} ${e.time || ""} ${e.country === "KR" ? "한국" : e.country === "US" ? "미국" : e.country || ""} · `, e.link ? ext(e.link, e.label) : e.label, e.source ? h("small", {}, ` — ${e.source}`) : ""))) : h("p", { class: "note" }, "같은 날·전날의 주요 이벤트 없음"),
+      r.speeches.length ? h("p", {}, "한은 발언 행사: " + r.speeches.map((s) => `${md(s.date)} ${s.venue}(${s.verdict})`).join(", ")) : "",
+      bp ? h("p", {}, "시장금리 일간 변화: " + bp) : "",
+      r.articles.length ? [h("p", {}, "같은 날 허용 언론사 주요 기사"), h("ul", {}, ...r.articles.map((a) => h("li", {}, `${a.press_name} `, ext(a.link, a.title), h("small", {}, ` — ${a.direction} · 강도 ${a.strength}`))))] : ""));
+  }
   function renderProbChart() {
     const el = $("#probChart");
     if (!el) return;
@@ -789,6 +803,9 @@
     });
     evs.forEach((e) => svg.append("path").attr("d", d3.symbol().type(d3.symbolTriangle).size(46)()).attr("transform", `translate(${x(new Date(e.date))},${H - m.b + 2})`).attr("fill", "var(--ink-2)")
       .style("cursor", "pointer").on("click", () => { $("#probEv").textContent = `동시 발생한 이벤트 · ${ymd(e.date)} ${e.time || ""} ${e.label}`; }).append("title").text(`${ymd(e.date)} ${e.label}`));
+    const bigs = (D.probEv && D.probEv.meeting === meet ? D.probEv.rows : []).filter((r) => vis.some((v) => v.d === r.date));
+    bigs.forEach((r) => svg.append("circle").attr("cx", x(new Date(r.date))).attr("cy", y(vis.find((v) => v.d === r.date).hike)).attr("r", 5).attr("fill", "none").attr("stroke", "var(--ink)").attr("stroke-width", 2)
+      .style("cursor", "pointer").on("click", () => showProbEvent(r)).append("title").text(`${ymd(r.date)} 인상 확률 ${r.delta >= 0 ? "+" : "−"}${Math.abs(r.delta * 100).toFixed(1)}%p`));
     const hov = svg.append("g").style("display", "none");
     hov.append("line").attr("y1", m.t).attr("y2", H - m.b).attr("stroke", "var(--ink-3)");
     const dots = hov.append("circle").attr("r", 4).attr("fill", "var(--hike)");
@@ -812,6 +829,7 @@
       h("div", { class: "pcchg" }, `인상 ${pct(lastRow.hike)} · 전일 ${fmt(chg(1))} · 7일 ${fmt(chg(7))} · 30일 ${fmt(chg(30))}`),
       h("div", { class: "chart" }, svg.node()),
       h("div", { class: "pclegend" }, h("span", {}, "━ 인상"), h("span", {}, "╌ 동결"), h("span", {}, "··· 인하"), h("span", {}, "▲ 주요 이벤트(동시 발생, 원인 아님)")),
+      bigs.length ? h("div", { class: "pclegend" }, h("span", {}, "○ 확률이 크게 움직인 날(5%p 이상):"), ...bigs.slice(0, 6).map((r) => h("button", { type: "button", class: "chipbtn", onclick: () => showProbEvent(r) }, `${md(r.date)} ${r.delta >= 0 ? "+" : "−"}${Math.abs(r.delta * 100).toFixed(1)}%p`))) : "",
       h("div", { class: "note", id: "probTip", "aria-live": "polite" }, tip(lastRow)),
       h("div", { class: "note", id: "probEv" }, ""));
   }
