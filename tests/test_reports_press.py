@@ -21,3 +21,12 @@ def test_consensus_counts_only_allowed_sources(monkeypatch):
     out = R.build_reports(["2026-11-26"], date(2026, 11, 3))
     assert [x["institution"] for x in out["reports"]] == ["A"] and out["press_excluded"] == 2
     assert out["consensus"]["by_meeting"]["2026-11-26"]["counts"] == {"인상": 1}      # 밖 출처의 동결 전망은 집계에 없다
+
+
+def test_consensus_uses_latest_forecast_since_last_decision(monkeypatch):
+    rs = [rep("A", "https://www.hankyung.com/a", pub="2026-10-27"), rep("A", "https://www.hankyung.com/a2", pub="2026-10-14", call="동결"),
+          rep("B", "https://www.mt.co.kr/b", pub="2026-10-10", call="동결")]          # B는 직전 결정(10/22) 이전 → 제외
+    out = R.consensus(rs, ["2026-11-26"], date(2026, 11, 3), since="2026-10-22")
+    m = out["by_meeting"]["2026-11-26"]
+    assert m["counts"] == {"인상": 1} and m["latest"] == "2026-10-27" and out["institutions"] == 1
+    assert R.consensus(rs, ["2026-11-26"], date(2026, 11, 3))["by_meeting"]["2026-11-26"]["n"] == 0      # since 없이 5영업일 창이면 비어 있다

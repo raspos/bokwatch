@@ -1042,7 +1042,7 @@
     const thead = h("thead", {}, h("tr", {}, ...cols.map((c) => h("th", { class: c.l ? "l" : null, "aria-sort": c.k === sk ? (sd === "asc" ? "ascending" : "descending") : null,
       onclick: () => setS({ sort: `${c.k}:${c.k === sk && sd === "desc" ? "asc" : "desc"}` }) }, c.t))));
     const rowOf = (r) => h("tr", { class: r.in_window === false || r.superseded ? "out" : null,
-      title: r.superseded ? "같은 기관의 새 전망이 있어 집계에서 뺌" : r.in_window === false ? "최근 5영업일보다 오래돼 전망 집계에서 뺌" : null }, ...cols.map((c) => {
+      title: r.superseded ? "같은 기관의 새 전망이 있어 집계에서 뺌" : r.in_window === false ? "직전 결정 이전 전망이라 집계에서 뺌" : null }, ...cols.map((c) => {
       if (c.k.startsWith("call:")) { const x = (r.calls || {})[c.k.slice(5)]; return h("td", { class: x ? "call-" + x.call : null, title: x && x.note || null }, x ? x.call + (x.size ? ` ${Math.round(x.size * 100)}bp` : "") + (x.note ? "*" : "") : "–"); }
       if (c.k === "terminal") return h("td", {}, r.terminal != null ? fx(r.terminal) + "%" : "–");
       if (c.k === "source") return h("td", { class: "l", title: r.source || null }, r.link ? ext(r.link, r.press_name || "기사") : "–");   // 출처는 허용 38개 매체의 표준명으로, 자세한 표기는 마우스를 올리면
@@ -1092,7 +1092,7 @@
     const term = Object.entries(cons.terminal || {});
     cards.push(h("div", { class: "tile" }, h("div", { class: "k" }, "최종금리 전망 분포"),
       term.length ? h("div", {}, ...term.map(([k, n]) => h("div", { class: "s" }, `${k}% — ${n}곳`))) : h("div", { class: "s" }, "입력 없음"),
-      h("div", { class: "note" }, `기관 ${cons.institutions}곳(${cons.since ? md(cons.since) + " 이후 " : ""}최근 ${cons.window_bd || 5}영업일 보고서, 기관별 최신)`)));
+      h("div", { class: "note" }, `기관 ${cons.institutions}곳 · ${cons.since ? md(cons.since) + " 이후 " : ""}기관별 최신 전망(발표일은 보고서 탭)`)));
     $("#consensus").replaceChildren(...cards);
   }
 
@@ -1182,7 +1182,7 @@
           h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },
             h("thead", {}, h("tr", {}, ...["근거 유형", "기사", "인상 압력", "중립", "인하 압력"].map((x) => h("th", {}, x)))),
             h("tbody", {}, ...Object.entries(Q.source_mix).filter(([, v]) => v.n).map(([k, v]) => h("tr", {}, h("td", {}, k), h("td", {}, v.n), h("td", {}, v["인상 압력"]), h("td", {}, v["중립"]), h("td", {}, v["인하 압력"])))))),
-          h("p", { class: "note" }, "근거 유형은 2026-11-03 이후 새로 분류한 기사부터 채워진다. 그 전 기사는 '미분류'로 센다. 분류는 제목·검색 요약만 보고 한 것이라 신뢰도가 낮다.")] : "",
+          h("p", { class: "note" }, "제목·검색 요약 기준 분류")] : "",
         h("h4", {}, "사용한 언론사"), h("p", { class: "note" }, Object.entries(PF.by_outlet || {}).map(([k, v]) => `${k} ${v}`).join(" · ") || "–"),
         h("h4", {}, "제외한 출처(상위)"), h("p", { class: "note" }, Object.entries(PF.excluded_top || {}).map(([k, v]) => `${k} ${v}`).join(" · ") || "–")));
     }
