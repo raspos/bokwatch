@@ -469,7 +469,6 @@
 
   async function renderMarket(snap) {
     renderReview();
-    document.querySelectorAll("#spreadToggle button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.s === S.s));
     if (!snap) {
       $("#gauges").replaceChildren(h("div", { class: "empty" }, "시장금리 데이터가 없습니다."));
       ["#probTable", "#inputTable"].forEach((s) => $(s).replaceChildren());
@@ -518,20 +517,6 @@
     const lastE = lastM ? (lastM.ois_only ? lastM.ois_only.expected : lastM.expected) : snap.r0;   // 1월 참고 추정은 OIS 기준이라 OIS 값에 이어 붙인다
     for (const it of ((((snap.components || {}).kofr_ois || {}).later_est || {}).later || [])) cards.push(laterCard(it, lastE));
     const out = scen.meetings.filter((m) => !m.in_range).map((m) => md(m.date));
-    // 정상 스프레드 버튼 설명: 그날 실제 가정값과 회의별 확률 범위
-    const u0 = snap.inputs.find((i) => i.used);
-    if (u0) {
-      const bp = Math.round(u0.spread * 100);
-      const cdc = (snap.components || {}).cd || {};
-      const rng = ms.map((m) => {
-        const ps = ["-5", "0", "5"].map((k) => ((cdc[k] || {}).meetings || []).find((x) => x.date === m.date && x.range)).filter(Boolean).map((x) => x.range.max);
-        return ps.length ? `${md(m.date)} ${pct(Math.min(...ps))}~${pct(Math.max(...ps))}` : null;
-      }).filter(Boolean);
-      $("#spreadNote").textContent = `CD 91일 모형: ${u0.label} 금리에서 역산한 값이다. 검증된 시장 내재확률이 아니다. `
-        + `정상 스프레드는 금리 변화 기대가 없을 때도 ${u0.label} 금리가 기준금리보다 높게 붙는 폭(은행 자금사정·신용 웃돈)이다. `
-        + `기본 ${bp}bp(${u0.spread_how}), −5bp는 ${bp - 5}bp, +5bp는 ${bp + 5}bp로 계산한 결과다. 스프레드를 작게 잡을수록 인상확률이 높게 나온다. `
-        + `버튼별 인상확률 최고값: ${rng.join(", ") || "–"}. 만기 안에 회의가 둘 이상이라 회의 사이 배분이 정해지지 않아 범위로만 낸다.`;
-    } else $("#spreadNote").textContent = "";
     if (!cards.length) {
       const kf = (snap.components || {}).kofr_futures;
       cards.push(h("div", { class: "empty" }, snap.default_ok === false
@@ -619,14 +604,6 @@
         `민감도 — ${sens.join(" · ")}. CD 공시값이 1bp 단위(소수 둘째 자리 버림)라 이 정도 오차가 늘 있다. 다음 회의 값이 바뀌면 그다음 회의 값은 반대 방향으로 움직인다.`,
         "스프레드 ±1bp, KOFR 보정 ±1bp도 같은 크기로 움직인다."].join(" ");
     } else { $("#oisTable").replaceChildren(); $("#oisNote").textContent = "자체 합성 OIS 자료 없음 — CD 91일 값으로 표시한다."; }
-
-    // CD 91일 참고 범위(버튼 결과가 바로 보이는 표)
-    const cdc0 = (snap.components || {}).cd || {};
-    const cdRows = ms.map((m) => {
-      const cells = ["-5", "0", "5"].map((kk) => { const x = ((cdc0[kk] || {}).meetings || []).find((z) => z.date === m.date && z.range); return x ? `${pct(x.range.min)}~${pct(x.range.max)}` : "–"; });
-      return h("tr", {}, h("td", {}, ymd(m.date)), ...cells.map((c, i) => h("td", { class: ["-5", "0", "5"][i] === S.s ? "max" : null }, c)));
-    });
-    $("#cdRangeTable").replaceChildren(h("thead", {}, h("tr", {}, h("th", {}, "회의"), ...["스프레드 −5bp", "기본", "+5bp"].map((x) => h("th", {}, `${x} 인상 확률 범위`)))), h("tbody", {}, cdRows));
 
     // 투입 금리표
     const ih = h("thead", {}, h("tr", {}, ...["상품", "금리", "기준일", "기준금리 대비", "전일 대비", "스프레드", "쓰임"].map((t) => h("th", {}, t))));
@@ -1806,7 +1783,6 @@
       setS({ tab: TABS[(i + TABS.length) % TABS.length] });
       $(`#tabs button[data-tab="${S.tab}"]`).focus();
     });
-    $("#spreadToggle").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) setS({ s: b.dataset.s }); });
     $("#snapDate").addEventListener("change", (e) => setS({ d: e.target.value }));
     $("#dotSel").addEventListener("change", (e) => setS({ dot: e.target.value }));
     let tm; $("#repSearch").addEventListener("input", (e) => { clearTimeout(tm); tm = setTimeout(() => setS({ q: e.target.value.trim() }), 200); });
