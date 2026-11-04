@@ -26,9 +26,9 @@ def test_changed_category_has_terms_and_read_unchanged_category_has_none():
 
 
 def test_scope_limits_interpretation_and_unknown_is_withheld():
-    # '선제'가 빠진 해석은 물가·정책 범주에서만. 규칙표에 없는 변화는 해석 보류
+    # '선제'가 빠진 해석은 물가·정책 범주에서만. 규칙표에 없는 변화는 공란
     rows = by_cat(SC.compare("가계대출은 증가하였다.", "가계대출은 감소하였다."))
-    assert rows["가계부채"]["reads"] == ["해석 보류(규칙표에 해당 없음)"]
+    assert rows["가계부채"]["reads"] == []
 
 
 def test_new_and_dropped_category():

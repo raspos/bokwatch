@@ -3,7 +3,7 @@
 직전 결정문과 이번 결정문을 범주(물가·성장·소비·고용·금융안정·가계부채·환율·대외 경제·향후 통화정책 운용 방향)별로 나눠 비교한다.
 각 범주: 이전 표현, 이번 표현, 변화 유형(신설·삭제·표현 변경·변화 없음), 사전에 든 핵심어의 등장·소멸, 통화정책상 가능한 의미(규칙표),
 원문 출처. 중요도는 범주 가중치 × 문장 변화 정도 + 핵심어 변화로 매겨 첫 화면에는 상위 5개만 보인다.
-의미 해석은 INTERPRET 규칙표에 걸린 것만 '읽힐 수 있다'로 쓰고 단정하지 않는다. 규칙에 없으면 '해석 보류'다.
+의미 해석은 INTERPRET 규칙표에 걸린 것만 "읽힐 수 있다"로 쓰고 단정하지 않는다. 규칙에 없으면 비워 둔다.
 전체 문장 비교(guidance.statement_diff)는 그대로 유지한다.
 """
 from __future__ import annotations
@@ -102,7 +102,7 @@ def compare(prev_text: str, cur_text: str) -> list[dict]:
         reads = [INTERPRET[("new", w)] for w in new_t if ("new", w) in INTERPRET and ok(w)] + [INTERPRET[("gone", w)] for w in gone_t if ("gone", w) in INTERPRET and ok(w)]
         change = 1.0 if kind in ("신설", "삭제") else (1 - ratio) if kind == "표현 변경" else 0.0
         rows.append({"category": cat, "change": kind, "similarity": round(ratio, 2), "prev": trim(a), "cur": trim(b),
-                     "new_terms": new_t, "gone_terms": gone_t, "reads": reads or (["해석 보류(규칙표에 해당 없음)"] if kind != "변화 없음" else []),
+                     "new_terms": new_t, "gone_terms": gone_t, "reads": reads,
                      "importance": round(WEIGHT[cat] * change + 0.1 * (len(new_t) + len(gone_t)), 3) if kind != "변화 없음" else 0.0})
     return sorted(rows, key=lambda r: -r["importance"])
 
