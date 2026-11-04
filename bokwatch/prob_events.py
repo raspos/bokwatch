@@ -10,7 +10,7 @@ import csv
 from datetime import date, timedelta
 from pathlib import Path
 
-THRESH = 0.03
+THRESH = 0.05
 RATE_IDS = ("cd91", "msb91", "kofr", "ktb3y")
 
 
@@ -119,5 +119,22 @@ def build(series: dict, meeting: str, events: list[dict], speech_events: list[di
         r["items"] = items
         r["lines"] = [i["text"] for i in items]
     rows.sort(key=lambda r: abs(r["delta"]), reverse=True)
-    return {"meeting": meeting, "threshold": thresh, "rows": rows,
+    lanes = {"bok": [], "speech": [], "indicator": [], "forecast": []}
+    if s:
+        lo, hi = s[0][0], s[-1][0]
+        for e in events:
+            if lo <= str(e.get("date")) <= hi:
+                if e.get("kind") in ("bok", "minutes"):
+                    lanes["bok"].append({"date": e["date"], "text": event_text(e, decisions)})
+                elif (e.get("importance") or 1) >= 2:
+                    lanes["indicator"].append({"date": e["date"], "text": event_text(e, decisions)})
+        for sp in speech_events:
+            if lo <= sp["date"] <= hi:
+                lanes["speech"].append({"date": sp["date"], "text": speech_text(sp)})
+        for dd in sorted({str(r.get("published")) for r in (reports or [])}):
+            if lo <= dd <= hi:
+                ft = forecast_text(reports or [], meeting, dd, dd)
+                if ft:
+                    lanes["forecast"].append({"date": dd, "text": ft})
+    return {"meeting": meeting, "threshold": thresh, "rows": rows, "lanes": lanes,
             "note": "확률이 전일보다 {}%p 이상 움직인 날. 같이 표시한 이벤트는 시간적으로 겹친 것이며 원인이라고 확인되지 않았다. 발표 시각·이벤트 전후 가격이 없어 일간 변화만 본다.".format(int(thresh * 100))}
