@@ -120,7 +120,7 @@ def _kst_key(ts: str) -> str:
     return (ts or "")[:16].replace("T", " ")
 
 
-def market_context(pool: list[dict], d_cur: str, d_prev: str, limit: int = 3) -> list[str]:
+def market_context(pool: list[dict], d_cur: str, d_prev: str, limit: int = 2, min_score: int = 5) -> list[str]:
     lo, hi = f"{d_prev} 15:30", f"{d_cur} 24:00"
     best: dict[str, tuple[int, str]] = {}
     seen: set[str] = set()
@@ -138,7 +138,7 @@ def market_context(pool: list[dict], d_cur: str, d_prev: str, limit: int = 3) ->
             if sc and sc > best.get(name, (0, ""))[0]:
                 best[name] = (sc, t)
         seen.add(t[:14])
-    picks = sorted(best.items(), key=lambda kv: -kv[1][0])[:limit]
+    picks = [kv for kv in sorted(best.items(), key=lambda kv: -kv[1][0]) if kv[1][0] >= min_score][:limit]
     out = []
     for name, (_, t) in picks:
         t = t.replace("…", " ").strip()
@@ -184,7 +184,8 @@ def build(series: dict, meeting: str, events: list[dict], speech_events: list[di
         rt = rates_text(r["rates_bp"])
         if rt:
             items.append({"type": "market", "text": rt})
-        for t in market_context(pool or [], r["date"], r["prev_date"]):
+        explained = any(i["type"] in ("bok", "speech") for i in items)    # 금통위·총재 발언이 있는 날은 해외 이슈는 한 건만, 발언이 있는 날은 아주 강한 것만
+        for t in market_context(pool or [], r["date"], r["prev_date"], limit=1, min_score=6 if explained else 5):
             items.append({"type": "global", "text": t})
         r["items"] = items
         r["headline"] = headline_of(items, r, decisions)
