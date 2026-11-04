@@ -47,11 +47,35 @@ def event_text(e: dict, decisions: dict[str, dict]) -> str:
     return short_label(e.get("label") or "")
 
 
+def speaker_label(speakers: list[str] | None) -> str:
+    sp = speakers or []
+    if any(x.endswith("총재") and "부총재" not in x for x in sp) or not sp:
+        return "총재"
+    return sp[0]
+
+
 def speech_text(s: dict) -> str:
     """'총재 국회 발언(매파): 연속 인상이 환율 안정에 기여' — 왜 그런 논조인지 한 줄 이유를 붙인다."""
     v = s.get("verdict") or ""
-    head = f"총재 {s['venue']} 발언" + (f"({v})" if v in ("매파", "중립", "비둘기파") else "")
+    head = f"{speaker_label(s.get('speakers'))} {s['venue']} 발언" + (f"({v})" if v in ("매파", "중립", "비둘기파") else "")
     return head + (f": {s['reason']}" if s.get("reason") else "")
+
+
+def headline_of(items: list[dict], r: dict, decisions: dict[str, dict]) -> str:
+    """그래프 위 말풍선에 쓰는 아주 짧은 제목: 금통위 결정 > 발언 > 지표 > 기관 전망 > 시장금리 순."""
+    for e in r["events"]:
+        if e.get("kind") == "bok" and e.get("date") in decisions:
+            m = decisions[e["date"]]
+            return f"금통위 {float(m['rate']):.2f}% {m.get('decision') or ''}".strip()
+    if r["speeches"]:
+        x = r["speeches"][0]
+        return f"{speaker_label(x.get('speakers'))} {x['venue']} 발언"[:16]
+    ind = [e for e in r["events"] if e.get("kind") != "bok"]
+    if ind:
+        return short_label(ind[0].get("label") or "", 14)
+    if any(i["type"] == "forecast" for i in items):
+        return "기관 전망 발표"
+    return "시장금리 변동" if items else ""
 
 
 RATE_NAMES = {"cd91": "CD 91일", "msb91": "통안채 91일", "ktb3y": "국고채 3년", "kofr": "KOFR"}
@@ -102,7 +126,7 @@ def build(series: dict, meeting: str, events: list[dict], speech_events: list[di
         rows.append({
             "date": d_cur, "prev_date": d_prev, "p_before": round(p_prev, 4), "p_after": round(p_cur, 4), "delta": round(delta, 4), "kind": kind,
             "events": related_events(events, d_cur),
-            "speeches": [{"date": e["date"], "venue": e["venue"], "verdict": e["verdict"], "reason": e.get("reason")} for e in speech_events if e["date"] == d_cur],
+            "speeches": [{"date": e["date"], "venue": e["venue"], "verdict": e["verdict"], "reason": e.get("reason"), "speakers": e.get("speakers")} for e in speech_events if e["date"] == d_cur],
             "lines": [],
             "rates_bp": rate_changes(rates_csv, d_cur, d_prev),
             "articles": [{k: a.get(k) for k in ("press_name", "published", "title", "link", "direction", "strength")} for a in arts],
@@ -117,6 +141,7 @@ def build(series: dict, meeting: str, events: list[dict], speech_events: list[di
         if rt:
             items.append({"type": "market", "text": rt})
         r["items"] = items
+        r["headline"] = headline_of(items, r, decisions)
         r["lines"] = [i["text"] for i in items]
     rows.sort(key=lambda r: abs(r["delta"]), reverse=True)
     lanes = {"bok": [], "speech": [], "indicator": [], "forecast": []}
@@ -130,7 +155,7 @@ def build(series: dict, meeting: str, events: list[dict], speech_events: list[di
                     lanes["indicator"].append({"date": e["date"], "text": event_text(e, decisions)})
         for sp in speech_events:
             if lo <= sp["date"] <= hi:
-                lanes["speech"].append({"date": sp["date"], "text": speech_text(sp)})
+                lanes["speech"].append({"date": sp["date"], "text": speech_text(sp)})   # sp에는 speakers가 들어 있다
         for dd in sorted({str(r.get("published")) for r in (reports or [])}):
             if lo <= dd <= hi:
                 ft = forecast_text(reports or [], meeting, dd, dd)

@@ -766,86 +766,140 @@
     const chg = (n) => { const b = n === 1 ? rows[rows.length - 2] : back(n); return b ? lastRow.hike - b.hike : null; };
     const fmt = (x) => x == null ? "–" : (x > 0.0005 ? "+" : x < -0.0005 ? "−" : "±") + Math.abs(x * 100).toFixed(1) + "%p";
     const vis = PC.range ? rows.filter((r) => dayMs(r.d) >= dayMs(lastRow.d) - PC.range * 864e5) : rows;
-    const W = 640, H = 250, m = { l: 40, r: 12, t: 12, b: 34 }, LANE_H = 17, LANES = [["bok", "금통위"], ["speech", "발언"], ["indicator", "지표"], ["forecast", "전망"]], HT = H + 6 + LANES.length * LANE_H + 4;
-    const x = d3.scaleTime().domain([new Date(vis[0].d + "T00:00:00"), new Date(lastRow.d + "T00:00:00")]).range([m.l, W - m.r]);
-    const y = d3.scaleLinear().domain([0, 1]).range([H - m.b, m.t]);
-    const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${HT}`).attr("role", "img")
-      .attr("aria-label", `${md(meet)} 금통위 인상·동결·인하 확률 변화, 최근 ${PC.range || "전체"}${PC.range ? "일" : " 기간"}`);
-    y.ticks(5).forEach((t) => {
-      svg.append("line").attr("x1", m.l).attr("x2", W - m.r).attr("y1", y(t)).attr("y2", y(t)).attr("stroke", "var(--line)");
-      svg.append("text").attr("x", m.l - 6).attr("y", y(t) + 4).attr("text-anchor", "end").attr("font-size", 10).attr("fill", "var(--ink-3)").text(Math.round(t * 100) + "%");
-    });
-    x.ticks(Math.min(6, vis.length)).forEach((t) => svg.append("text").attr("x", x(t)).attr("y", H - 16).attr("text-anchor", "middle").attr("font-size", 10).attr("fill", "var(--ink-3)").text(`${t.getMonth() + 1}/${t.getDate()}`));
-    // 전환 구간: 전일 대비 크게 움직인 날은 전날→그날 구간을 음영 띠로 칠하고 위에 변화폭을 적는다(번호·화살표 라벨 없이 색으로 읽힌다)
-    const bigs = (D.probEv && D.probEv.meeting === meet ? D.probEv.rows : []).filter((r) => vis.some((v) => v.d === r.date)).slice().sort((a, b) => a.date.localeCompare(b.date));
-    const tcol = (r) => (r.delta >= 0 ? "var(--hike)" : "var(--cut)");
+    const showCut = vis.some((r) => r.cut > 0.005);
+
+    // 이벤트 자료: 날짜별 목록(툴팁·표)과 전환점(말풍선)
+    const PEV = D.probEv && D.probEv.meeting === meet ? D.probEv : null;
+    const LANES = [["bok", "금통위"], ["speech", "발언"], ["indicator", "지표"], ["forecast", "전망"]];
+    const evByDate = {};
+    LANES.forEach(([k]) => ((PEV && PEV.lanes && PEV.lanes[k]) || []).forEach((it) => (evByDate[it.date] = evByDate[it.date] || []).push({ type: k, text: it.text })));
+    const bigs = (PEV ? PEV.rows : []).filter((r) => vis.some((v) => v.d === r.date)).slice().sort((a, b) => a.date.localeCompare(b.date));
+
+    // 치수: 화면 너비에 맞춰 그리므로 글자는 항상 같은 크기(모바일에서도 읽힌다)
+    const W = Math.max(300, Math.round(el.clientWidth || 640));
+    const LANE_H = 18, AX = 22;
+    const x = d3.scaleTime().domain([new Date(vis[0].d + "T00:00:00"), new Date(lastRow.d + "T00:00:00")]).range([44, W - 74]);
     const tx = (d) => x(new Date(d + "T00:00:00"));
-    const bandDates = new Set(bigs.map((r) => r.date));
-    bigs.forEach((r) => {
-      const x0 = Math.max(m.l, tx(r.prev_date)), x1 = tx(r.date);
-      const g = svg.append("g").attr("class", "tpband").attr("data-d", r.date);
-      g.append("rect").attr("x", x0).attr("y", m.t).attr("width", Math.max(6, x1 - x0)).attr("height", H - m.t - m.b).attr("fill", tcol(r));
-      g.append("text").attr("x", (x0 + x1) / 2).attr("y", m.t + 11).attr("text-anchor", "middle").attr("font-size", 11).attr("font-weight", 700).attr("fill", tcol(r))
-        .attr("stroke", "var(--surface)").attr("stroke-width", 3).attr("paint-order", "stroke").text(`${r.delta >= 0 ? "+" : "−"}${Math.abs(r.delta * 100).toFixed(1)}`);
+    const tcol = (r) => (r.delta >= 0 ? "var(--hike)" : "var(--cut)");
+
+    // 전환점 말풍선: 한 줄('▲ 10/22 +20.1%p 금통위 3.00% 동결'). 겹치면 높이를 올려 쌓는다
+    const mc = document.createElement("canvas").getContext("2d");
+    mc.font = `600 12px ${getComputedStyle(document.body).fontFamily}`;
+    const calls = bigs.map((r) => {
+      const txt = `${md(r.date)} ${r.delta >= 0 ? "+" : "−"}${Math.abs(r.delta * 100).toFixed(1)}%p${r.headline && W >= 560 ? "  " + r.headline : ""}`;
+      const w = mc.measureText("▲ " + txt).width + 4, cx = tx(r.date);
+      const flip = cx + w > W - 6;                       // 오른쪽 끝에 걸리면 왼쪽으로 펼친다
+      return { r, txt, w, cx, x0: flip ? cx - w : cx, x1: flip ? cx : cx + w, flip, lv: 0 };
     });
-    const L = [["hike", "var(--hike)", null, "인상"], ["hold", "var(--hold)", "5 3", "동결"], ["cut", "var(--cut)", "1.5 3", "인하"]];
-    L.forEach(([k, c, dash]) => {
-      if (k === "cut" && !vis.some((r) => r.cut > 0.005)) return;
-      svg.append("path").attr("d", d3.line().x((r) => x(new Date(r.d + "T00:00:00"))).y((r) => y(r[k]))(vis)).attr("fill", "none").attr("stroke", c).attr("stroke-width", k === "hike" ? 2.5 : 1.8).attr("stroke-dasharray", dash);
+    calls.forEach((c, i) => { while (calls.slice(0, i).some((p) => p.lv === c.lv && c.x0 < p.x1 + 8 && p.x0 < c.x1 + 8)) c.lv++; });
+    const nLv = calls.length ? Math.max(...calls.map((c) => c.lv)) + 1 : 0;
+    const m = { l: 44, r: 74, t: 10 + nLv * 18 + (nLv ? 8 : 0), b: 0 };
+    const PH = 190, plotB = m.t + PH, laneTop = plotB + AX, HT = laneTop + LANES.length * LANE_H + 4;
+    const y = d3.scaleLinear().domain([0, 1]).range([plotB, m.t]);
+    const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${HT}`).attr("width", W).attr("height", HT).attr("role", "img").attr("tabindex", 0)
+      .attr("aria-label", `${md(meet)} 금통위 인상·동결 확률 변화와 그날 있었던 일, 방향키로 날짜 이동`);
+
+    // 격자: 1px 실선, 눈에 띄지 않게
+    y.ticks(4).forEach((t) => {
+      svg.append("line").attr("x1", 44).attr("x2", W - 74).attr("y1", y(t)).attr("y2", y(t)).attr("stroke", "var(--line)").attr("stroke-width", 1);
+      svg.append("text").attr("x", 38).attr("y", y(t) + 4).attr("text-anchor", "end").attr("font-size", 11).attr("fill", "var(--ink-3)").text(Math.round(t * 100) + "%");
     });
-    // 시간축 이벤트 레인: 그래프와 같은 가로축 아래에 종류별 한 줄씩. 점에 마우스를 올리거나 누르면 그날 내용이 아래에 한 줄로 나온다
+    x.ticks(Math.min(6, vis.length)).forEach((t) => svg.append("text").attr("x", x(t)).attr("y", plotB + 15).attr("text-anchor", "middle").attr("font-size", 11).attr("fill", "var(--ink-3)").text(`${t.getMonth() + 1}/${t.getDate()}`));
+
+    // 선: 강조는 인상(주황), 동결은 회색(맥락). 선 2px, 인상 아래에만 옅은 면
+    const lineOf = (k) => d3.line().curve(d3.curveMonotoneX).x((r) => tx(r.d)).y((r) => y(r[k]))(vis);
+    svg.append("path").attr("d", d3.area().curve(d3.curveMonotoneX).x((r) => tx(r.d)).y0(plotB).y1((r) => y(r.hike))(vis)).attr("fill", "var(--hike)").attr("opacity", 0.1);
+    svg.append("path").attr("d", lineOf("hold")).attr("fill", "none").attr("stroke", "var(--hold)").attr("stroke-width", 2).attr("stroke-linecap", "round").attr("stroke-linejoin", "round");
+    if (showCut) svg.append("path").attr("d", lineOf("cut")).attr("fill", "none").attr("stroke", "var(--cut)").attr("stroke-width", 2).attr("stroke-linecap", "round");
+    svg.append("path").attr("d", lineOf("hike")).attr("fill", "none").attr("stroke", "var(--hike)").attr("stroke-width", 2).attr("stroke-linecap", "round").attr("stroke-linejoin", "round");
+
+    // 오른쪽 끝 직접 표기(글자는 본문색, 색은 점이 담당). 두 값이 붙어 있으면 아래 것을 내린다
+    const lx = tx(lastRow.d), yH = y(lastRow.hike), yD = y(lastRow.hold);
+    const ends = [{ k: "hike", name: "인상", v: lastRow.hike, y: yH, c: "var(--hike)", strong: true }, { k: "hold", name: "동결", v: lastRow.hold, y: yD, c: "var(--hold)" }];
+    if (showCut) ends.push({ k: "cut", name: "인하", v: lastRow.cut, y: y(lastRow.cut), c: "var(--cut)" });
+    ends.sort((a, b) => a.y - b.y);
+    ends.forEach((e, i) => { e.ly = i && e.y - ends[i - 1].ly < 15 ? ends[i - 1].ly + 15 : e.y; });
+    ends.forEach((e) => {
+      svg.append("circle").attr("cx", lx).attr("cy", e.y).attr("r", 4.5).attr("fill", e.c).attr("stroke", "var(--surface)").attr("stroke-width", 2);
+      svg.append("text").attr("x", lx + 10).attr("y", e.ly + 4).attr("font-size", 12).attr("font-weight", e.strong ? 700 : 500).attr("fill", e.strong ? "var(--ink)" : "var(--ink-2)").text(`${e.name} ${pct(e.v)}`);
+    });
+
+    // 전환점: 말풍선 + 가는 연결선 + 점의 고리
+    calls.forEach((c) => {
+      const cy = y(vis.find((v) => v.d === c.r.date).hike), ty = 14 + c.lv * 18;
+      svg.append("line").attr("x1", c.cx).attr("x2", c.cx).attr("y1", ty + 4).attr("y2", cy - 6).attr("stroke", "var(--ink-3)").attr("stroke-width", 1);
+      svg.append("circle").attr("cx", c.cx).attr("cy", cy).attr("r", 5.5).attr("fill", "var(--surface)").attr("stroke", tcol(c.r)).attr("stroke-width", 2.5);
+      const t = svg.append("text").attr("x", c.flip ? c.cx : c.cx).attr("y", ty).attr("text-anchor", c.flip ? "end" : "start").attr("font-size", 12).attr("font-weight", 600).attr("fill", "var(--ink)");
+      t.append("tspan").attr("fill", tcol(c.r)).text(c.r.delta >= 0 ? "▲ " : "▼ ");
+      t.append("tspan").text(c.txt);
+    });
+
+    // 시간축 이벤트 줄: 같은 날짜 축 아래에 종류별 한 줄(점은 8px 이상, 눌리는 영역은 더 넓게)
     const laneCol = { bok: "var(--hike)", speech: "var(--ink)", indicator: "var(--cut)", forecast: "var(--ink-3)" };
-    const showTip = (t) => { const el2 = $("#probTip"); if (el2) el2.textContent = t; };
     LANES.forEach(([k, name], li) => {
-      const cy = H + 6 + li * LANE_H + LANE_H / 2;
-      svg.append("line").attr("x1", m.l).attr("x2", W - m.r).attr("y1", cy).attr("y2", cy).attr("stroke", "var(--line)");
-      svg.append("text").attr("x", m.l - 6).attr("y", cy + 3).attr("text-anchor", "end").attr("font-size", 10).attr("fill", "var(--ink-3)").text(name);
-      const byDate = {};
-      ((D.probEv && D.probEv.meeting === meet && D.probEv.lanes && D.probEv.lanes[k]) || []).filter((it) => vis.some((v) => v.d === it.date)).forEach((it) => (byDate[it.date] = byDate[it.date] || []).push(it.text));
-      Object.entries(byDate).forEach(([d, texts]) => {
-        const g2 = svg.append("g").style("cursor", "pointer");
-        g2.append("circle").attr("cx", tx(d)).attr("cy", cy).attr("r", bandDates.has(d) ? 6 : 4.5).attr("fill", laneCol[k]).attr("stroke", bandDates.has(d) ? "var(--ink)" : "var(--surface)").attr("stroke-width", bandDates.has(d) ? 1.5 : 1);
-        if (texts.length > 1) g2.append("text").attr("x", tx(d)).attr("y", cy + 3).attr("text-anchor", "middle").attr("font-size", 8).attr("font-weight", 700).attr("fill", "var(--surface)").text(texts.length);
-        const say = () => showTip(`${ymd(d)} · ${texts.join(" / ")}`);
-        g2.on("pointerenter", say).on("pointerdown", say).on("pointerleave", () => showTip(""));
+      const cy = laneTop + li * LANE_H + LANE_H / 2;
+      svg.append("line").attr("x1", 44).attr("x2", W - 74).attr("y1", cy).attr("y2", cy).attr("stroke", "var(--line)").attr("stroke-width", 1);
+      svg.append("text").attr("x", 38).attr("y", cy + 4).attr("text-anchor", "end").attr("font-size", 11).attr("fill", "var(--ink-3)").text(name);
+      const dates = [...new Set(((PEV && PEV.lanes && PEV.lanes[k]) || []).map((it) => it.date))].filter((d) => vis.some((v) => v.d === d));
+      dates.forEach((d) => {
+        const n = (evByDate[d] || []).filter((e) => e.type === k).length;
+        svg.append("circle").attr("cx", tx(d)).attr("cy", cy).attr("r", 5).attr("fill", laneCol[k]).attr("stroke", "var(--surface)").attr("stroke-width", 2);
+        if (n > 1) svg.append("text").attr("x", tx(d)).attr("y", cy + 3.5).attr("text-anchor", "middle").attr("font-size", 9).attr("font-weight", 700).attr("fill", "var(--surface)").text(n);
       });
     });
-    bigs.forEach((r) => {
-      svg.append("circle").attr("cx", tx(r.date)).attr("cy", y(vis.find((v) => v.d === r.date).hike)).attr("r", 4.5).attr("fill", tcol(r)).attr("stroke", "var(--surface)").attr("stroke-width", 2);
-    });
-    const hov = svg.append("g").style("display", "none");
-    hov.append("line").attr("y1", m.t).attr("y2", H - m.b).attr("stroke", "var(--ink-3)");
-    const dots = hov.append("circle").attr("r", 4).attr("fill", "var(--hike)");
-    const tip = (r) => {
-      return `${ymd(r.d)} · 인상 ${pct(r.hike)} · 동결 ${pct(r.hold)}${r.cut > 0.0005 ? ` · 인하 ${pct(r.cut)}` : ""}`;
+
+    // 커서·툴팁: 가장 가까운 날짜에 맞춘다. 모든 선의 값과 그날 있었던 일을 한 번에 보인다
+    const hov = svg.append("g").style("display", "none").attr("pointer-events", "none");
+    hov.append("line").attr("y1", m.t).attr("y2", laneTop + LANES.length * LANE_H).attr("stroke", "var(--ink-3)").attr("stroke-width", 1);
+    const hdot = hov.append("circle").attr("r", 4.5).attr("fill", "var(--hike)").attr("stroke", "var(--surface)").attr("stroke-width", 2);
+    const tip = h("div", { class: "pctip", role: "status", "aria-live": "polite" });
+    tip.hidden = true;
+    const TAG = { bok: "금통위", speech: "발언", indicator: "지표", forecast: "전망" };
+    let idx = vis.length - 1;
+    const show = (i, px) => {
+      idx = Math.max(0, Math.min(vis.length - 1, i));
+      const r = vis[idx], cx = tx(r.d);
+      hov.style("display", null); hov.select("line").attr("x1", cx).attr("x2", cx); hdot.attr("cx", cx).attr("cy", y(r.hike));
+      const key2 = (c, name, v, strong) => h("div", { class: "pcrow2" }, h("i", { style: `background:${c}` }), h("span", {}, name), h("b", { class: strong ? "" : "m" }, pct(v)));
+      const evs = evByDate[r.d] || [];
+      tip.replaceChildren(h("div", { class: "pcdate" }, ymd(r.d)), key2("var(--hike)", "인상", r.hike, true), key2("var(--hold)", "동결", r.hold, false), showCut ? key2("var(--cut)", "인하", r.cut, false) : "",
+        evs.length ? h("ul", { class: "pcev" }, ...evs.map((e) => h("li", {}, h("span", { class: `pctag t-${e.type}` }, TAG[e.type]), e.text))) : "");
+      tip.hidden = false;
+      const tw = tip.offsetWidth || 220, left = Math.max(2, Math.min(W - tw - 2, (px != null ? px : cx) + 12));
+      tip.style.left = left + "px";
     };
-    svg.append("rect").attr("x", m.l).attr("y", m.t).attr("width", W - m.l - m.r).attr("height", H - m.t - m.b).attr("fill", "transparent").style("touch-action", "pan-y")
-      .on("pointermove pointerdown", (ev) => {
-        const [px] = d3.pointer(ev);
-        const t = x.invert(px).getTime();
-        const r = vis.reduce((a, b) => (Math.abs(dayMs(b.d) - t) < Math.abs(dayMs(a.d) - t) ? b : a));
-        hov.style("display", null); hov.select("line").attr("x1", x(new Date(r.d + "T00:00:00"))).attr("x2", x(new Date(r.d + "T00:00:00")));
-        dots.attr("cx", x(new Date(r.d + "T00:00:00"))).attr("cy", y(r.hike));
-        $("#probTip").textContent = tip(r);
-      }).on("pointerleave", () => { hov.style("display", "none"); $("#probTip").textContent = ""; });
+    const nearest = (px) => { const t = x.invert(px).getTime(); let b = 0; vis.forEach((v, i) => { if (Math.abs(dayMs(v.d) - t) < Math.abs(dayMs(vis[b].d) - t)) b = i; }); return b; };
+    const hide = () => { hov.style("display", "none"); tip.hidden = true; };
+    svg.on("pointermove", (ev) => { const [px] = d3.pointer(ev); if (px >= 44 && px <= W - 74) show(nearest(px), px); else if (ev.pointerType === "mouse") hide(); })
+      .on("pointerdown", (ev) => { const [px] = d3.pointer(ev); if (px >= 44 && px <= W - 74) show(nearest(px), px); })
+      .on("pointerleave", (ev) => { if (ev.pointerType === "mouse") hide(); })
+      .on("focus", () => show(idx)).on("blur", hide)
+      .on("keydown", (ev) => {
+        const step = ev.key === "ArrowLeft" ? -1 : ev.key === "ArrowRight" ? 1 : 0;
+        if (step) { ev.preventDefault(); show(idx + step); } else if (ev.key === "Home") { ev.preventDefault(); show(0); } else if (ev.key === "End") { ev.preventDefault(); show(vis.length - 1); }
+      });
+
+    // 표로 보기: 그래프와 같은 값(툴팁이 없어도 모든 값에 닿을 수 있게)
+    const tableRows = vis.slice().reverse().slice(0, 45).map((r) => h("tr", {}, h("td", {}, ymd(r.d)), h("td", {}, pct(r.hike)), h("td", {}, pct(r.hold)),
+      h("td", { class: "l" }, (evByDate[r.d] || []).map((e) => e.text).join(" · ") || "–")));
     const seg = h("div", { class: "seg", role: "group", "aria-label": "기간 선택" }, ...[[7, "7일"], [30, "30일"], [90, "90일"], [0, "전체"]].map(([n, t]) =>
       h("button", { type: "button", "aria-pressed": PC.range === n, onclick: () => { PC.range = n; renderProbChart(); } }, t)));
     el.replaceChildren(
       h("div", { class: "pchead" }, h("div", {}, h("b", {}, `${dmon(meet)} 금통위 확률 변화`), h("span", { class: "note" }, ` · ${REP.mode === "m5" ? "BOK WATCH 종합 예측" : "합성 KOFR OIS"} · 기준일 ${ymd(lastRow.d)}`)), seg),
       h("div", { class: "pcchg" }, `인상 ${pct(lastRow.hike)} · 전일 ${fmt(chg(1))} · 7일 ${fmt(chg(7))} · 30일 ${fmt(chg(30))}`),
-      h("div", { class: "chart" }, svg.node()),
-      h("div", { class: "pclegend" }, h("span", { style: "color:var(--hike)" }, "━ 인상"), h("span", { style: "color:var(--hold)" }, "╌ 동결"), h("span", { style: "color:var(--cut)" }, "··· 인하")),
+      h("div", { class: "chart pcwrap" }, svg.node(), tip),
+      h("div", { class: "pclegend" }, h("span", {}, h("i", { class: "pckey", style: "background:var(--hike)" }), "인상"), h("span", {}, h("i", { class: "pckey", style: "background:var(--hold)" }), "동결"),
+        showCut ? h("span", {}, h("i", { class: "pckey", style: "background:var(--cut)" }), "인하") : ""),
       bigs.length ? h("div", { class: "pcturn" }, h("h4", {}, "전환점 ", h("small", {}, `전일 대비 ${Math.round(((D.probEv && D.probEv.threshold) || 0.05) * 100)}%p 이상 움직인 날`)),
         h("div", { class: "tbl-wrap" }, h("table", { class: "grid pcgrid" },
           h("thead", {}, h("tr", {}, h("th", {}, "날짜"), h("th", {}, "변화"), h("th", { class: "l" }, "그날 있었던 일"))),
-          h("tbody", {}, ...bigs.slice().reverse().map((r) => h("tr", { class: "pcrow", "data-d": r.date,
-            onmouseenter: () => document.querySelector(`.tpband[data-d="${r.date}"]`)?.classList.add("on"), onmouseleave: () => document.querySelector(`.tpband[data-d="${r.date}"]`)?.classList.remove("on") },
+          h("tbody", {}, ...bigs.slice().reverse().map((r) => h("tr", { class: "pcrow", "data-d": r.date },
             h("td", {}, md(r.date)),
             h("td", { class: "pcchg" }, h("span", { style: `color:${tcol(r)};font-weight:700` }, `${r.delta >= 0 ? "▲" : "▼"} ${Math.abs(r.delta * 100).toFixed(1)}%p`),
               h("span", { class: "pcbar" }, h("i", { style: `width:${Math.min(100, Math.abs(r.delta) * 500)}%;background:${tcol(r)}` }))),
             h("td", { class: "l" }, (r.items || []).length ? h("ul", { class: "pcitems" }, ...r.items.map((it) => h("li", {}, h("span", { class: `pctag t-${it.type}` }, ({ bok: "금통위", speech: "발언", indicator: "지표", forecast: "전망", market: "금리" })[it.type] || "기타"), it.text))) : "이벤트 없음"))))))) : "",
-      h("div", { class: "note", id: "probTip", "aria-live": "polite" }, ""),
-      "");
+      h("details", { class: "more" }, h("summary", {}, "표로 보기"), h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },
+        h("thead", {}, h("tr", {}, h("th", {}, "날짜"), h("th", {}, "인상"), h("th", {}, "동결"), h("th", { class: "l" }, "그날 있었던 일"))), h("tbody", {}, ...tableRows)))));
   }
 
   function renderTrend() {
@@ -1763,7 +1817,7 @@
       document.documentElement.dataset.theme = nxt; store("bokwatch.theme", nxt);
     });
     addEventListener("hashchange", () => { readHash(); renderAll(); });
-    let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { renderTrend(); renderTone(); qualTrend(); }, 150); });
+    let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { renderProbChart(); renderTrend(); renderTone(); qualTrend(); }, 150); });
     addEventListener("beforeprint", () => { $("#tab-market").hidden = false; $("#tab-guidance").hidden = false; renderTrend(); });
     addEventListener("afterprint", renderTabs);
     addEventListener("pagehide", () => store("bokwatch.lastVisit", new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 16)));
