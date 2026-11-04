@@ -321,7 +321,16 @@ def main(argv=None):
                 ev_all = (read_json(SITE_DATA / "events.json", {}) or {}).get("all", [])
                 sp_ev = (read_json(SITE_DATA / "speech_events.json", {}) or {}).get("events", [])
                 qa = (read_json(SITE_DATA / "qual.json", {}) or {}).get("articles", [])
-                write_json(SITE_DATA / "prob_events.json", prob_events.build(series, nm, ev_all, sp_ev, qa, DATA / "rates.csv", meetings=guidance.get("meetings", []), reports=allowed_reports(raw["reports"])))
+                pool = []
+                for fn_ in ("naver.jsonl", "news.jsonl"):
+                    fp = SITE_DATA / fn_
+                    if fp.exists():
+                        for ln in fp.read_text(encoding="utf-8").splitlines():
+                            try:
+                                pool.append(json.loads(ln))
+                            except ValueError:
+                                pass
+                write_json(SITE_DATA / "prob_events.json", prob_events.build(series, nm, ev_all, sp_ev, qa, DATA / "rates.csv", meetings=guidance.get("meetings", []), reports=allowed_reports(raw["reports"]), pool=pool))
         except Exception as e:  # noqa: BLE001
             print(f"확률 변화 이벤트 생성 실패: {e}")
 

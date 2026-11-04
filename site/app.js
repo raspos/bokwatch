@@ -874,7 +874,7 @@
             h("td", {}, md(r.date)),
             h("td", { class: "pcchg" }, h("span", { style: `color:${tcol(r)};font-weight:700` }, `${r.delta >= 0 ? "▲" : "▼"} ${Math.abs(r.delta * 100).toFixed(1)}%p`),
               h("span", { class: "pcbar" }, h("i", { style: `width:${Math.min(100, Math.abs(r.delta) * 500)}%;background:${tcol(r)}` }))),
-            h("td", { class: "l" }, (r.items || []).length ? h("ul", { class: "pcitems" }, ...r.items.map((it) => h("li", {}, h("span", { class: `pctag t-${it.type}` }, ({ bok: "금통위", speech: "발언", indicator: "지표", forecast: "전망", market: "금리" })[it.type] || "기타"), it.text))) : "이벤트 없음"))))))) : "",
+            h("td", { class: "l" }, (r.items || []).length ? h("ul", { class: "pcitems" }, ...r.items.map((it) => h("li", {}, h("span", { class: `pctag t-${it.type}` }, ({ bok: "금통위", speech: "발언", indicator: "지표", forecast: "전망", market: "금리", global: "해외·시장" })[it.type] || "기타"), it.text))) : "이벤트 없음"))))))) : "",
       h("details", { class: "more" }, h("summary", {}, "표로 보기"), h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },
         h("thead", {}, h("tr", {}, h("th", {}, "날짜"), h("th", {}, "인상"), h("th", {}, "동결"), h("th", { class: "l" }, "그날 있었던 일"))), h("tbody", {}, ...tableRows)))));
   }

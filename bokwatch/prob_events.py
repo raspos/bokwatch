@@ -75,6 +75,9 @@ def headline_of(items: list[dict], r: dict, decisions: dict[str, dict]) -> str:
         return short_label(ind[0].get("label") or "", 14)
     if any(i["type"] == "forecast" for i in items):
         return "기관 전망 발표"
+    g = [i for i in items if i["type"] == "global"]
+    if g:
+        return g[0]["text"].split(":")[0] + " 이슈"
     return "시장금리 변동" if items else ""
 
 
@@ -102,6 +105,47 @@ def forecast_text(reports: list[dict], meeting: str, d_cur: str, d_prev: str) ->
     return f"기관 전망 {len(hit)}곳 발표({md} " + "·".join(f"{k} {v}" for k, v in cnt.items()) + ")"
 
 
+# 해외·시장 이슈: 그날(전날 15:30~그날 자정 KST, 일정 연결 규칙과 같다) 기사 제목에서 주제별로 한 건씩 고른다. 제목만 쓰고 원인이라고 단정하지 않는다.
+THEMES = [
+    ("유가·중동", ("호르무즈", "유가", "WTI", "브렌트", "중동", "이란", "이스라엘", "원유")),
+    ("미국·연준", ("연준", "Fed", "FOMC", "파월", "美 국채", "미 국채", "10년물", "미국 금리", "美 금리", "미 금리", "트럼프", "관세")),
+    ("글로벌 증시", ("뉴욕증시", "뉴욕 증시", "나스닥", "S&P", "AI 투자", "AI 불안", "코스피", "반도체주", "미 증시", "美 증시")),
+    ("해외 물가·중앙은행", ("영국", "유로존", "ECB", "BOJ", "일본은행", "엔화", "인플레", "중국", "프랑스")),
+    ("환율", ("원·달러", "원/달러", "달러 강세", "달러 약세", "환율")),
+]
+NOISE = ("비트코인", "코인", "이더리움", "리플", "금시세", "금값", "게시판", "부고", "인사", "분양")
+
+
+def _kst_key(ts: str) -> str:
+    return (ts or "")[:16].replace("T", " ")
+
+
+def market_context(pool: list[dict], d_cur: str, d_prev: str, limit: int = 3) -> list[str]:
+    lo, hi = f"{d_prev} 15:30", f"{d_cur} 24:00"
+    best: dict[str, tuple[int, str]] = {}
+    seen: set[str] = set()
+    for a in pool:
+        t = (a.get("title") or "").strip()
+        k = _kst_key(a.get("published") or "")
+        if not t or not (lo <= k < hi) or t[:14] in seen or any(n in t for n in NOISE):
+            continue
+        for name, kws in THEMES:
+            sc = sum(1 for w in kws if w in t)
+            if sc and any(w in t for w in ("급등", "돌파", "급락", "폭락", "최고", "최저", "최대", "쇼크")):
+                sc += 2
+            if sc and ("금리" in t or "인상" in t or "긴축" in t or sc >= 2):
+                sc += 1
+            if sc and sc > best.get(name, (0, ""))[0]:
+                best[name] = (sc, t)
+        seen.add(t[:14])
+    picks = sorted(best.items(), key=lambda kv: -kv[1][0])[:limit]
+    out = []
+    for name, (_, t) in picks:
+        t = t.replace("…", " ").strip()
+        out.append(f"{name}: {t if len(t) <= 48 else t[:47] + '…'}")
+    return out
+
+
 def related_events(events: list[dict], day: str) -> list[dict]:
     """그 날 이벤트 + 전날 한국 시간 15:30 이후 발표(미국 저녁 지표 등, 다음 기준일에 반영). 시각이 없는 전날 일정은 그 날 것이므로 넣지 않는다."""
     d0 = date.fromisoformat(day)
@@ -114,7 +158,7 @@ def related_events(events: list[dict], day: str) -> list[dict]:
 
 
 def build(series: dict, meeting: str, events: list[dict], speech_events: list[dict], articles: list[dict], rates_csv: Path, thresh: float = THRESH,
-          meetings: list[dict] | None = None, reports: list[dict] | None = None) -> dict:
+          meetings: list[dict] | None = None, reports: list[dict] | None = None, pool: list[dict] | None = None) -> dict:
     s = series_of(series, meeting)
     decisions = {m["date"]: m for m in (meetings or []) if m.get("decision")}
     rows = []
@@ -140,6 +184,8 @@ def build(series: dict, meeting: str, events: list[dict], speech_events: list[di
         rt = rates_text(r["rates_bp"])
         if rt:
             items.append({"type": "market", "text": rt})
+        for t in market_context(pool or [], r["date"], r["prev_date"]):
+            items.append({"type": "global", "text": t})
         r["items"] = items
         r["headline"] = headline_of(items, r, decisions)
         r["lines"] = [i["text"] for i in items]
