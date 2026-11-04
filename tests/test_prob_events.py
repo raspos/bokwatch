@@ -43,3 +43,21 @@ def test_lines_are_short_summaries_and_empty_when_no_event():
     by = {x["date"]: x["lines"] for x in r["rows"]}
     assert by["2026-10-22"] == ["금통위 결정: 기준금리 3.00% 동결", "한국 3분기 GDP 속보치 전기비 +1.0%", "총재 금통위 간담회 발언(매파)"]
     assert by["2026-10-24"] == []                       # 그 날·전날에 이벤트가 없으면 화면에서 '이벤트 없음'
+
+
+def test_days_without_events_fall_back_to_forecasts_then_rates(tmp_path):
+    rates = tmp_path / "rates.csv"
+    rates.write_text("""date,id,value,source
+2026-10-21,cd91,3.25,x
+2026-10-22,cd91,3.26,x
+2026-10-21,ktb3y,3.88,x
+2026-10-22,ktb3y,3.84,x
+2026-10-21,kofr,3.05,x
+2026-10-22,kofr,3.05,x
+""", encoding="utf-8")
+    reps = [{"institution": "A", "published": "2026-10-22", "calls": {"2026-11-26": {"call": "인상"}}},
+            {"institution": "B", "published": "2026-10-21", "calls": {"2026-11-26": {"call": "동결"}}}]
+    r = P.build(series([0.50, 0.50, 0.60]), "2026-11-26", [], [], [], rates, reports=reps)
+    assert r["rows"][0]["lines"] == ["기관 전망 2곳 발표(11/26 인상 1·동결 1)", "시장금리: 국고채 3년 -4.0bp · CD 91일 +1.0bp"]
+    r2 = P.build(series([0.50, 0.50, 0.60]), "2026-11-26", [], [], [], Path("없음.csv"))
+    assert r2["rows"][0]["lines"] == []                  # 전망·금리 자료도 없으면 비어 있다(화면에서 '이벤트 없음')

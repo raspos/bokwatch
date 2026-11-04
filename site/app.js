@@ -760,7 +760,7 @@
     if (!meet) { el.replaceChildren(h("div", { class: "empty" }, "다가오는 회의의 확률 변화 데이터 없음")); return; }
     const rows = all.filter((r) => key(r.meeting) === meet).map((r) => ({ d: key(r.date), hike: +r.p_hike, hold: +r.p_hold, cut: +r.p_cut }))
       .sort((a, b) => a.d.localeCompare(b.d));
-    const dayMs = (d) => Date.parse(d + "T00:00:00Z");
+    const dayMs = (d) => Date.parse(d + "T00:00:00");
     const lastRow = rows[rows.length - 1];
     const back = (n) => { const t = dayMs(lastRow.d) - n * 864e5; const c = rows.filter((r) => dayMs(r.d) <= t); return c.length ? c[c.length - 1] : null; };
     const chg = (n) => { const b = n === 1 ? rows[rows.length - 2] : back(n); return b ? lastRow.hike - b.hike : null; };
@@ -768,7 +768,7 @@
     const vis = PC.range ? rows.filter((r) => dayMs(r.d) >= dayMs(lastRow.d) - PC.range * 864e5) : rows;
     const evs = ((D.events && D.events.all) || []).filter((e) => vis.length && e.date >= vis[0].d && e.date <= lastRow.d && (e.importance || 1) >= 3);
     const W = 640, H = 250, m = { l: 40, r: 12, t: 12, b: 34 };
-    const x = d3.scaleTime().domain([new Date(vis[0].d), new Date(lastRow.d)]).range([m.l, W - m.r]);
+    const x = d3.scaleTime().domain([new Date(vis[0].d + "T00:00:00"), new Date(lastRow.d + "T00:00:00")]).range([m.l, W - m.r]);
     const y = d3.scaleLinear().domain([0, 1]).range([H - m.b, m.t]);
     const svg = d3.create("svg").attr("viewBox", `0 0 ${W} ${H}`).attr("role", "img")
       .attr("aria-label", `${md(meet)} 금통위 인상·동결·인하 확률 변화, 최근 ${PC.range || "전체"}${PC.range ? "일" : " 기간"}`);
@@ -776,18 +776,18 @@
       svg.append("line").attr("x1", m.l).attr("x2", W - m.r).attr("y1", y(t)).attr("y2", y(t)).attr("stroke", "var(--line)");
       svg.append("text").attr("x", m.l - 6).attr("y", y(t) + 4).attr("text-anchor", "end").attr("font-size", 10).attr("fill", "var(--ink-3)").text(Math.round(t * 100) + "%");
     });
-    x.ticks(Math.min(6, vis.length)).forEach((t) => svg.append("text").attr("x", x(t)).attr("y", H - 16).attr("text-anchor", "middle").attr("font-size", 10).attr("fill", "var(--ink-3)").text(`${t.getUTCMonth() + 1}/${t.getUTCDate()}`));
+    x.ticks(Math.min(6, vis.length)).forEach((t) => svg.append("text").attr("x", x(t)).attr("y", H - 16).attr("text-anchor", "middle").attr("font-size", 10).attr("fill", "var(--ink-3)").text(`${t.getMonth() + 1}/${t.getDate()}`));
     const L = [["hike", "var(--hike)", null, "인상"], ["hold", "var(--hold)", "5 3", "동결"], ["cut", "var(--cut)", "1.5 3", "인하"]];
     L.forEach(([k, c, dash]) => {
       if (k === "cut" && !vis.some((r) => r.cut > 0.005)) return;
-      svg.append("path").attr("d", d3.line().x((r) => x(new Date(r.d))).y((r) => y(r[k]))(vis)).attr("fill", "none").attr("stroke", c).attr("stroke-width", k === "hike" ? 2.5 : 1.8).attr("stroke-dasharray", dash);
+      svg.append("path").attr("d", d3.line().x((r) => x(new Date(r.d + "T00:00:00"))).y((r) => y(r[k]))(vis)).attr("fill", "none").attr("stroke", c).attr("stroke-width", k === "hike" ? 2.5 : 1.8).attr("stroke-dasharray", dash);
     });
-    evs.forEach((e) => svg.append("path").attr("d", d3.symbol().type(d3.symbolTriangle).size(46)()).attr("transform", `translate(${x(new Date(e.date))},${H - m.b + 2})`).attr("fill", "var(--ink-2)")
+    evs.forEach((e) => svg.append("path").attr("d", d3.symbol().type(d3.symbolTriangle).size(46)()).attr("transform", `translate(${x(new Date(e.date + "T00:00:00"))},${H - m.b + 2})`).attr("fill", "var(--ink-2)")
       .append("title").text(`${ymd(e.date)} ${e.label}`));
     // 전환점(전일 대비 5%p 이상 움직인 날): 그래프에 번호로 표시하고, 아래에 그날 있었던 이벤트를 그대로 적는다(인과를 따지지 않는다)
     const bigs = (D.probEv && D.probEv.meeting === meet ? D.probEv.rows : []).filter((r) => vis.some((v) => v.d === r.date)).slice().sort((a, b) => a.date.localeCompare(b.date));
     bigs.forEach((r, i) => {
-      const cx = x(new Date(r.date)), cy = y(vis.find((v) => v.d === r.date).hike);
+      const cx = x(new Date(r.date + "T00:00:00")), cy = y(vis.find((v) => v.d === r.date).hike);
       svg.append("circle").attr("cx", cx).attr("cy", cy).attr("r", 8).attr("fill", "var(--surface)").attr("stroke", "var(--ink)").attr("stroke-width", 1.5);
       svg.append("text").attr("x", cx).attr("y", cy + 3.5).attr("text-anchor", "middle").attr("font-size", 10).attr("font-weight", 700).attr("fill", "var(--ink)").text(i + 1);
     });
@@ -802,8 +802,8 @@
         const [px] = d3.pointer(ev);
         const t = x.invert(px).getTime();
         const r = vis.reduce((a, b) => (Math.abs(dayMs(b.d) - t) < Math.abs(dayMs(a.d) - t) ? b : a));
-        hov.style("display", null); hov.select("line").attr("x1", x(new Date(r.d))).attr("x2", x(new Date(r.d)));
-        dots.attr("cx", x(new Date(r.d))).attr("cy", y(r.hike));
+        hov.style("display", null); hov.select("line").attr("x1", x(new Date(r.d + "T00:00:00"))).attr("x2", x(new Date(r.d + "T00:00:00")));
+        dots.attr("cx", x(new Date(r.d + "T00:00:00"))).attr("cy", y(r.hike));
         $("#probTip").textContent = tip(r);
       }).on("pointerleave", () => { hov.style("display", "none"); $("#probTip").textContent = ""; });
     const seg = h("div", { class: "seg", role: "group", "aria-label": "기간 선택" }, ...[[7, "7일"], [30, "30일"], [90, "90일"], [0, "전체"]].map(([n, t]) =>
@@ -1155,7 +1155,7 @@
       const sm = (x) => x ? `${idx100(x.index)} (사건 ${x.n})` : "–";
       const tm = PF.by_type || {};
       kids.push(more(`분석 대상 언론사 · ${PF.outlets_used}/${PF.outlets_total}곳 사용 · 기사 ${PF.allowed}/${PF.window_articles}건 반영`,
-        h("p", { class: "note" }, `최근 ${Q.window_hours}시간 수집 ${PF.window_articles}건 중 허용 38개 언론사 기사 ${PF.allowed}건만 정성평가에 쓴다. 제외 ${PF.excluded}건`
+        h("p", { class: "note" }, `최근 ${Q.window_hours}시간 수집 ${PF.window_articles}건 중 허용 ${PF.outlets_total}개 언론사 기사 ${PF.allowed}건만 정성평가에 쓴다. 제외 ${PF.excluded}건`
           + (PF.review ? `, 원출처 확인 불가 ${PF.review}건(검토 대상)` : "") + ". 허용 목록 밖 기사는 점수에 넣지 않는다. 한국은행 등 공식 기관 자료는 이 제한과 별개다."),
         PF.compare_same_rule ? h("p", { class: "note" }, `같은 규칙(제목 묶음)으로 비교한 압력지수 — 전체 매체 ${sm(PF.compare_same_rule.all_outlets)} · 허용 38곳만 ${sm(PF.compare_same_rule.allowed_only)}`) : "",
         PF.excluded_reasons ? h("p", { class: "note" }, "제외·미사용 사유: " + Object.entries(PF.excluded_reasons).filter(([, v]) => v).map(([k, v]) => `${k} ${v}건`).join(" · ")) : "",

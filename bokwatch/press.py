@@ -1,6 +1,6 @@
 """언론사 화이트리스트와 기사 출처 판정.
 
-- 허용 38곳은 data/press.yaml, 검증된 도메인은 data/press_verified.json(press_verify가 만든다)에서 읽는다.
+- 허용 47곳은 data/press.yaml, 검증된 도메인은 data/press_verified.json(press_verify가 만든다)에서 읽는다.
 - 기사 출처는 '포털'이 아니라 원래 기사를 낸 언론사로 판정한다. 포털(네이버·다음·구글 등) 링크만 있고 원출처를 확인할 수 없으면 제외하고 검토 대상으로 남긴다.
 - 도메인은 가장 구체적인 것(서브도메인 포함)부터 맞춘다. 예: biz.chosun.com은 조선비즈, chosun.com은 조선일보.
 """
@@ -14,7 +14,7 @@ from .common import DATA, load_yaml, read_json
 
 PORTAL_HOSTS = ("news.naver.com", "n.news.naver.com", "m.news.naver.com", "naver.com", "v.daum.net", "news.daum.net", "daum.net",
                 "news.google.com", "google.com", "news.nate.com", "nate.com", "msn.com", "zum.com")
-EXPECTED_COUNT = 38
+EXPECTED_COUNT = 47
 
 
 def host_of(url: str) -> str:
@@ -35,7 +35,7 @@ def load_outlets(raw: bool = False) -> list[dict]:
 
 
 def validate_config(outlets: list[dict] | None = None) -> list[str]:
-    """설정 점검: 38곳, id·이름·별칭 중복 없음. 문제 목록(비어 있으면 정상)."""
+    """설정 점검: 47곳, id·이름·별칭 중복 없음. 문제 목록(비어 있으면 정상)."""
     outlets = outlets if outlets is not None else load_outlets(raw=True)
     errs = []
     if len(outlets) != EXPECTED_COUNT:

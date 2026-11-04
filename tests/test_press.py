@@ -10,15 +10,15 @@ def idx():
     return press.PressIndex()
 
 
-def test_exactly_38_outlets_and_config_is_consistent():
+def test_exactly_47_outlets_and_config_is_consistent():
     outlets = press.load_outlets(raw=True)
-    assert len(outlets) == 38
+    assert len(outlets) == 47
     assert press.validate_config(outlets) == []
-    # 유형별 개수: 종합일간지7 지상파3 경제지10 종편3 통신·정보5 IT3 방송보도3 경제전문3 인터넷1
+    # 유형별 개수: 종합일간지7 지상파3 경제지13 종편3 통신·정보5 IT3 방송보도3 경제전문9 인터넷1 (2026-11-04에 9곳 추가)
     from collections import Counter
     c = Counter(o["type"] for o in outlets)
-    assert c["종합일간지"] == 7 and c["지상파방송"] == 3 and c["경제지"] == 10 and c["종합편성채널"] == 3
-    assert c["통신사"] + c["경제정보"] == 5 and c["IT산업전문"] == 3 and c["보도채널"] == 3 and c["경제전문"] == 3 and c["종합인터넷"] == 1
+    assert c["종합일간지"] == 7 and c["지상파방송"] == 3 and c["경제지"] == 13 and c["종합편성채널"] == 3
+    assert c["통신사"] + c["경제정보"] == 5 and c["IT산업전문"] == 3 and c["보도채널"] == 3 and c["경제전문"] == 9 and c["종합인터넷"] == 1
 
 
 def test_every_outlet_has_a_verified_domain():

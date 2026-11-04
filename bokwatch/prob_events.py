@@ -54,6 +54,30 @@ def speech_text(s: dict) -> str:
     return head + (f": {s['reason']}" if s.get("reason") else "")
 
 
+RATE_NAMES = {"cd91": "CD 91일", "msb91": "통안채 91일", "ktb3y": "국고채 3년", "kofr": "KOFR"}
+
+
+def rates_text(bp: dict) -> str:
+    """시장금리 일간 변화 한 줄(1bp 이상만, 변화가 큰 순 3개). 모두 1bp 미만이면 '시장금리 변동 미미'."""
+    big = sorted(((k, v) for k, v in bp.items() if abs(v) >= 1), key=lambda kv: -abs(kv[1]))[:3]
+    if not big:
+        return "시장금리 변동 미미" if bp else ""
+    return "시장금리: " + " · ".join(f"{RATE_NAMES.get(k, k)} {v:+.1f}bp" for k, v in big)
+
+
+def forecast_text(reports: list[dict], meeting: str, d_cur: str, d_prev: str) -> str:
+    """그 날·전날 발표된 기관 전망 한 줄: '기관 전망 6곳 발표(11/26 인상 5·동결 1)'."""
+    hit = [r for r in reports if str(r.get("published")) in (d_cur, d_prev) and (r.get("calls") or {}).get(meeting)]
+    if not hit:
+        return ""
+    cnt: dict[str, int] = {}
+    for r in hit:
+        c = r["calls"][meeting]["call"]
+        cnt[c] = cnt.get(c, 0) + 1
+    md = f"{int(meeting[5:7])}/{int(meeting[8:10])}"
+    return f"기관 전망 {len(hit)}곳 발표({md} " + "·".join(f"{k} {v}" for k, v in cnt.items()) + ")"
+
+
 def related_events(events: list[dict], day: str) -> list[dict]:
     """그 날과 전날(미국 저녁 발표 등이 다음 기준일에 반영되는 경우) 이벤트. 중요도 2 이상."""
     d0 = date.fromisoformat(day)
@@ -63,7 +87,7 @@ def related_events(events: list[dict], day: str) -> list[dict]:
 
 
 def build(series: dict, meeting: str, events: list[dict], speech_events: list[dict], articles: list[dict], rates_csv: Path, thresh: float = THRESH,
-          meetings: list[dict] | None = None) -> dict:
+          meetings: list[dict] | None = None, reports: list[dict] | None = None) -> dict:
     s = series_of(series, meeting)
     decisions = {m["date"]: m for m in (meetings or []) if m.get("decision")}
     rows = []
@@ -80,8 +104,10 @@ def build(series: dict, meeting: str, events: list[dict], speech_events: list[di
             "rates_bp": rate_changes(rates_csv, d_cur, d_prev),
             "articles": [{k: a.get(k) for k in ("press_name", "published", "title", "link", "direction", "strength")} for a in arts],
         })
-    for r in rows:        # 화면용 한 줄 요약들(없으면 빈 목록 → 화면에서 '이벤트 없음')
+    for r in rows:        # 화면용 한 줄 요약들. 일정·발언이 없는 날은 기관 전망 발표와 시장금리 변화로 채운다(없으면 화면에서 '이벤트 없음')
         r["lines"] = [event_text(e, decisions) for e in r["events"]] + [speech_text(x) for x in r["speeches"]]
+        if not r["lines"]:
+            r["lines"] = [x for x in (forecast_text(reports or [], meeting, r["date"], r["prev_date"]), rates_text(r["rates_bp"])) if x]
     rows.sort(key=lambda r: abs(r["delta"]), reverse=True)
     return {"meeting": meeting, "threshold": thresh, "rows": rows,
             "note": "확률이 전일보다 {}%p 이상 움직인 날. 같이 표시한 이벤트는 시간적으로 겹친 것이며 원인이라고 확인되지 않았다. 발표 시각·이벤트 전후 가격이 없어 일간 변화만 본다.".format(int(thresh * 100))}

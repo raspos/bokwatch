@@ -33,7 +33,9 @@ CANDIDATES = {
     "yna": ["yna.co.kr"], "newsis": ["newsis.com"], "news1": ["news1.kr"], "newspim": ["newspim.com"], "einfomax": ["einfomax.co.kr"],
     "etnews": ["etnews.com"], "zdnet": ["zdnet.co.kr"], "inews24": ["inews24.com"],
     "yonhapnewstv": ["yonhapnewstv.co.kr"], "ytn": ["ytn.co.kr"], "sbsbiz": ["biz.sbs.co.kr"],
-    "chosunbiz": ["biz.chosun.com"], "econovill": ["econovill.com"], "joseilbo": ["joseilbo.com"], "nocutnews": ["nocutnews.co.kr"],
+    "chosunbiz": ["biz.chosun.com"],
+    "genews": ["g-enews.com"], "newstomato": ["newstomato.com"], "dnews": ["dnews.co.kr"], "ekn": ["ekn.kr"], "viva100": ["viva100.com"],
+    "bizwatch": ["news.bizwatch.co.kr"], "sisajournale": ["sisajournal-e.com"], "newsprime": ["newsprime.co.kr"], "fntimes": ["fntimes.com"], "econovill": ["econovill.com"], "joseilbo": ["joseilbo.com"], "nocutnews": ["nocutnews.co.kr"],
 }
 
 
