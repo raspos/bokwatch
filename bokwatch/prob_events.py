@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import csv
+import re
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -141,7 +142,8 @@ def market_context(pool: list[dict], d_cur: str, d_prev: str, limit: int = 2, mi
     picks = [kv for kv in sorted(best.items(), key=lambda kv: -kv[1][0]) if kv[1][0] >= min_score][:limit]
     out = []
     for name, (_, t) in picks:
-        t = t.replace("…", " ").strip()
+        t = re.sub(r"\s*\[[^\]]*\]?\s*", " ", t)          # [김혜란의 FX…] 같은 코너명·말머리 제거(잘린 대괄호 포함)
+        t = re.sub(r"[.…]{2,}$|…$", "", t.replace("…", " ")).strip()
         out.append(f"{name}: {t if len(t) <= 48 else t[:47] + '…'}")
     return out
 
