@@ -766,7 +766,6 @@
     const chg = (n) => { const b = n === 1 ? rows[rows.length - 2] : back(n); return b ? lastRow.hike - b.hike : null; };
     const fmt = (x) => x == null ? "–" : (x > 0.0005 ? "+" : x < -0.0005 ? "−" : "±") + Math.abs(x * 100).toFixed(1) + "%p";
     const vis = PC.range ? rows.filter((r) => dayMs(r.d) >= dayMs(lastRow.d) - PC.range * 864e5) : rows;
-    const evs = ((D.events && D.events.all) || []).filter((e) => vis.length && e.date >= vis[0].d && e.date <= lastRow.d && (e.importance || 1) >= 3);
     const W = 640, H = 250, m = { l: 40, r: 12, t: 12, b: 34 };
     const x = d3.scaleTime().domain([new Date(vis[0].d + "T00:00:00"), new Date(lastRow.d + "T00:00:00")]).range([m.l, W - m.r]);
     const y = d3.scaleLinear().domain([0, 1]).range([H - m.b, m.t]);
@@ -782,14 +781,21 @@
       if (k === "cut" && !vis.some((r) => r.cut > 0.005)) return;
       svg.append("path").attr("d", d3.line().x((r) => x(new Date(r.d + "T00:00:00"))).y((r) => y(r[k]))(vis)).attr("fill", "none").attr("stroke", c).attr("stroke-width", k === "hike" ? 2.5 : 1.8).attr("stroke-dasharray", dash);
     });
-    evs.forEach((e) => svg.append("path").attr("d", d3.symbol().type(d3.symbolTriangle).size(46)()).attr("transform", `translate(${x(new Date(e.date + "T00:00:00"))},${H - m.b + 2})`).attr("fill", "var(--ink-2)")
-      .append("title").text(`${ymd(e.date)} ${e.label}`));
     // 전환점(전일 대비 5%p 이상 움직인 날): 그래프에 번호로 표시하고, 아래에 그날 있었던 이벤트를 그대로 적는다(인과를 따지지 않는다)
     const bigs = (D.probEv && D.probEv.meeting === meet ? D.probEv.rows : []).filter((r) => vis.some((v) => v.d === r.date)).slice().sort((a, b) => a.date.localeCompare(b.date));
+    const tcol = (r) => (r.delta >= 0 ? "var(--hike)" : "var(--cut)");
+    const placed = { up: [], down: [] };      // 라벨 겹침 방지: 가까운 날짜끼리 높이를 달리 둔다
     bigs.forEach((r, i) => {
-      const cx = x(new Date(r.date + "T00:00:00")), cy = y(vis.find((v) => v.d === r.date).hike);
-      svg.append("circle").attr("cx", cx).attr("cy", cy).attr("r", 8).attr("fill", "var(--surface)").attr("stroke", "var(--ink)").attr("stroke-width", 1.5);
-      svg.append("text").attr("x", cx).attr("y", cy + 3.5).attr("text-anchor", "middle").attr("font-size", 10).attr("font-weight", 700).attr("fill", "var(--ink)").text(i + 1);
+      const cx = x(new Date(r.date + "T00:00:00")), cy = y(vis.find((v) => v.d === r.date).hike), up = r.delta >= 0;
+      const side = placed[up ? "up" : "down"];
+      let lv = 0;
+      while (side.some((p) => p.lv === lv && Math.abs(p.cx - cx) < 46) && lv < 4) lv++;
+      side.push({ cx, lv });
+      const g = svg.append("g").attr("class", "tp").attr("data-d", r.date).style("cursor", "pointer");
+      g.append("circle").attr("cx", cx).attr("cy", cy).attr("r", 5).attr("fill", tcol(r)).attr("stroke", "var(--surface)").attr("stroke-width", 2);
+      g.append("text").attr("x", cx).attr("y", cy + (up ? -12 - lv * 13 : 20 + lv * 13)).attr("text-anchor", "middle").attr("font-size", 11).attr("font-weight", 700)
+        .attr("fill", tcol(r)).attr("stroke", "var(--surface)").attr("stroke-width", 3).attr("paint-order", "stroke").text(`${up ? "▲" : "▼"} ${md(r.date)}`);
+      g.on("mouseenter", () => document.querySelector(`.pcrow[data-d="${r.date}"]`)?.classList.add("on")).on("mouseleave", () => document.querySelector(`.pcrow[data-d="${r.date}"]`)?.classList.remove("on"));
     });
     const hov = svg.append("g").style("display", "none");
     hov.append("line").attr("y1", m.t).attr("y2", H - m.b).attr("stroke", "var(--ink-3)");
@@ -812,9 +818,16 @@
       h("div", { class: "pchead" }, h("div", {}, h("b", {}, `${dmon(meet)} 금통위 확률 변화`), h("span", { class: "note" }, ` · ${REP.mode === "m5" ? "BOK WATCH 종합 예측" : "합성 KOFR OIS"} · 기준일 ${ymd(lastRow.d)}`)), seg),
       h("div", { class: "pcchg" }, `인상 ${pct(lastRow.hike)} · 전일 ${fmt(chg(1))} · 7일 ${fmt(chg(7))} · 30일 ${fmt(chg(30))}`),
       h("div", { class: "chart" }, svg.node()),
-      h("div", { class: "pclegend" }, h("span", { style: "color:var(--hike)" }, "━ 인상"), h("span", { style: "color:var(--hold)" }, "╌ 동결"), h("span", { style: "color:var(--cut)" }, "··· 인하"), h("span", {}, "▲ 주요 이벤트")),
-      bigs.length ? h("div", { class: "pcturn" }, h("h4", {}, "전환점 ", h("small", {}, "확률이 전일보다 5%p 이상 움직인 날")),
-        h("ol", {}, ...bigs.map((r) => h("li", {}, h("b", {}, `${md(r.date)} ${r.delta >= 0 ? "+" : "−"}${Math.abs(r.delta * 100).toFixed(1)}%p`), "  ", (r.lines || []).length ? r.lines.join(" · ") : "이벤트 없음")))) : "",
+      h("div", { class: "pclegend" }, h("span", { style: "color:var(--hike)" }, "━ 인상"), h("span", { style: "color:var(--hold)" }, "╌ 동결"), h("span", { style: "color:var(--cut)" }, "··· 인하"), h("span", {}, "▲▼ 전환점")),
+      bigs.length ? h("div", { class: "pcturn" }, h("h4", {}, "전환점 ", h("small", {}, "전일 대비 3%p 이상 움직인 날")),
+        h("div", { class: "tbl-wrap" }, h("table", { class: "grid pcgrid" },
+          h("thead", {}, h("tr", {}, h("th", {}, "날짜"), h("th", {}, "변화"), h("th", { class: "l" }, "그날 있었던 일"))),
+          h("tbody", {}, ...bigs.slice().reverse().map((r) => h("tr", { class: "pcrow", "data-d": r.date,
+            onmouseenter: () => document.querySelector(`.tp[data-d="${r.date}"]`)?.classList.add("on"), onmouseleave: () => document.querySelector(`.tp[data-d="${r.date}"]`)?.classList.remove("on") },
+            h("td", {}, md(r.date)),
+            h("td", { class: "pcchg" }, h("span", { style: `color:${tcol(r)};font-weight:700` }, `${r.delta >= 0 ? "▲" : "▼"} ${Math.abs(r.delta * 100).toFixed(1)}%p`),
+              h("span", { class: "pcbar" }, h("i", { style: `width:${Math.min(100, Math.abs(r.delta) * 500)}%;background:${tcol(r)}` }))),
+            h("td", { class: "l" }, (r.items || []).length ? h("ul", { class: "pcitems" }, ...r.items.map((it) => h("li", {}, h("span", { class: `pctag t-${it.type}` }, ({ bok: "금통위", speech: "발언", indicator: "지표", forecast: "전망", market: "금리" })[it.type] || "기타"), it.text))) : "이벤트 없음"))))))) : "",
       h("div", { class: "note", id: "probTip", "aria-live": "polite" }, ""),
       "");
   }

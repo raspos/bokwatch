@@ -10,7 +10,7 @@ import csv
 from datetime import date, timedelta
 from pathlib import Path
 
-THRESH = 0.05
+THRESH = 0.03
 RATE_IDS = ("cd91", "msb91", "kofr", "ktb3y")
 
 
@@ -79,11 +79,14 @@ def forecast_text(reports: list[dict], meeting: str, d_cur: str, d_prev: str) ->
 
 
 def related_events(events: list[dict], day: str) -> list[dict]:
-    """그 날과 전날(미국 저녁 발표 등이 다음 기준일에 반영되는 경우) 이벤트. 중요도 2 이상."""
+    """그 날 이벤트 + 전날 한국 시간 15:30 이후 발표(미국 저녁 지표 등, 다음 기준일에 반영). 시각이 없는 전날 일정은 그 날 것이므로 넣지 않는다."""
     d0 = date.fromisoformat(day)
-    keys = {day, (d0 - timedelta(days=1)).isoformat()}
-    return [{k: e.get(k) for k in ("date", "time", "label", "country", "kind", "link", "source", "verify")}
-            for e in events if e.get("date") in keys and (e.get("importance") or 1) >= 2]
+    prev = (d0 - timedelta(days=1)).isoformat()
+    out = []
+    for e in events:
+        if e.get("date") == day or (e.get("date") == prev and (e.get("time") or "") >= "15:30"):
+            out.append({k: e.get(k) for k in ("date", "time", "label", "country", "kind", "link", "source", "verify")})
+    return out
 
 
 def build(series: dict, meeting: str, events: list[dict], speech_events: list[dict], articles: list[dict], rates_csv: Path, thresh: float = THRESH,
@@ -99,15 +102,22 @@ def build(series: dict, meeting: str, events: list[dict], speech_events: list[di
         rows.append({
             "date": d_cur, "prev_date": d_prev, "p_before": round(p_prev, 4), "p_after": round(p_cur, 4), "delta": round(delta, 4), "kind": kind,
             "events": related_events(events, d_cur),
-            "speeches": [{"date": e["date"], "venue": e["venue"], "verdict": e["verdict"], "reason": e.get("reason")} for e in speech_events if e["date"] in (d_cur, d_prev)],
+            "speeches": [{"date": e["date"], "venue": e["venue"], "verdict": e["verdict"], "reason": e.get("reason")} for e in speech_events if e["date"] == d_cur],
             "lines": [],
             "rates_bp": rate_changes(rates_csv, d_cur, d_prev),
             "articles": [{k: a.get(k) for k in ("press_name", "published", "title", "link", "direction", "strength")} for a in arts],
         })
-    for r in rows:        # 화면용 한 줄 요약들. 일정·발언이 없는 날은 기관 전망 발표와 시장금리 변화로 채운다(없으면 화면에서 '이벤트 없음')
-        r["lines"] = [event_text(e, decisions) for e in r["events"]] + [speech_text(x) for x in r["speeches"]]
-        if not r["lines"]:
-            r["lines"] = [x for x in (forecast_text(reports or [], meeting, r["date"], r["prev_date"]), rates_text(r["rates_bp"])) if x]
+    for r in rows:        # 화면용 항목: 일정·발언에 더해 기관 전망 발표와 시장금리 변화를 함께 보인다(각 항목은 종류 태그와 한 줄 요약)
+        items = [{"type": "bok" if e.get("kind") == "bok" else "indicator", "text": event_text(e, decisions)} for e in r["events"]]
+        items += [{"type": "speech", "text": speech_text(x)} for x in r["speeches"]]
+        ft = forecast_text(reports or [], meeting, r["date"], r["prev_date"])
+        if ft:
+            items.append({"type": "forecast", "text": ft})
+        rt = rates_text(r["rates_bp"])
+        if rt:
+            items.append({"type": "market", "text": rt})
+        r["items"] = items
+        r["lines"] = [i["text"] for i in items]
     rows.sort(key=lambda r: abs(r["delta"]), reverse=True)
     return {"meeting": meeting, "threshold": thresh, "rows": rows,
             "note": "확률이 전일보다 {}%p 이상 움직인 날. 같이 표시한 이벤트는 시간적으로 겹친 것이며 원인이라고 확인되지 않았다. 발표 시각·이벤트 전후 가격이 없어 일간 변화만 본다.".format(int(thresh * 100))}
