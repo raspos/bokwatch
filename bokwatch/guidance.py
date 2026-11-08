@@ -131,6 +131,16 @@ VENUE_KEYS = {  # 발언 자리별로 기사 제목·요약에서 찾을 말
 RATE_WORDS = ("금리", "물가", "인상", "인하", "환율", "통화정책", "긴축", "중립", "인플레", "AI", "양극화", "성장", "원화")
 
 
+def allowed_speeches(speeches: list[dict]) -> tuple[list[dict], list[dict]]:
+    """발언의 출처 링크가 허용 47개 매체 기사인 것만 남긴다. 링크가 없거나 목록 밖이면 제외(제외 목록도 돌려준다)."""
+    from .press import default_index
+    idx = default_index()
+    ok, out = [], []
+    for s in speeches:
+        (ok if idx.identify({"link": s.get("link") or ""})["status"] == "allowed" else out).append(s)
+    return ok, out
+
+
 def related_articles(speeches: list[dict], press: dict, days: int = 2) -> None:
     """발언 자리(날짜+장소)마다 관련 기사를 모은다. 지정 언론사, 발언일~2일 뒤, 제목에 총재·금리 관련 말.
     기사 하나는 점수가 가장 높은 자리 하나에만 붙인다(자리 낱말 2점 + 발언 낱말 1점, 2점 이상)."""
@@ -145,7 +155,10 @@ def related_articles(speeches: list[dict], press: dict, days: int = 2) -> None:
             arts += [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
     pool, seen = [], set()
     for a in arts:
-        name = press.get(urlparse(a["link"]).netloc)
+        from .press import default_index
+        _idx = default_index()
+        _r = _idx.identify({"link": a["link"]})
+        name = _idx.outlets[_r["outlet"]]["name"] if _r["status"] == "allowed" else None
         t = a["title"]
         if not name or a["link"] in seen or not any(k in t for k in ("신현송", "총재")) or not any(k in t for k in RATE_WORDS):
             continue
@@ -207,7 +220,10 @@ def build_guidance(cfg: dict, minutes: dict | None = None, today: date | None = 
     dots = [m for m in out_meetings if m["dotplot"]]
     from .common import all_meetings
     nxt = next_dotplot_meeting(all_meetings(cfg), cfg.get("dotplot_months", []), today or date.today())
-    speeches = sorted(g["speeches"], key=lambda s: s["date"], reverse=True)
+    kept, dropped = allowed_speeches(g["speeches"])
+    if dropped:
+        print(f"허용 47개 매체 밖 출처라 발언 {len(dropped)}건 제외: " + ", ".join(f"{d['date']} {d.get('speaker')}" for d in dropped))
+    speeches = sorted(kept, key=lambda s: s["date"], reverse=True)
     related_articles(speeches, (cfg.get("news") or {}).get("press") or {})
     return {
         "meetings": list(reversed(out_meetings)),
