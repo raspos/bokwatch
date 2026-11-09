@@ -1,7 +1,7 @@
 # 기관 전망 (수기 입력). verify: true = 언론 보도 인용 초기값, 원문 대조 필요.
 # calls: 회의별 전망  {회의일: {call: 동결|인상|인하, size: 0.25}}. 키 "2027-01-14"는 1월 14일 회의(명시 또는 전체 경로에서 1월 변경이 없는 경우만 입력)
 # dissent: 소수의견 전망 문자열, terminal: 최종금리(%), path: 경로 설명
-asof: "2026-11-05"
+asof: "2026-11-09"
 
 reports:
   - institution: iM증권
@@ -749,6 +749,48 @@ reports:
     rationale: 핵심 물가가 11~12월 다시 3%를 웃돌 가능성과 3분기 성장률 호조
     source: 뉴시스 11/4 11:30, 메디컬투데이 11/4 10:04(보고서 원문 미확인)
     link: "https://www.newsis.com/view/NISX20261104_0003854326"
+    verify: true
+
+  - institution: 씨티
+    author: 김진욱
+    published: "2026-11-06"
+    calls:
+      "2026-11-26": {call: 인상, size: 0.25}
+      "2027-01-14": {call: 동결, note: "2027년 2월 인상"}
+      "2027-02-25": {call: 인상, size: 0.25}
+    dissent: null
+    terminal: 3.50
+    path: "11월·2027년 2월 25bp씩 인상(점도표 중간값 3.50% 예상)"
+    rationale: 코스피 급락에도 반도체 가격 상승세가 이어져 인상 전망 유지
+    source: 연합뉴스 11/6 16:44(보고서 원문 미확인)
+    link: "https://www.yna.co.kr/view/AKR20261106149800002"
+    verify: true
+
+  - institution: KB증권
+    author: 임재균
+    published: "2026-11-07"
+    calls:
+      "2026-11-26": {call: 인상, size: 0.25}
+      "2027-01-14": {call: 동결, note: "11월 인상 뒤 동결"}
+    dissent: "황건일 위원 동결 의견 가능성"
+    terminal: 3.25
+    path: "11월 인상 뒤 동결(주가 부진으로 11월 동결 가능성도 배제하지 못함)"
+    rationale: 주가 부진으로 최종금리 3.50%에 대한 시장 확신이 약해짐
+    source: 연합인포맥스 11/7 07:28(보고서 '흔들리는 최종 기준금리(3.50%)에 대한 믿음' 인용, 원문 미확인)
+    link: "https://news.einfomax.co.kr/news/articleView.html?idxno=4443583"
+    verify: true
+
+  - institution: NH투자증권
+    author: 강승원
+    published: "2026-11-09"
+    calls:
+      "2026-11-26": {call: 인상, size: 0.25}
+    dissent: null
+    terminal: null
+    path: "11월 25bp 인상 전망 유지"
+    rationale: 증시 급락에도 한은이 긴축 경로를 바꿀 상황은 아님
+    source: 연합뉴스 11/9 08:51(보고서 원문 미확인)
+    link: "https://www.yna.co.kr/view/AKR20261109022900008"
     verify: true
 
 kofia_survey:
