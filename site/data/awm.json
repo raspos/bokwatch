@@ -1,9 +1,9 @@
 {
- "generated": "2026-11-10",
+ "generated": "2026-11-11",
  "live": {
   "meeting": "2026-11-26",
-  "D": 16,
-  "obs_date": "2026-11-09",
+  "D": 15,
+  "obs_date": "2026-11-10",
   "ois_policy": "flat",
   "panel_rebuilt": false,
   "n_train_meetings": 46,
@@ -11,24 +11,24 @@
    "M2 합성 OIS 단독": {
     "ok": true,
     "p": {
-     "hike": 0.9474,
-     "hold": 0.0526,
+     "hike": 0.788,
+     "hold": 0.212,
      "cut": 0.0
     }
    },
    "M3 통안채 91일 단독": {
     "ok": true,
     "p": {
-     "hike": 0.8474,
-     "hold": 0.1526,
+     "hike": 0.8121,
+     "hold": 0.1879,
      "cut": 0.0
     }
    },
    "M5 OIS+통안채 50:50": {
     "ok": true,
     "p": {
-     "hike": 0.8974,
-     "hold": 0.1026,
+     "hike": 0.8001,
+     "hold": 0.1999,
      "cut": 0.0
     },
     "w_ois": 0.5
@@ -36,17 +36,17 @@
    "M6c 기간 연속형 가중치": {
     "ok": true,
     "p": {
-     "hike": 0.8968,
-     "hold": 0.1032,
+     "hike": 0.8002,
+     "hold": 0.1998,
      "cut": 0.0
     },
-    "w_ois": 0.494
+    "w_ois": 0.4941
    },
    "M7 최근 오차 반영(EWA)": {
     "ok": true,
     "p": {
-     "hike": 0.8959,
-     "hold": 0.1041,
+     "hike": 0.8004,
+     "hold": 0.1996,
      "cut": 0.0
     },
     "w_ois": 0.485
@@ -54,17 +54,17 @@
    "M8 기간+전환 신호 가중치": {
     "ok": true,
     "p": {
-     "hike": 0.8968,
-     "hold": 0.1032,
+     "hike": 0.8002,
+     "hold": 0.1998,
      "cut": 0.0
     },
-    "w_ois": 0.4937
+    "w_ois": 0.4941
    }
   },
   "inputs": {
    "cd91": {
     "source_type": "single_cd91",
-    "input_date": "2026-11-09",
+    "input_date": "2026-11-10",
     "p": {
      "hike": 0,
      "hold": 1.0,
@@ -75,28 +75,28 @@
    },
    "msb91": {
     "source_type": "single_msb91",
-    "input_date": "2026-11-09",
+    "input_date": "2026-11-10",
     "p": {
-     "hike": 0.847388,
-     "hold": 0.152612,
+     "hike": 0.812122,
+     "hold": 0.187878,
      "cut": 0
     },
     "solve": "min_hike",
     "spread_how": "당시까지 자료"
    },
    "ois": {
-    "source_type": "ois_3m",
-    "input_date": "2026-11-09",
+    "source_type": "ois_1m",
+    "input_date": "2026-11-10",
     "p": {
-     "hike": 0.9474,
-     "hold": 0.0526,
+     "hike": 0.788,
+     "hold": 0.212,
      "cut": 0
     },
     "solve": null,
     "spread_how": null
    }
   },
-  "ois_source": "ois_3m"
+  "ois_source": "ois_1m"
  },
  "label": "통계적 결합 실험값. 시장가격이 아니며 기본 확률(KOFR OIS)을 대체하지 않는다.",
  "backtest_file": "awm_backtest.json"

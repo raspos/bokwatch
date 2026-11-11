@@ -1750,90 +1750,81 @@
    "w1": {
     "label": "1주",
     "tenor_days": 7,
-    "cd_date": "2026-11-09",
-    "cd": 3.11,
+    "cd_date": "2026-11-10",
+    "cd": 3.12,
     "spread": -0.0068,
     "n_obs": 931,
-    "ois": 3.1168
+    "ois": 3.1268
    },
    "w2": {
     "label": "2주(15일)",
     "tenor_days": 15,
-    "cd_date": "2026-11-09",
-    "cd": 3.14,
-    "spread": 0.024,
-    "n_obs": 925,
-    "ois": 3.116
+    "cd_date": "2026-11-10",
+    "cd": 3.16,
+    "spread": 0.0241,
+    "n_obs": 926,
+    "ois": 3.1359
    },
    "m1": {
     "label": "1개월",
     "tenor_days": 30,
-    "cd_date": "2026-11-09",
-    "cd": 3.18,
-    "spread": 0.0544,
-    "n_obs": 915,
-    "ois": 3.1256
+    "cd_date": "2026-11-10",
+    "cd": 3.2,
+    "spread": 0.0545,
+    "n_obs": 916,
+    "ois": 3.1455
    },
    "m3": {
     "label": "3개월",
     "tenor_days": 91,
-    "cd_date": "2026-11-09",
-    "cd": 3.36,
+    "cd_date": "2026-11-10",
+    "cd": 3.37,
     "spread": 0.1153,
     "n_obs": 1156,
-    "ois": 3.2447
+    "ois": 3.2547
    }
   },
-  "next": null,
+  "next": {
+   "meeting": "2026-11-26",
+   "pre_days": 15,
+   "post_days": 15,
+   "kofr_base": 0.047,
+   "expected": 3.197,
+   "delta_bp": 19.7,
+   "p_hike": 0.788,
+   "p_cut": 0,
+   "p_hold": 0.212
+  },
   "path": [
    {
     "meeting": "2026-11-26",
-    "source": "3개월 OIS",
-    "post_days": 75,
-    "tenor_days": 91,
-    "kofr_base": 0.0495,
-    "expected": 3.2368,
-    "delta_bp": 23.68,
-    "tail_assumed": [
-     "2027-01-14"
-    ],
-    "p_hike": 0.9474,
+    "pre_days": 15,
+    "post_days": 15,
+    "kofr_base": 0.047,
+    "expected": 3.197,
+    "delta_bp": 19.7,
+    "p_hike": 0.788,
     "p_cut": 0,
-    "p_hold": 0.0526,
+    "p_hold": 0.212,
+    "source": "1개월 OIS",
+    "tail_unscheduled": []
+   },
+   {
+    "meeting": "2027-01-14",
+    "source": "3개월 OIS + 1개월 OIS",
+    "post_days": 27,
+    "tenor_days": 91,
+    "kofr_base": 0.047,
+    "expected": 3.3425,
+    "delta_bp": 14.55,
+    "tail_assumed": [],
+    "p_hike": 0.582,
+    "p_cut": 0,
+    "p_hold": 0.418,
     "tail_unscheduled": []
    }
   ],
-  "later_est": {
-   "later": [
-    {
-     "date": "2027-01-14",
-     "late": "2027-01-14",
-     "delta_bp": [
-      7.3,
-      7.3
-     ],
-     "p_hike": [
-      0.2932,
-      0.2932
-     ]
-    }
-   ],
-   "targets": [
-    {
-     "date": "2026-11-26",
-     "late": "2026-11-26",
-     "delta_bp": [
-      21.1,
-      21.1
-     ],
-     "p_hike": [
-      0.8457,
-      0.8457
-     ]
-    }
-   ],
-   "basis": "3개월 OIS 한 식, 회의별 변화폭 최소(참고 추정·가정 의존)"
-  },
+  "later_est": null,
   "kofr_base_how": "KOFR−기준금리 60일 중앙값(38일)"
  }
 }
