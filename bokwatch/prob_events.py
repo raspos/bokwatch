@@ -106,7 +106,7 @@ def forecast_text(reports: list[dict], meeting: str, d_cur: str, d_prev: str) ->
     return f"기관 전망 {len(hit)}곳 발표({md} " + "·".join(f"{k} {v}" for k, v in cnt.items()) + ")"
 
 
-# 해외·시장 이슈: 그날(전날 15:30~그날 자정 KST, 일정 연결 규칙과 같다) 기사 제목에서 주제별로 한 건씩 고른다. 제목만 쓰고 원인이라고 단정하지 않는다.
+# 해외·시장 이슈: 그날(전날 15:30~그날 15:30 KST, 일정 연결 규칙과 같다) 기사 제목에서 주제별로 한 건씩 고른다. 제목만 쓰고 원인이라고 단정하지 않는다.
 THEMES = [
     ("유가·중동", ("호르무즈", "유가", "WTI", "브렌트", "중동", "이란", "이스라엘", "원유")),
     ("미국·연준", ("연준", "Fed", "FOMC", "파월", "美 국채", "미 국채", "10년물", "미국 금리", "美 금리", "미 금리", "트럼프", "관세")),
@@ -122,7 +122,7 @@ def _kst_key(ts: str) -> str:
 
 
 def market_context(pool: list[dict], d_cur: str, d_prev: str, limit: int = 2, min_score: int = 5) -> list[str]:
-    lo, hi = f"{d_prev} 15:30", f"{d_cur} 24:00"
+    lo, hi = f"{d_prev} 15:30", f"{d_cur} 15:30"
     best: dict[str, tuple[int, str]] = {}
     seen: set[str] = set()
     for a in pool:
@@ -149,12 +149,16 @@ def market_context(pool: list[dict], d_cur: str, d_prev: str, limit: int = 2, mi
 
 
 def related_events(events: list[dict], day: str) -> list[dict]:
-    """그 날 이벤트 + 전날 한국 시간 15:30 이후 발표(미국 저녁 지표 등, 다음 기준일에 반영). 시각이 없는 전날 일정은 그 날 것이므로 넣지 않는다."""
+    """그 날 15:30(채권시장 마감) 전 이벤트 + 전날 15:30 이후 발표(미국 저녁 지표 등). 금리는 그날 마감 값이라 같은 날 15:30 이후 발표는 다음 기준일로 넘긴다.
+    시각이 없는 일정은 그 날 것으로 본다(전날 시각 없는 일정은 넣지 않는다)."""
     d0 = date.fromisoformat(day)
     prev = (d0 - timedelta(days=1)).isoformat()
     out = []
     for e in events:
-        if e.get("date") == day or (e.get("date") == prev and (e.get("time") or "") >= "15:30"):
+        t = e.get("time") or ""
+        if (e.get("importance") or 1) < 2 and e.get("kind") != "bok":
+            continue    # 중요도 낮은 일정은 붙이지 않는다
+        if (e.get("date") == day and (not t or t < "15:30")) or (e.get("date") == prev and t >= "15:30"):
             out.append({k: e.get(k) for k in ("date", "time", "label", "country", "kind", "link", "source", "verify")})
     return out
 
@@ -187,6 +191,11 @@ def build(series: dict, meeting: str, events: list[dict], speech_events: list[di
         if rt:
             items.append({"type": "market", "text": rt})
         explained = any(i["type"] in ("bok", "speech") for i in items)    # 금통위·총재 발언이 있는 날은 해외 이슈는 한 건만, 발언이 있는 날은 아주 강한 것만
+        ser = ((series or {}).get("meetings") or {}).get(meeting) or {}
+        a_, b_ = (ser.get(r["prev_date"]) or {}).get("ois_source"), (ser.get(r["date"]) or {}).get("ois_source")
+        if a_ and b_ and a_ != b_:
+            nm_ = {"ois_1m": "1개월 OIS", "ois_3m": "3개월 OIS"}
+            items.insert(0, {"type": "model", "text": f"계산 방식 전환: {nm_.get(a_, a_)} → {nm_.get(b_, b_)}"})
         for t in market_context(pool or [], r["date"], r["prev_date"], limit=1, min_score=6 if explained else 5):
             items.append({"type": "global", "text": t})
         r["items"] = items

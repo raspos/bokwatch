@@ -229,7 +229,7 @@
       : `모형 추정(CD) · ${nextDate ? mon(nextDate) + " 회의" : "다음 회의"} 인상 확률${staleFrom ? ` · ${ymd(staleFrom)} 기준` : ""}`),
       h("div", { class: "v" }, nTop ? `${nTop.name} ${pct(nTop.p)}` : nxt ? (nxt.range && nxt.range.direction === "hike" ? `최고 ${pct(nxt.range.max)}` : pct(nxt.p_hike)) : "–"),
       nTop ? h("div", { class: "s" }, outcomes(nxt).filter((o) => o.bp !== nTop.bp).map((o) => `${o.name} ${pct(o.p)}`).join(" · ")) : "",
-      nxt && nxt.rep ? h("div", { class: "s" }, `OIS·통안채 91일 50:50 결합 · ${repKind(nxt.rep.kind)}`) : "",
+      nxt && nxt.rep ? h("div", { class: "s" }, `OIS·통안채 91일 50:50 결합 · 금리 기준일 ${md(snap.asof)} · ${nxt.rep.kind === "retro" && snap.asof === (D.meta.latest || snap.asof) ? "저장 전 계산" : repKind(nxt.rep.kind)}`) : "",
       nxt && nxt.range ? h("div", { class: "s" }, `가능 범위 ${pct(nxt.range.min, 0)}~${pct(nxt.range.max, 0)}`) : "",
       h("div", { class: "s" }, ms[1] ? (ms[1].method === "kofr_ois"
         ? `${mon(ms[1].date)} ${(() => { const t = outcomes(ms[1]).reduce((a, b) => (b.p > a.p ? b : a)); return `${t.name} ${pct(t.p)}`; })()} · 인상 ${pct(ms[1].p_hike)}`
@@ -679,7 +679,7 @@
       const r0 = rs[0];
       const stop = r0.status !== "산출";
       return h("tr", { class: dd.length > 10 ? "extra" : null }, h("td", {}, ymd(dd) + (dd.length > 10 ? ` ${dd.slice(11, 16)} 추가` : "")), h("td", {}, ymd(r0.asof)),
-        ...meets.map((m) => { const r = rs.find((x) => x.meeting === m); const e = r && !stop ? repEntry(m, r.asof) : null; return h("td", {}, e ? pct(e.m5.hike) : r && r.p_hike !== "" ? pct(+r.p_hike) : "–"); }),
+        ...meets.map((m) => { const r = rs.find((x) => x.meeting === m); const e = r && !stop ? repEntry(m, r.asof) : null; return h("td", {}, e ? pct(e.m5.hike) : r && r.p_hike !== "" ? `${pct(+r.p_hike)} (OIS)` : "–"); }),
         h("td", {}, stop ? "–" : (() => { const e = meets.map((m) => { const r = rs.find((x) => x.meeting === m); return r ? repEntry(m, r.asof) : null; }).find(Boolean); return e ? `종합 예측 · ${repKind(e.kind)}` : r0.instrument; })()));
     });
     // 최근 10줄만 보이고 나머지는 접어 둔다
@@ -878,7 +878,7 @@
             h("td", {}, md(r.date)),
             h("td", { class: "pcchg" }, h("span", { style: `color:${tcol(r)};font-weight:700` }, `${r.delta >= 0 ? "▲" : "▼"} ${Math.abs(r.delta * 100).toFixed(1)}%p`),
               h("span", { class: "pcbar" }, h("i", { style: `width:${Math.min(100, Math.abs(r.delta) * 500)}%;background:${tcol(r)}` }))),
-            h("td", { class: "l" }, (r.items || []).length ? h("ul", { class: "pcitems" }, ...r.items.map((it) => h("li", {}, h("span", { class: `pctag t-${it.type}` }, ({ bok: "금통위", speech: "발언", indicator: "지표", forecast: "전망", market: "금리", global: "해외·시장" })[it.type] || "기타"), it.text))) : "이벤트 없음"))))))) : "",
+            h("td", { class: "l" }, (r.items || []).length ? h("ul", { class: "pcitems" }, ...r.items.map((it) => h("li", {}, h("span", { class: `pctag t-${it.type}` }, ({ bok: "금통위", speech: "발언", indicator: "지표", forecast: "전망", market: "금리", global: "해외·시장", model: "모형" })[it.type] || "기타"), it.text))) : "이벤트 없음"))))))) : "",
       h("details", { class: "more" }, h("summary", {}, "표로 보기"), h("div", { class: "tbl-wrap" }, h("table", { class: "grid" },
         h("thead", {}, h("tr", {}, h("th", {}, "날짜"), h("th", {}, "인상"), h("th", {}, "동결"), h("th", { class: "l" }, "그날 있었던 일"))), h("tbody", {}, ...tableRows)))));
   }

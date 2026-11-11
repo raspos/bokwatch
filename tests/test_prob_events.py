@@ -20,13 +20,26 @@ def test_only_moves_at_or_above_threshold_sorted_by_size():
     assert r["rows"][0]["delta"] < 0 and abs(r["rows"][0]["delta"]) > abs(r["rows"][1]["delta"])
 
 
-def test_related_events_window_is_same_day_and_previous_day_with_min_importance():
-    r = P.build(series([0.50, 0.60]), "2026-11-26", EV, [], [], Path("없음.csv"))
-    labels = [e["label"] for e in r["rows"][0]["events"]]                           # 10/21 기준일: 그 날·전날(10/20~21) 이벤트
-    assert labels == []
-    r2 = P.build(series([0.50, 0.50, 0.60]), "2026-11-26", EV, [], [], Path("없음.csv"))
-    assert [e["label"] for e in r2["rows"][0]["events"]] == ["미국 PCE"]            # 10/22 변화: 10/21·10/22 중 10/22 PCE만(중요도 1 일정·먼 날짜 제외)
-    assert r2["rows"][0]["date"] == "2026-10-22"
+def test_related_events_window_uses_market_close():
+    # 금리는 그날 15:30(채권시장 마감) 값이다. 10/22 21:30 미국 PCE는 10/22 확률이 아니라 다음 기준일(10/23)에 붙는다
+    r = P.build(series([0.50, 0.50, 0.60]), "2026-11-26", EV, [], [], Path("없음.csv"))
+    assert r["rows"][0]["date"] == "2026-10-22"
+    assert [e["label"] for e in r["rows"][0]["events"]] == []
+    r2 = P.build(series([0.50, 0.50, 0.50, 0.60]), "2026-11-26", EV, [], [], Path("없음.csv"))
+    assert r2["rows"][0]["date"] == "2026-10-23"
+    assert [e["label"] for e in r2["rows"][0]["events"]] == ["미국 PCE"]            # 전날 15:30 이후 발표. 중요도 1 일정·먼 날짜는 제외
+    ev = [{"date": "2026-10-22", "label": "시각 없는 일정", "country": "KR", "importance": 3}]
+    r3 = P.build(series([0.50, 0.50, 0.60]), "2026-11-26", ev, [], [], Path("없음.csv"))
+    assert [e["label"] for e in r3["rows"][0]["events"]] == ["시각 없는 일정"]      # 시각이 없으면 그날 것
+
+
+def test_model_switch_day_is_marked():
+    s = {"meetings": {"2026-11-26": {
+        "2026-10-20": {"m5": {"hike": 0.9, "hold": 0.1, "cut": 0.0}, "kind": "stored", "ois_source": "ois_3m"},
+        "2026-10-21": {"m5": {"hike": 0.8, "hold": 0.2, "cut": 0.0}, "kind": "stored", "ois_source": "ois_1m"}}}}
+    r = P.build(s, "2026-11-26", [], [], [], Path("없음.csv"))
+    items = r["rows"][0]["items"]
+    assert items[0] == {"type": "model", "text": "계산 방식 전환: 3개월 OIS → 1개월 OIS"}
 
 
 def test_note_does_not_claim_causation_and_missing_series_is_empty():

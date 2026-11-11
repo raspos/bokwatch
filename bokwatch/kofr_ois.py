@@ -120,6 +120,8 @@ def next_meeting(ois_row: dict, r0: float, k_spread: float, meetings: list[date]
             "expected": round(e, 4), "delta_bp": round((e - r0) * 100, 2), **{f"p_{k}": round(v, 4) for k, v in p.items()}}
 
 
+AMP_FROM = date(2026, 11, 11)   # 이 날 기준일부터 적용한다. 그 전 날짜의 값·백테스트는 바꾸지 않는다(model_changelog 2026-11-11).
+MAX_AMP = 2.0       # 1개월 값을 받아 3개월 식으로 그다음 회의를 풀 때, 그 회의 뒤 구간이 만기의 절반 미만이면 오차가 2배를 넘게 커져 풀지 않는다(참고 추정으로 낸다).
 MIN_POST_DAYS = 15  # 1개월물로 다음 회의를 풀려면 회의 뒤 구간이 이 일수 이상이어야 한다(오차 확대 ≤ 2배)
 
 
@@ -130,7 +132,7 @@ def _probs(delta: float) -> dict:
     return {f"p_{k}": round(v, 4) for k, v in p.items()}
 
 
-def solve_path(c: dict, r0: float, k_spread: float, meetings: list[date]) -> list[dict]:
+def solve_path(c: dict, r0: float, k_spread: float, meetings: list[date], max_amp: float | None = None) -> list[dict]:
     """1개월 OIS로 다음 회의, 3개월 OIS로 그다음 회의를 차례로 푼다(부트스트래핑).
     회의별 확률은 Δ_k = E_k − E_(k−1)로 CD 91일 모형과 같은 규칙.
     3개월 만기 안에 아직 모르는 회의가 둘 이상이면 식이 하나뿐이라 앞 회의만 풀고, 뒤 회의는 변화 없음(꼬리)으로 둔다.
@@ -170,6 +172,8 @@ def solve_path(c: dict, r0: float, k_spread: float, meetings: list[date]) -> lis
             return out
     if coef <= 0:
         return out
+    if known and max_amp and T / coef > max_amp:   # 앞 회의가 1개월물로 풀린 뒤 이어 푸는 뒤 회의는 오차가 너무 커져 확률로 내지 않는다
+        return out
     e = lhs / coef
     prev_m = max((m for m in known if m < target), default=None)
     prev = known[prev_m] if prev_m else r0
@@ -180,7 +184,7 @@ def solve_path(c: dict, r0: float, k_spread: float, meetings: list[date]) -> lis
 
 
 def min_change_estimate(c: dict, r0: float, k_spread: float, meetings: list[date],
-                        late: dict[date, date] | None = None) -> dict | None:
+                        late: dict[date, date] | None = None, max_amp: float | None = None) -> dict | None:
     """참고 추정(실험): 3개월 OIS 한 식에 아직 모르는 회의가 둘 이상일 때, 회의별 변화폭의 제곱합이 가장 작은 해를 쓴다.
     같은 가격이 뒤 회의의 인상 확률 0~100%와 모두 맞아서 값이 정해지지는 않는다(뒤 회의가 만기 끝에 가까울수록 더 그렇다).
     late(일정 미정 회의의 늦은 쪽 날짜)를 주면 두 날짜로 풀어 범위로 낸다."""
@@ -192,6 +196,10 @@ def min_change_estimate(c: dict, r0: float, k_spread: float, meetings: list[date
     end = start + timedelta(days=T)
     first = next_meeting(c, r0, k_spread, meetings)
     known = {d(first["meeting"]): first["expected"]} if first else {}
+    if known and max_amp:   # solve_path가 뒤 회의를 풀지 않는 경우(오차 확대 > max_amp)에는 1개월 값 없이 3개월 한 식으로 두 회의를 함께 본다
+        unk = [m for m in sorted(meetings) if start <= m < end and m not in known]
+        if unk and T / max((end - unk[0]).days, 1) > max_amp:
+            known = {}
 
     def solve(cand: list[date]) -> list[tuple[date, float]] | None:
         ms = sorted(m for m in cand if start <= m < end)
@@ -231,11 +239,12 @@ def compute(o: OIS, day: date, r0: float, k_spread: float, meetings: list[date],
     c = o.curve_on(day, max_stale)
     if not c:
         return None
-    path = solve_path(c, r0, k_spread, meetings)
+    amp = MAX_AMP if day >= AMP_FROM else None
+    path = solve_path(c, r0, k_spread, meetings, amp)
     for x in path:
         x["tail_unscheduled"] = [m for m in (x.get("tail_assumed") or []) if late and d(m) in late]
     return {"curve": c, "next": next_meeting(c, r0, k_spread, meetings), "path": path,
-            "later_est": min_change_estimate(c, r0, k_spread, meetings, late)}
+            "later_est": min_change_estimate(c, r0, k_spread, meetings, late, amp)}
 
 
 # ---------------------------------------------------------------- 백테스트
