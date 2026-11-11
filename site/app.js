@@ -702,14 +702,18 @@
     const E = D.events;
     const flag = { US: "미국", KR: "한국" };
     const ind = Object.values(E.indicators || {});
-    const tiles = ind.length ? ind.map((x) => h("div", { class: "tile" }, h("div", { class: "k" }, `${x.label} · ${x.month} 전년동월비`),
-      h("div", { class: "v" }, fx(x.yoy, 1) + "%"),
-      h("div", { class: "s" }, (x.prev_yoy != null ? `전월 ${fx(x.prev_yoy, 1)}%` : "") + (x.core_yoy != null ? ` · 근원 ${fx(x.core_yoy, 1)}%` : "")
+    const tiles = ind.length ? ind.map((x) => h("div", { class: "tile" }, h("div", { class: "k" }, `${x.label} · ${x.month} ${x.yoy == null ? "전월비" : "전년동월비"}`),
+      h("div", { class: "v" }, x.yoy == null ? `${x.mom >= 0 ? "+" : ""}${fx(x.mom, 1)}%` : fx(x.yoy, 1) + "%"),
+      x.yoy == null ? h("div", { class: "s" }, (x.core_mom != null ? `근원 ${x.core_mom >= 0 ? "+" : ""}${fx(x.core_mom, 1)}% · ` : "") + "계절조정") : h("div", { class: "s" }, (x.prev_yoy != null ? `전월 ${fx(x.prev_yoy, 1)}%` : "") + (x.core_yoy != null ? ` · 근원 ${fx(x.core_yoy, 1)}%` : "")
         + (x.prev_core_yoy != null ? `(전월 ${fx(x.prev_core_yoy, 1)}%)` : "")),
-      x.mom != null ? h("div", { class: "s" }, `전월비 ${x.mom >= 0 ? "+" : ""}${fx(x.mom, 1)}%` + (x.core_mom != null ? ` · 근원 ${x.core_mom >= 0 ? "+" : ""}${fx(x.core_mom, 1)}%` : "") + " (계절조정)") : "",
-      x.consensus ? h("div", { class: "s" }, `예상 ${fx(x.consensus.yoy, 1)}%` + (x.consensus.core_yoy != null ? ` · 근원 예상 ${fx(x.consensus.core_yoy, 1)}%` : "") + " → "
-        + [x.yoy - x.consensus.yoy, x.core_yoy != null && x.consensus.core_yoy != null ? x.core_yoy - x.consensus.core_yoy : null]
-          .map((d, i) => d == null ? "" : `${i ? "근원 " : ""}${d > 0.04 ? "상회" : d < -0.04 ? "하회" : "부합"}`).filter(Boolean).join(" · ")) : "",
+      x.yoy != null && x.mom != null ? h("div", { class: "s" }, `전월비 ${x.mom >= 0 ? "+" : ""}${fx(x.mom, 1)}%` + (x.core_mom != null ? ` · 근원 ${x.core_mom >= 0 ? "+" : ""}${fx(x.core_mom, 1)}%` : "") + " (계절조정)") : "",
+      x.consensus ? (x.yoy == null
+        ? h("div", { class: "s" }, `예상 ${x.consensus.mom != null ? fx(x.consensus.mom, 1) + "%" : "–"}` + (x.consensus.core_mom != null ? ` · 근원 예상 ${fx(x.consensus.core_mom, 1)}%` : "") + " → "
+          + [x.mom != null && x.consensus.mom != null ? x.mom - x.consensus.mom : null, x.core_mom != null && x.consensus.core_mom != null ? x.core_mom - x.consensus.core_mom : null]
+            .map((d, i) => d == null ? "" : `${i ? "근원 " : ""}${d > 0.04 ? "상회" : d < -0.04 ? "하회" : "부합"}`).filter(Boolean).join(" · "))
+        : h("div", { class: "s" }, `예상 ${fx(x.consensus.yoy, 1)}%` + (x.consensus.core_yoy != null ? ` · 근원 예상 ${fx(x.consensus.core_yoy, 1)}%` : "") + " → "
+          + [x.yoy - x.consensus.yoy, x.core_yoy != null && x.consensus.core_yoy != null ? x.core_yoy - x.consensus.core_yoy : null]
+            .map((d, i) => d == null ? "" : `${i ? "근원 " : ""}${d > 0.04 ? "상회" : d < -0.04 ? "하회" : "부합"}`).filter(Boolean).join(" · "))) : "",
       "")) : [h("p", { class: "note" }, "지표 실제치 수집 전")];
     ind.forEach((x, i) => { if (tiles[i] && tiles[i].setAttribute) tiles[i].title = `출처: ${x.source}` + (x.consensus ? ` · 예상치: ${x.consensus.source}` : ""); });
     $("#indicators").replaceChildren(...tiles);

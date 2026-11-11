@@ -1,0 +1,1694 @@
+{
+ "asof": "2026-11-11",
+ "r0": 3.0,
+ "r0_source": "ECOS/수동 base (2026-11-09)",
+ "default_ok": true,
+ "assumed_meetings": [],
+ "inputs": [
+  {
+   "id": "cd91",
+   "label": "CD 91일",
+   "rate": 3.37,
+   "date": "2026-11-11",
+   "tenor_days": 91,
+   "spread": 0.18,
+   "spread_how": "동결 국면 중앙값(367일)",
+   "chg_bp": 0.0,
+   "prev_date": "2026-11-10",
+   "source": "ECOS 817Y002/010502000",
+   "used": true,
+   "kind": "market",
+   "vs_base_bp": 37.0
+  },
+  {
+   "id": "msb91",
+   "label": "통안증권 91일",
+   "rate": 3.193,
+   "date": "2026-11-11",
+   "tenor_days": 91,
+   "spread": -0.035,
+   "spread_how": "동결 국면 중앙값(367일)",
+   "chg_bp": 1.9,
+   "prev_date": "2026-11-10",
+   "source": "ECOS 817Y002/010400000",
+   "used": false,
+   "kind": "market",
+   "vs_base_bp": 19.3
+  },
+  {
+   "id": "msb1y",
+   "label": "통안증권 1년",
+   "rate": 3.529,
+   "date": "2026-11-11",
+   "tenor_days": 365,
+   "spread": -0.09,
+   "spread_how": "동결 국면 중앙값(367일)",
+   "chg_bp": 6.0,
+   "prev_date": "2026-11-10",
+   "source": "ECOS 817Y002/010400001",
+   "used": false,
+   "kind": "market",
+   "vs_base_bp": 52.9
+  },
+  {
+   "id": "msb2y",
+   "label": "통안증권 2년",
+   "rate": 3.737,
+   "date": "2026-11-11",
+   "tenor_days": 730,
+   "spread": -0.055,
+   "spread_how": "동결 국면 중앙값(367일)",
+   "chg_bp": 7.9,
+   "prev_date": "2026-11-10",
+   "source": "ECOS 817Y002/010400002",
+   "used": false,
+   "kind": "market",
+   "vs_base_bp": 73.7
+  },
+  {
+   "id": "ktb1y",
+   "label": "국고채 1년",
+   "rate": 3.613,
+   "date": "2026-11-11",
+   "tenor_days": 365,
+   "spread": -0.042,
+   "spread_how": "동결 국면 중앙값(367일)",
+   "chg_bp": 4.3,
+   "prev_date": "2026-11-10",
+   "source": "ECOS 817Y002/010190000",
+   "used": false,
+   "kind": "market",
+   "vs_base_bp": 61.3
+  },
+  {
+   "id": "ktb3y",
+   "label": "국고채 3년",
+   "rate": 3.729,
+   "date": "2026-11-11",
+   "tenor_days": 1095,
+   "spread": -0.095,
+   "spread_how": "동결 국면 중앙값(367일)",
+   "chg_bp": 9.6,
+   "prev_date": "2026-11-10",
+   "source": "ECOS 817Y002/010200000",
+   "used": false,
+   "kind": "market",
+   "vs_base_bp": 72.9
+  },
+  {
+   "id": "kofr",
+   "label": "KOFR 익일물",
+   "rate": 3.041,
+   "date": "2026-11-09",
+   "tenor_days": 1,
+   "spread": 0.041,
+   "spread_how": "동결 국면 중앙값(367일)",
+   "chg_bp": -1.9,
+   "prev_date": "2026-11-06",
+   "source": "ECOS 817Y002/010901000",
+   "used": false,
+   "kind": "market",
+   "vs_base_bp": 4.1
+  }
+ ],
+ "warnings": [],
+ "scenarios": {
+  "-5": {
+   "meetings": [
+    {
+     "date": "2026-11-26",
+     "expected": 3.1884,
+     "delta_bp": 18.84,
+     "p_hike": 0.7538,
+     "p_hold": 0.2462,
+     "p_cut": 0,
+     "moves": {
+      "0": 0.2464,
+      "25": 0.7536
+     },
+     "levels": {
+      "3.00": 0.2464,
+      "3.25": 0.7536
+     },
+     "method": "kofr_ois",
+     "in_range": true,
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0.64,
+      "p_hold": 0.36,
+      "p_cut": 0,
+      "expected": 3.16,
+      "range": {
+       "direction": "hike",
+       "min": 0.7709,
+       "max": 1.0,
+       "early": 1.0,
+       "late": 0.7709,
+       "max_expected": 3.25,
+       "max_levels": {
+        "3.25": 1.0
+       },
+       "feasible": true
+      }
+     }
+    },
+    {
+     "date": "2027-01-14",
+     "expected": 3.3522,
+     "delta_bp": 16.38,
+     "p_hike": 0.655,
+     "p_hold": 0.345,
+     "p_cut": 0,
+     "moves": {
+      "0": 0.3448,
+      "25": 0.6552
+     },
+     "levels": {
+      "3.25": 0.5912,
+      "3.50": 0.4088
+     },
+     "method": "kofr_ois",
+     "in_range": true,
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "3개월 OIS + 1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 1.0,
+      "p_hold": 0.0,
+      "p_cut": 0,
+      "expected": 3.5,
+      "range": {
+       "direction": "hike",
+       "min": 0.37,
+       "max": 1.0,
+       "early": 0.37,
+       "late": 1.0,
+       "max_expected": 3.4427,
+       "max_levels": {
+        "3.25": 0.2291,
+        "3.50": 0.7709
+       },
+       "feasible": true
+      }
+     }
+    },
+    {
+     "date": "2027-02-25",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-04-09",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-05-27",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-07-15",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-08-26",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-10-15",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-11-25",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    }
+   ],
+   "method": "min_hike",
+   "notes": [
+    "투입 상품 최장 만기(91일) 밖 회의는 계산하지 않음"
+   ]
+  },
+  "0": {
+   "meetings": [
+    {
+     "date": "2026-11-26",
+     "expected": 3.1884,
+     "delta_bp": 18.84,
+     "p_hike": 0.7538,
+     "p_hold": 0.2462,
+     "p_cut": 0,
+     "moves": {
+      "0": 0.2464,
+      "25": 0.7536
+     },
+     "levels": {
+      "3.00": 0.2464,
+      "3.25": 0.7536
+     },
+     "method": "kofr_ois",
+     "in_range": true,
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0.84,
+      "p_hold": 0.16,
+      "p_cut": 0,
+      "expected": 3.21,
+      "range": {
+       "direction": "hike",
+       "min": 0.5345,
+       "max": 0.8982,
+       "early": 0.8982,
+       "late": 0.5345,
+       "max_expected": 3.2245,
+       "max_levels": {
+        "3.00": 0.1018,
+        "3.25": 0.8982
+       },
+       "feasible": true
+      }
+     }
+    },
+    {
+     "date": "2027-01-14",
+     "expected": 3.3522,
+     "delta_bp": 16.38,
+     "p_hike": 0.655,
+     "p_hold": 0.345,
+     "p_cut": 0,
+     "moves": {
+      "0": 0.3448,
+      "25": 0.6552
+     },
+     "levels": {
+      "3.25": 0.5912,
+      "3.50": 0.4088
+     },
+     "method": "kofr_ois",
+     "in_range": true,
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "3개월 OIS + 1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0.16,
+      "p_hold": 0.84,
+      "p_cut": 0,
+      "expected": 3.25,
+      "range": {
+       "direction": "hike",
+       "min": 0.0,
+       "max": 1.0,
+       "early": 0.0,
+       "late": 1.0,
+       "max_expected": 3.3836,
+       "max_levels": {
+        "3.25": 0.4655,
+        "3.50": 0.5345
+       },
+       "feasible": true
+      }
+     }
+    },
+    {
+     "date": "2027-02-25",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-04-09",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-05-27",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-07-15",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-08-26",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-10-15",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-11-25",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    }
+   ],
+   "method": "min_hike",
+   "notes": [
+    "투입 상품 최장 만기(91일) 밖 회의는 계산하지 않음"
+   ]
+  },
+  "5": {
+   "meetings": [
+    {
+     "date": "2026-11-26",
+     "expected": 3.1884,
+     "delta_bp": 18.84,
+     "p_hike": 0.7538,
+     "p_hold": 0.2462,
+     "p_cut": 0,
+     "moves": {
+      "0": 0.2464,
+      "25": 0.7536
+     },
+     "levels": {
+      "3.00": 0.2464,
+      "3.25": 0.7536
+     },
+     "method": "kofr_ois",
+     "in_range": true,
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0.4686,
+      "p_hold": 0.5314,
+      "p_cut": 0,
+      "expected": 3.1171,
+      "range": {
+       "direction": "hike",
+       "min": 0.2982,
+       "max": 0.6618,
+       "early": 0.6618,
+       "late": 0.2982,
+       "max_expected": 3.1655,
+       "max_levels": {
+        "3.00": 0.3382,
+        "3.25": 0.6618
+       },
+       "feasible": true
+      }
+     }
+    },
+    {
+     "date": "2027-01-14",
+     "expected": 3.3522,
+     "delta_bp": 16.38,
+     "p_hike": 0.655,
+     "p_hold": 0.345,
+     "p_cut": 0,
+     "moves": {
+      "0": 0.3448,
+      "25": 0.6552
+     },
+     "levels": {
+      "3.25": 0.5912,
+      "3.50": 0.4088
+     },
+     "method": "kofr_ois",
+     "in_range": true,
+     "source": "KOFR OIS(자체 산출)",
+     "ois_source": "3개월 OIS + 1개월 OIS",
+     "tail_assumed": [],
+     "cd91": {
+      "p_hike": 0.5314,
+      "p_hold": 0.4686,
+      "p_cut": 0,
+      "expected": 3.25,
+      "range": {
+       "direction": "hike",
+       "min": 0.0,
+       "max": 1.0,
+       "early": 0.0,
+       "late": 1.0,
+       "max_expected": 3.3245,
+       "max_levels": {
+        "3.25": 0.7018,
+        "3.50": 0.2982
+       },
+       "feasible": true
+      }
+     }
+    },
+    {
+     "date": "2027-02-25",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-04-09",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-05-27",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-07-15",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-08-26",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-10-15",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    },
+    {
+     "date": "2027-11-25",
+     "expected": null,
+     "delta_bp": null,
+     "p_hike": null,
+     "p_hold": null,
+     "p_cut": null,
+     "moves": {},
+     "levels": {},
+     "method": "out_of_range",
+     "in_range": false,
+     "source": "CD 91일 모형"
+    }
+   ],
+   "method": "min_hike",
+   "notes": [
+    "투입 상품 최장 만기(91일) 밖 회의는 계산하지 않음"
+   ]
+  }
+ },
+ "components": {
+  "cd": {
+   "-5": {
+    "asof": "2026-11-11",
+    "start": "2026-11-12",
+    "r0": 3.0,
+    "method": "min_hike",
+    "notes": [
+     "투입 상품 최장 만기(91일) 밖 회의는 계산하지 않음"
+    ],
+    "meetings": [
+     {
+      "date": "2026-11-26",
+      "expected": 3.16,
+      "delta_bp": 16.0,
+      "p_hike": 0.64,
+      "p_hold": 0.36,
+      "p_cut": 0,
+      "moves": {
+       "0": 0.36,
+       "25": 0.64
+      },
+      "levels": {
+       "3.00": 0.36,
+       "3.25": 0.64
+      },
+      "method": "min_hike",
+      "in_range": true,
+      "range": {
+       "direction": "hike",
+       "min": 0.7709,
+       "max": 1.0,
+       "early": 1.0,
+       "late": 0.7709,
+       "max_expected": 3.25,
+       "max_levels": {
+        "3.25": 1.0
+       },
+       "feasible": true
+      }
+     },
+     {
+      "date": "2027-01-14",
+      "expected": 3.5,
+      "delta_bp": 34.0,
+      "p_hike": 1.0,
+      "p_hold": 0.0,
+      "p_cut": 0,
+      "moves": {
+       "25": 0.64,
+       "50": 0.36
+      },
+      "levels": {
+       "3.50": 1.0
+      },
+      "method": "min_hike",
+      "in_range": true,
+      "range": {
+       "direction": "hike",
+       "min": 0.37,
+       "max": 1.0,
+       "early": 0.37,
+       "late": 1.0,
+       "max_expected": 3.4427,
+       "max_levels": {
+        "3.25": 0.2291,
+        "3.50": 0.7709
+       },
+       "feasible": true
+      }
+     },
+     {
+      "date": "2027-02-25",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-04-09",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-05-27",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-07-15",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-08-26",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-10-15",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-11-25",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     }
+    ],
+    "path_range": {
+     "direction": "hike",
+     "L": 87.36,
+     "feasible": true,
+     "meetings": {
+      "2026-11-26": {
+       "exposure_days": 77,
+       "min": 0.7709,
+       "max": 1.0,
+       "early": 1.0,
+       "late": 0.7709,
+       "max_expected": 3.25,
+       "max_levels": {
+        "3.25": 1.0
+       }
+      },
+      "2027-01-14": {
+       "exposure_days": 28,
+       "min": 0.37,
+       "max": 1.0,
+       "early": 0.37,
+       "late": 1.0,
+       "max_expected": 3.4427,
+       "max_levels": {
+        "3.25": 0.2291,
+        "3.50": 0.7709
+       }
+      }
+     }
+    }
+   },
+   "0": {
+    "asof": "2026-11-11",
+    "start": "2026-11-12",
+    "r0": 3.0,
+    "method": "min_hike",
+    "notes": [
+     "투입 상품 최장 만기(91일) 밖 회의는 계산하지 않음"
+    ],
+    "meetings": [
+     {
+      "date": "2026-11-26",
+      "expected": 3.21,
+      "delta_bp": 21.0,
+      "p_hike": 0.84,
+      "p_hold": 0.16,
+      "p_cut": 0,
+      "moves": {
+       "0": 0.16,
+       "25": 0.84
+      },
+      "levels": {
+       "3.00": 0.16,
+       "3.25": 0.84
+      },
+      "method": "min_hike",
+      "in_range": true,
+      "range": {
+       "direction": "hike",
+       "min": 0.5345,
+       "max": 0.8982,
+       "early": 0.8982,
+       "late": 0.5345,
+       "max_expected": 3.2245,
+       "max_levels": {
+        "3.00": 0.1018,
+        "3.25": 0.8982
+       },
+       "feasible": true
+      }
+     },
+     {
+      "date": "2027-01-14",
+      "expected": 3.25,
+      "delta_bp": 4.0,
+      "p_hike": 0.16,
+      "p_hold": 0.84,
+      "p_cut": 0,
+      "moves": {
+       "0": 0.84,
+       "25": 0.16
+      },
+      "levels": {
+       "3.25": 1.0
+      },
+      "method": "min_hike",
+      "in_range": true,
+      "range": {
+       "direction": "hike",
+       "min": 0.0,
+       "max": 1.0,
+       "early": 0.0,
+       "late": 1.0,
+       "max_expected": 3.3836,
+       "max_levels": {
+        "3.25": 0.4655,
+        "3.50": 0.5345
+       },
+       "feasible": true
+      }
+     },
+     {
+      "date": "2027-02-25",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-04-09",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-05-27",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-07-15",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-08-26",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-10-15",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-11-25",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     }
+    ],
+    "path_range": {
+     "direction": "hike",
+     "L": 69.16,
+     "feasible": true,
+     "meetings": {
+      "2026-11-26": {
+       "exposure_days": 77,
+       "min": 0.5345,
+       "max": 0.8982,
+       "early": 0.8982,
+       "late": 0.5345,
+       "max_expected": 3.2245,
+       "max_levels": {
+        "3.00": 0.1018,
+        "3.25": 0.8982
+       }
+      },
+      "2027-01-14": {
+       "exposure_days": 28,
+       "min": 0.0,
+       "max": 1.0,
+       "early": 0.0,
+       "late": 1.0,
+       "max_expected": 3.3836,
+       "max_levels": {
+        "3.25": 0.4655,
+        "3.50": 0.5345
+       }
+      }
+     }
+    }
+   },
+   "5": {
+    "asof": "2026-11-11",
+    "start": "2026-11-12",
+    "r0": 3.0,
+    "method": "min_hike",
+    "notes": [
+     "투입 상품 최장 만기(91일) 밖 회의는 계산하지 않음"
+    ],
+    "meetings": [
+     {
+      "date": "2026-11-26",
+      "expected": 3.1171,
+      "delta_bp": 11.71,
+      "p_hike": 0.4686,
+      "p_hold": 0.5314,
+      "p_cut": 0,
+      "moves": {
+       "0": 0.5314,
+       "25": 0.4686
+      },
+      "levels": {
+       "3.00": 0.5314,
+       "3.25": 0.4686
+      },
+      "method": "min_hike",
+      "in_range": true,
+      "range": {
+       "direction": "hike",
+       "min": 0.2982,
+       "max": 0.6618,
+       "early": 0.6618,
+       "late": 0.2982,
+       "max_expected": 3.1655,
+       "max_levels": {
+        "3.00": 0.3382,
+        "3.25": 0.6618
+       },
+       "feasible": true
+      }
+     },
+     {
+      "date": "2027-01-14",
+      "expected": 3.25,
+      "delta_bp": 13.29,
+      "p_hike": 0.5314,
+      "p_hold": 0.4686,
+      "p_cut": 0,
+      "moves": {
+       "0": 0.4686,
+       "25": 0.5314
+      },
+      "levels": {
+       "3.25": 1.0
+      },
+      "method": "min_hike",
+      "in_range": true,
+      "range": {
+       "direction": "hike",
+       "min": 0.0,
+       "max": 1.0,
+       "early": 0.0,
+       "late": 1.0,
+       "max_expected": 3.3245,
+       "max_levels": {
+        "3.25": 0.7018,
+        "3.50": 0.2982
+       },
+       "feasible": true
+      }
+     },
+     {
+      "date": "2027-02-25",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-04-09",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-05-27",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-07-15",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-08-26",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-10-15",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     },
+     {
+      "date": "2027-11-25",
+      "expected": null,
+      "delta_bp": null,
+      "p_hike": null,
+      "p_hold": null,
+      "p_cut": null,
+      "moves": {},
+      "levels": {},
+      "method": "out_of_range",
+      "in_range": false
+     }
+    ],
+    "path_range": {
+     "direction": "hike",
+     "L": 50.96,
+     "feasible": true,
+     "meetings": {
+      "2026-11-26": {
+       "exposure_days": 77,
+       "min": 0.2982,
+       "max": 0.6618,
+       "early": 0.6618,
+       "late": 0.2982,
+       "max_expected": 3.1655,
+       "max_levels": {
+        "3.00": 0.3382,
+        "3.25": 0.6618
+       }
+      },
+      "2027-01-14": {
+       "exposure_days": 28,
+       "min": 0.0,
+       "max": 1.0,
+       "early": 0.0,
+       "late": 1.0,
+       "max_expected": 3.3245,
+       "max_levels": {
+        "3.25": 0.7018,
+        "3.50": 0.2982
+       }
+      }
+     }
+    }
+   }
+  },
+  "kofr_futures": {
+   "meetings": [
+    {
+     "date": "2026-11-26",
+     "expected": 3.3492,
+     "delta_bp": 34.92,
+     "p_hike": 1.0,
+     "p_hold": 0.0,
+     "p_cut": 0,
+     "moves": {
+      "25": 0.6032,
+      "50": 0.3968
+     },
+     "levels": {
+      "3.25": 0.6032,
+      "3.50": 0.3968
+     },
+     "method": "kofr_futures",
+     "in_range": true
+    },
+    {
+     "date": "2027-01-14",
+     "expected": 3.182,
+     "delta_bp": -16.72,
+     "p_hike": 0,
+     "p_hold": 0.3311,
+     "p_cut": 0.6689,
+     "moves": {
+      "-25": 0.6689,
+      "0": 0.3311
+     },
+     "levels": {
+      "3.00": 0.2721,
+      "3.25": 0.7279
+     },
+     "method": "kofr_futures",
+     "in_range": true
+    },
+    {
+     "date": "2027-02-25",
+     "expected": 3.6213,
+     "delta_bp": 43.93,
+     "p_hike": 1.0,
+     "p_hold": 0.0,
+     "p_cut": 0,
+     "moves": {
+      "25": 0.2427,
+      "50": 0.7573
+     },
+     "levels": {
+      "3.50": 0.5148,
+      "3.75": 0.4852
+     },
+     "method": "kofr_futures",
+     "in_range": true
+    },
+    {
+     "date": "2027-04-09",
+     "expected": 3.1076,
+     "delta_bp": -51.37,
+     "p_hike": 0,
+     "p_hold": 0.0,
+     "p_cut": 1.0,
+     "moves": {
+      "-75": 0.0548,
+      "-50": 0.9452
+     },
+     "levels": {
+      "3.00": 0.5697,
+      "3.25": 0.4303
+     },
+     "method": "kofr_futures",
+     "in_range": true
+    },
+    {
+     "date": "2027-05-27",
+     "expected": 3.8442,
+     "delta_bp": 73.66,
+     "p_hike": 1.0,
+     "p_hold": 0.0,
+     "p_cut": 0,
+     "moves": {
+      "50": 0.0537,
+      "75": 0.9463
+     },
+     "levels": {
+      "3.75": 0.6233,
+      "4.00": 0.3767
+     },
+     "method": "kofr_futures",
+     "in_range": true
+    },
+    {
+     "date": "2027-07-15",
+     "expected": 3.0629,
+     "delta_bp": -78.13,
+     "p_hike": 0,
+     "p_hold": 0.0,
+     "p_cut": 1.0,
+     "moves": {
+      "-100": 0.125,
+      "-75": 0.875
+     },
+     "levels": {
+      "3.00": 0.7484,
+      "3.25": 0.2516
+     },
+     "method": "kofr_futures",
+     "in_range": true
+    },
+    {
+     "date": "2027-08-26",
+     "expected": 2.8109,
+     "delta_bp": -25.2,
+     "p_hike": 0,
+     "p_hold": 0.0,
+     "p_cut": 1.0,
+     "moves": {
+      "-50": 0.0081,
+      "-25": 0.9919
+     },
+     "levels": {
+      "2.75": 0.7564,
+      "3.00": 0.2436
+     },
+     "method": "kofr_futures",
+     "in_range": true
+    }
+   ],
+   "used": [
+    {
+     "month": "2026-11",
+     "start": "2026-08-19",
+     "end": "2026-11-17",
+     "price": 96.985,
+     "rate": 3.015,
+     "avg": 3.0037,
+     "past_days": 85,
+     "future_days": 6,
+     "volume": 500,
+     "oi": 610
+    },
+    {
+     "month": "2026-12",
+     "start": "2026-09-16",
+     "end": "2026-12-15",
+     "price": 96.845,
+     "rate": 3.155,
+     "avg": 3.1427,
+     "past_days": 57,
+     "future_days": 34,
+     "volume": 0,
+     "oi": 310
+    },
+    {
+     "month": "2027-01",
+     "start": "2026-10-21",
+     "end": "2027-01-19",
+     "price": 96.755,
+     "rate": 3.245,
+     "avg": 3.2319,
+     "past_days": 22,
+     "future_days": 69,
+     "volume": 0,
+     "oi": 70
+    },
+    {
+     "month": "2027-02",
+     "start": "2026-11-18",
+     "end": "2027-02-16",
+     "price": 96.69,
+     "rate": 3.31,
+     "avg": 3.2964,
+     "past_days": 0,
+     "future_days": 91,
+     "volume": 0,
+     "oi": 30
+    },
+    {
+     "month": "2027-03",
+     "start": "2026-12-16",
+     "end": "2027-03-16",
+     "price": 96.6,
+     "rate": 3.4,
+     "avg": 3.3857,
+     "past_days": 0,
+     "future_days": 91,
+     "volume": 0,
+     "oi": 0
+    },
+    {
+     "month": "2027-04",
+     "start": "2027-01-20",
+     "end": "2027-04-20",
+     "price": 96.565,
+     "rate": 3.435,
+     "avg": 3.4204,
+     "past_days": 0,
+     "future_days": 91,
+     "volume": 0,
+     "oi": 0
+    },
+    {
+     "month": "2027-06",
+     "start": "2027-03-17",
+     "end": "2027-06-15",
+     "price": 96.54,
+     "rate": 3.46,
+     "avg": 3.4452,
+     "past_days": 0,
+     "future_days": 91,
+     "volume": 0,
+     "oi": 0
+    },
+    {
+     "month": "2027-09",
+     "start": "2027-06-16",
+     "end": "2027-09-14",
+     "price": 96.685,
+     "rate": 3.315,
+     "avg": 3.3014,
+     "past_days": 0,
+     "future_days": 91,
+     "volume": 0,
+     "oi": 0
+    }
+   ],
+   "skipped": [],
+   "spread": 0.045,
+   "r0": 3.0,
+   "asof": "2026-11-11",
+   "fit_bp": [
+    46.2,
+    -11.2,
+    1.75,
+    0.5,
+    -0.89,
+    0.44,
+    -0.09,
+    0.01
+   ],
+   "spread_how": "KOFR−기준금리 60일 중앙값(37일)",
+   "price_date": "2026-11-10"
+  },
+  "blend_experimental": {
+   "weight_kofr": 0.5,
+   "meetings": [
+    {
+     "date": "2026-11-26",
+     "expected": 3.2796,
+     "delta_bp": 27.96,
+     "p_hike": 0.92,
+     "p_hold": 0.08,
+     "p_cut": 0.0,
+     "moves": {
+      "0": 0.08,
+      "25": 0.7216,
+      "50": 0.1984
+     },
+     "levels": {
+      "3.00": 0.08,
+      "3.25": 0.7216,
+      "3.50": 0.1984
+     },
+     "method": "blend",
+     "in_range": true,
+     "source": "CD·KOFR 선물 혼합"
+    },
+    {
+     "date": "2027-01-14",
+     "expected": 3.216,
+     "delta_bp": -6.36,
+     "p_hike": 0.08,
+     "p_hold": 0.5856,
+     "p_cut": 0.3345,
+     "moves": {
+      "-25": 0.3345,
+      "0": 0.5856,
+      "25": 0.08
+     },
+     "levels": {
+      "3.00": 0.1361,
+      "3.25": 0.8639
+     },
+     "method": "blend",
+     "in_range": true,
+     "source": "CD·KOFR 선물 혼합"
+    }
+   ]
+  },
+  "cd_short": {
+   "curve_date": "2026-11-11",
+   "source": "금융투자협회 CD시가평가수익률 AAA 5사 평균",
+   "inputs": {
+    "d7": 3.13,
+    "d15": 3.16,
+    "m1": 3.2,
+    "m3": 3.37
+   },
+   "m1": {
+    "label": "CD 1개월",
+    "tenor_days": 30,
+    "rate": 3.2,
+    "spread": 0.16,
+    "spread_how": "회의 없는 기간 1년 중앙값(81일)",
+    "meeting": "2026-11-26",
+    "pre_days": 14,
+    "post_days": 16,
+    "expected": 3.075,
+    "delta_bp": 7.5,
+    "p_hike": 0.3,
+    "p_cut": 0,
+    "p_hold": 0.7
+   },
+   "d15": {
+    "label": "CD 15일",
+    "tenor_days": 15,
+    "rate": 3.16,
+    "spread": 0.11,
+    "spread_how": "회의 없는 기간 1년 중앙값(164일)",
+    "meeting": "2026-11-26",
+    "pre_days": 14,
+    "post_days": 1,
+    "expected": 3.75,
+    "delta_bp": 75.0,
+    "p_hike": 1.0,
+    "p_cut": 0,
+    "p_hold": 0.0
+   }
+  },
+  "kofr_ois": {
+   "curve": {
+    "w1": {
+     "label": "1주",
+     "tenor_days": 7,
+     "cd_date": "2026-11-11",
+     "cd": 3.13,
+     "spread": -0.0066,
+     "n_obs": 932,
+     "ois": 3.1366
+    },
+    "w2": {
+     "label": "2주(15일)",
+     "tenor_days": 15,
+     "cd_date": "2026-11-11",
+     "cd": 3.16,
+     "spread": 0.0241,
+     "n_obs": 926,
+     "ois": 3.1359
+    },
+    "m1": {
+     "label": "1개월",
+     "tenor_days": 30,
+     "cd_date": "2026-11-11",
+     "cd": 3.2,
+     "spread": 0.0545,
+     "n_obs": 916,
+     "ois": 3.1455
+    },
+    "m3": {
+     "label": "3개월",
+     "tenor_days": 91,
+     "cd_date": "2026-11-11",
+     "cd": 3.37,
+     "spread": 0.1152,
+     "n_obs": 1157,
+     "ois": 3.2548
+    }
+   },
+   "next": {
+    "meeting": "2026-11-26",
+    "pre_days": 14,
+    "post_days": 16,
+    "kofr_base": 0.045,
+    "expected": 3.1884,
+    "delta_bp": 18.84,
+    "p_hike": 0.7538,
+    "p_cut": 0,
+    "p_hold": 0.2462
+   },
+   "path": [
+    {
+     "meeting": "2026-11-26",
+     "pre_days": 14,
+     "post_days": 16,
+     "kofr_base": 0.045,
+     "expected": 3.1884,
+     "delta_bp": 18.84,
+     "p_hike": 0.7538,
+     "p_cut": 0,
+     "p_hold": 0.2462,
+     "source": "1개월 OIS",
+     "tail_unscheduled": []
+    },
+    {
+     "meeting": "2027-01-14",
+     "source": "3개월 OIS + 1개월 OIS",
+     "post_days": 28,
+     "tenor_days": 91,
+     "kofr_base": 0.045,
+     "expected": 3.3522,
+     "delta_bp": 16.38,
+     "tail_assumed": [],
+     "p_hike": 0.655,
+     "p_cut": 0,
+     "p_hold": 0.345,
+     "tail_unscheduled": []
+    }
+   ],
+   "later_est": null,
+   "kofr_base_how": "KOFR−기준금리 60일 중앙값(37일)"
+  },
+  "qual_mix": {
+   "meeting": "2026-11-26",
+   "qual": {
+    "p_hike": 0.78,
+    "p_hold": 0.21,
+    "p_cut": 0.01
+   },
+   "reason": "근원물가 2%대 후반·성장 호조 속 한은 발언과 점도표가 추가 인상 쪽",
+   "generated": "2026-11-11T18:11+09:00",
+   "w10": {
+    "p_hike": 0.7564,
+    "p_hold": 0.2426,
+    "p_cut": 0.001
+   },
+   "w20": {
+    "p_hike": 0.759,
+    "p_hold": 0.239,
+    "p_cut": 0.002
+   }
+  }
+ },
+ "spreads": {
+  "cd91": {
+   "value": 0.18,
+   "how": "동결 국면 중앙값(367일)"
+  },
+  "msb91": {
+   "value": -0.035,
+   "how": "동결 국면 중앙값(367일)"
+  },
+  "msb1y": {
+   "value": -0.09,
+   "how": "동결 국면 중앙값(367일)"
+  },
+  "msb2y": {
+   "value": -0.055,
+   "how": "동결 국면 중앙값(367일)"
+  },
+  "ktb1y": {
+   "value": -0.042,
+   "how": "동결 국면 중앙값(367일)"
+  },
+  "ktb3y": {
+   "value": -0.095,
+   "how": "동결 국면 중앙값(367일)"
+  },
+  "kofr": {
+   "value": 0.041,
+   "how": "동결 국면 중앙값(367일)"
+  },
+  "ois3m": {
+   "value": 0.0,
+   "how": "기본 가정(이력 부족)"
+  },
+  "ois6m": {
+   "value": 0.0,
+   "how": "기본 가정(이력 부족)"
+  },
+  "ois9m": {
+   "value": 0.0,
+   "how": "기본 가정(이력 부족)"
+  },
+  "ois1y": {
+   "value": 0.0,
+   "how": "기본 가정(이력 부족)"
+  }
+ }
+}

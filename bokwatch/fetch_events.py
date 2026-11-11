@@ -184,7 +184,7 @@ def bls_cpi() -> dict[str, list[tuple[str, float]]]:
     """BLS 공식 API(키 없이 하루 25회): CPI-U 전체(CUUR0000SA0)·근원(CUUR0000SA0L1E), 계절조정 전.
     FRED CPIAUCNS·CPILFENS와 같은 지수이고, 발표 직후 바로 반영된다."""
     y = now_kst().year
-    r = requests.post(BLS_API, json={"seriesid": ["CUUR0000SA0", "CUUR0000SA0L1E", *PPI_SERIES], "startyear": str(y - 2), "endyear": str(y)},
+    r = requests.post(BLS_API, json={"seriesid": ["CUUR0000SA0", "CUUR0000SA0L1E", "CUSR0000SA0", "CUSR0000SA0L1E", *PPI_SERIES], "startyear": str(y - 2), "endyear": str(y)},
                       headers={**UA, "Content-type": "application/json"}, timeout=60)
     r.raise_for_status()
     return parse_bls_api(r.json())
@@ -279,7 +279,7 @@ def attach_consensus(indicators: dict) -> None:
         ind.pop("consensus", None)
         hit = next((c for c in (cons.get(key) or []) if str(c.get("month")) == ind.get("month")), None)
         if hit:
-            ind["consensus"] = {k: hit.get(k) for k in ("yoy", "core_yoy", "source", "link")}
+            ind["consensus"] = {k: hit.get(k) for k in ("yoy", "core_yoy", "mom", "core_mom", "source", "link")}
 
 
 def main(argv=None) -> int:
@@ -360,7 +360,17 @@ def main(argv=None) -> int:
         except Exception as e2:
             errors.append(bls_err + " → FRED 대체도 실패")
             errors.append(f"FRED: {type(e2).__name__}: {e2}")
-    if us:
+    sa = locals().get("b") or {}
+    sa_all, sa_core = sa.get("CUSR0000SA0") or [], sa.get("CUSR0000SA0L1E") or []
+    if sa_all and (not us or sa_all[-1][0] > us["month"]):
+        # 최신 달의 전년동월비를 못 구하는 경우(예: 2025년 10월 CPI는 정부 셧다운으로 미공표): 계절조정 전월비로 낸다
+        m_ = sa_all[-1][0]
+        indicators["us_cpi"] = {"month": m_, "yoy": None, "prev_month": us["month"] if us else None, "prev_yoy": us["yoy"] if us else None,
+                                "core_yoy": None, "prev_core_yoy": core.get("yoy") if core else None,
+                                "mom": mom(sa_all), "core_mom": mom(sa_core) if sa_core and sa_core[-1][0] == m_ else None,
+                                "source": "BLS CPI-U 계절조정 CUSR0000SA0·CUSR0000SA0L1E 전월비. 전년동월비는 비교월(전년 같은 달) 지수가 없어 산출 불가",
+                                "label": "미국 CPI"}
+    elif us:
         indicators["us_cpi"] = {**us, "core_yoy": core["yoy"] if core and core["month"] == us["month"] else None,
                                 "prev_core_yoy": core.get("prev_yoy") if core and core["month"] == us["month"] else None,
                                 "source": src, "label": "미국 CPI"}
