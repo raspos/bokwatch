@@ -74,3 +74,10 @@ def test_days_without_events_fall_back_to_forecasts_then_rates(tmp_path):
     assert r["rows"][0]["lines"] == ["기관 전망 2곳 발표(11/26 인상 1·동결 1)", "시장금리: 국고채 3년 -4.0bp · CD 91일 +1.0bp"]
     r2 = P.build(series([0.50, 0.50, 0.60]), "2026-11-26", [], [], [], Path("없음.csv"))
     assert r2["rows"][0]["lines"] == []                  # 전망·금리 자료도 없으면 비어 있다(화면에서 '이벤트 없음')
+
+
+def test_headline_prefers_global_issue_when_probability_fell():
+    r = {"events": [], "speeches": [], "delta": -0.168}
+    items = [{"type": "forecast", "text": "기관 전망 19곳 발표(11/26 인상 19)"}, {"type": "global", "text": "글로벌 증시: 나스닥 폭락"}]
+    assert P.headline_of(items, r, {}) == "글로벌 증시 이슈"
+    assert P.headline_of(items, {**r, "delta": 0.1}, {}) == "기관 전망 발표"

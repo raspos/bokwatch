@@ -74,9 +74,12 @@ def headline_of(items: list[dict], r: dict, decisions: dict[str, dict]) -> str:
     ind = [e for e in r["events"] if e.get("kind") != "bok"]
     if ind:
         return short_label(ind[0].get("label") or "", 14)
+    g = [i for i in items if i["type"] == "global"]
+    # 기관 전망은 대부분 인상 쪽이라, 확률이 내려간 날의 제목으로는 해외·시장 이슈를 먼저 쓴다
+    if g and (r.get("delta") or 0) < 0:
+        return g[0]["text"].split(":")[0] + " 이슈"
     if any(i["type"] == "forecast" for i in items):
         return "기관 전망 발표"
-    g = [i for i in items if i["type"] == "global"]
     if g:
         return g[0]["text"].split(":")[0] + " 이슈"
     return "시장금리 변동" if items else ""
