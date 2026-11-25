@@ -124,6 +124,11 @@ def instruments_on(rows, cfg, day: date, spreads: dict):
         if iid in use and not in_sched:
             warns.append(f"{df['label']} 만기({mat})가 확정 일정({known}) 밖 — 계산 제외")
         src = next((r["source"] for r in rows if r["id"] == iid and r["date"] == used_day), "")
+        if iid == "msb91" and not used:
+            # 통안채 91일은 종합 예측이 '당시까지 자료'로 추정한 정상 스프레드를 쓴다. 입력표에도 같은 값을 보여 두 값이 갈리지 않게 한다(표시만, 확률 계산에는 영향 없음).
+            pv = pit_spread(rows, "msb91", day)
+            if pv is not None:
+                sp = {"value": pv, "how": "당시까지 자료(종합 예측과 동일)"}
         table.append({"id": iid, "label": df["label"], "rate": v, "date": used_day,
                       "tenor_days": df["tenor_days"], "spread": sp["value"], "spread_how": sp["how"],
                       "chg_bp": round((v - prev_v) * 100, 1) if prev_v is not None else None,
