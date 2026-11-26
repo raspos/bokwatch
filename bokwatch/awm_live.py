@@ -52,7 +52,7 @@ def _state_after(cfg: dict) -> dict:
 def live_row(inp: awm_data.Inputs, meeting: date, today: date) -> dict:
     """오늘 관측 시점의 칸(결과는 아직 없다)."""
     st = _state_after(inp.cfg)
-    D = (meeting - today).days
+    D = max((meeting - today).days, 1)   # 회의 당일(0일)은 직전 영업일 자료 기준 1영업일 전 칸으로 본다
     obs = awm_data.obs_on_or_before(inp.avail, today)
     row = {"meeting": meeting.isoformat(), "horizon": D, "target_date": today.isoformat(), "actual": "hold", "move_bp": 0,
            "last_change_dir": st["last_dir"], "streak": st["streak"],
@@ -73,9 +73,15 @@ def live_row(inp: awm_data.Inputs, meeting: date, today: date) -> dict:
     return row
 
 
+def target_meeting(meetings_all: list[date], decided: set[date], today: date) -> date | None:
+    """오늘 예측할 회의. 회의 당일에는 결과가 입력되기 전까지 그 회의가 대상이다(오늘 이후 첫 회의로 넘기지 않는다)."""
+    return next((m for m in sorted(meetings_all) if m >= today and m not in decided), None)
+
+
 def predict_live(today: date, meeting: date | None = None) -> dict | None:
     inp = awm_data.Inputs()
-    meeting = meeting or next((m for m in inp.meetings_all if m > today), None)
+    decided = {date.fromisoformat(str(x["date"])) for x in inp.cfg.get("past_decisions", [])}
+    meeting = meeting or target_meeting(inp.meetings_all, decided, today)
     if meeting is None:
         return None
     panel, rebuilt = get_panel(inp)
@@ -118,7 +124,7 @@ def append_log(live: dict, today: date) -> None:
         return
     day = today.isoformat()
     rows = list(csv.DictReader(open(AWM_LOG, encoding="utf-8"))) if AWM_LOG.exists() else []
-    if any(r["date"] == day for r in rows):
+    if any(r["date"] == day and r["meeting"] == live["meeting"] for r in rows):
         return
     for name, m in live["models"].items():
         if not m.get("ok"):

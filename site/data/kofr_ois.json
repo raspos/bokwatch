@@ -1,16 +1,16 @@
 {
- "n": 28,
+ "n": 29,
  "first": "2023-05-25",
  "rule": "회의 3영업일 전 공시값",
  "summary": {
   "ois": {
-   "hits": 22,
-   "brier": 0.3808,
+   "hits": 23,
+   "brier": 0.3797,
    "by_actual": {
     "hike": {
-     "n": 2,
-     "hits": 1,
-     "p_actual": 0.4309
+     "n": 3,
+     "hits": 2,
+     "p_actual": 0.4811
     },
     "hold": {
      "n": 22,
@@ -26,12 +26,12 @@
   },
   "base_rate": {
    "hits": 19,
-   "brier": 0.5189,
+   "brier": 0.5338,
    "by_actual": {
     "hike": {
-     "n": 2,
+     "n": 3,
      "hits": 0,
-     "p_actual": 0.2472
+     "p_actual": 0.2532
     },
     "hold": {
      "n": 22,
@@ -47,10 +47,10 @@
   },
   "always_hold": {
    "hits": 22,
-   "brier": 0.4286,
+   "brier": 0.4828,
    "by_actual": {
     "hike": {
-     "n": 2,
+     "n": 3,
      "hits": 0,
      "p_actual": 0.0
     },
@@ -67,15 +67,15 @@
    }
   },
   "same_as_cd91": {
-   "n": 28,
+   "n": 29,
    "ois": {
-    "hits": 22,
-    "brier": 0.3808,
+    "hits": 23,
+    "brier": 0.3797,
     "by_actual": {
      "hike": {
-      "n": 2,
-      "hits": 1,
-      "p_actual": 0.4309
+      "n": 3,
+      "hits": 2,
+      "p_actual": 0.4811
      },
      "hold": {
       "n": 22,
@@ -91,12 +91,12 @@
    },
    "base_rate": {
     "hits": 19,
-    "brier": 0.5189,
+    "brier": 0.5338,
     "by_actual": {
      "hike": {
-      "n": 2,
+      "n": 3,
       "hits": 0,
-      "p_actual": 0.2472
+      "p_actual": 0.2532
      },
      "hold": {
       "n": 22,
@@ -112,10 +112,10 @@
    },
    "always_hold": {
     "hits": 22,
-    "brier": 0.4286,
+    "brier": 0.4828,
     "by_actual": {
      "hike": {
-      "n": 2,
+      "n": 3,
       "hits": 0,
       "p_actual": 0.0
      },
@@ -133,10 +133,10 @@
    },
    "cd91": {
     "hits": 17,
-    "brier": 0.5376,
+    "brier": 0.588,
     "by_actual": {
      "hike": {
-      "n": 2,
+      "n": 3,
       "hits": 0,
       "p_actual": 0
      },
@@ -1022,10 +1022,41 @@
     "hit": true,
     "brier": 0.0
    }
+  },
+  {
+   "meeting": "2026-11-26",
+   "obs_date": "2026-11-23",
+   "actual": "hike",
+   "move_bp": 25,
+   "ois": {
+    "p_hike": 0.5816,
+    "p_hold": 0.4184,
+    "p_cut": 0,
+    "hit": true,
+    "brier": 0.3501,
+    "ois_1m": 3.1847,
+    "cd_1m": 3.24,
+    "spread_bp": 5.5,
+    "delta_bp": 14.54
+   },
+   "base_rate": {
+    "p_hike": 0.2653,
+    "p_hold": 0.6327,
+    "p_cut": 0.102,
+    "hit": false,
+    "brier": 0.9504
+   },
+   "cd91": {
+    "p_hike": 0,
+    "p_hold": 1.0,
+    "p_cut": 0,
+    "hit": false,
+    "brier": 2.0
+   }
   }
  ],
  "second": {
-  "n": 27,
+  "n": 28,
   "rows": [
    {
     "meeting": "2023-07-13",
@@ -1728,21 +1759,47 @@
      "hit": false,
      "brier": 1.7646
     }
+   },
+   {
+    "meeting": "2026-11-26",
+    "obs_date": "2026-10-19",
+    "actual": "hike",
+    "move_bp": 25,
+    "ois": {
+     "p_hike": 0.344,
+     "p_hold": 0.656,
+     "p_cut": 0,
+     "hit": false,
+     "brier": 0.8607,
+     "delta_bp": 8.6,
+     "expected": 3.1145
+    },
+    "always_hold": {
+     "hit": false,
+     "brier": 2.0
+    },
+    "cd91": {
+     "p_hike": 0,
+     "p_hold": 0.6563,
+     "p_cut": 0.3437,
+     "hit": false,
+     "brier": 1.5489
+    }
    }
   ],
   "ois": {
    "hits": 17,
-   "brier": 0.4793
+   "brier": 0.4929
   },
   "always_hold": {
    "hits": 21,
-   "brier": 0.4444
+   "brier": 0.5
   },
   "same_as_cd91": {
-   "n": 27,
-   "ois": 0.4793,
-   "cd91": 0.7057,
-   "always_hold": 0.4444
+   "n": 28,
+   "ois": 0.4929,
+   "cd91": 0.7358,
+   "always_hold": 0.5
   }
  },
  "current": {

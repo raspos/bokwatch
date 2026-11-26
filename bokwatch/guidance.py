@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import difflib
 import re
-from datetime import date
+from datetime import date, timedelta
 
 from .common import ROOT, d, load_yaml
 
@@ -219,7 +219,10 @@ def build_guidance(cfg: dict, minutes: dict | None = None, today: date | None = 
         out_meetings.append(e)
     dots = [m for m in out_meetings if m["dotplot"]]
     from .common import all_meetings
-    nxt = next_dotplot_meeting(all_meetings(cfg), cfg.get("dotplot_months", []), today or date.today())
+    _t = today or date.today()
+    _decided = {str(x["date"]) for x in (cfg.get("past_decisions") or [])}
+    _after = _t if _t.isoformat() in _decided else _t - timedelta(days=1)   # 회의 당일 결정 입력 전에는 그 회의가 다음 점도표 회의
+    nxt = next_dotplot_meeting(all_meetings(cfg), cfg.get("dotplot_months", []), _after)
     kept, dropped = allowed_speeches(g["speeches"])
     if dropped:
         print(f"허용 47개 매체 밖 출처라 발언 {len(dropped)}건 제외: " + ", ".join(f"{d['date']} {d.get('speaker')}" for d in dropped))

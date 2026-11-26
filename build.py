@@ -12,7 +12,7 @@ from datetime import timedelta
 
 from bokwatch import cd_short, kofr_ois, market
 from bokwatch.fetch_cdcurve import load_curve
-from bokwatch.common import DATA, SITE_DATA, all_meetings, d, load_config, now_kst, read_json, write_json
+from bokwatch.common import DATA, SITE_DATA, all_meetings, d, load_config, now_kst, read_json, upcoming_meetings, write_json
 from bokwatch.fetch_futures import by_date, load_futures
 from bokwatch.fetch_news import load_news
 from bokwatch.guidance import build_guidance
@@ -255,7 +255,7 @@ def main(argv=None):
         from bokwatch.guidance import load_guidance as _lg
         from bokwatch.statement_changes import build as build_statement_changes
         write_json(SITE_DATA / "statement_changes.json", build_statement_changes(_lg()["meetings"]))       # 통방문 범주별 핵심 변화(규칙 기반)
-        upcoming = [m.isoformat() for m in all_meetings(cfg) if m > today]
+        upcoming = [m.isoformat() for m in upcoming_meetings(cfg, today)]
         reports = build_reports(upcoming, today)
         write_json(SITE_DATA / "reports.json", reports)
 
@@ -305,6 +305,7 @@ def main(argv=None):
         try:  # 대표모형 전환용 시계열(OIS 단독과 M5). 기존 기록은 건드리지 않는다
             from bokwatch import awm_series
             series = awm_series.write_series(SITE_DATA, DATA / "awm_log.csv", today, (cfg.get("awm") or {}).get("representative", "m5"))
+            awm_series.export_rep_log(SITE_DATA, series)   # 대표 확률(종합 예측) 기록표 site/data/prob_log_rep.csv
         except Exception as e:  # noqa: BLE001
             print(f"AWM 시계열 생성 실패: {e}")
         from bokwatch.reports import allowed_reports, load_reports
@@ -318,7 +319,7 @@ def main(argv=None):
             print(f"BOK LAB 현황 생성 실패: {e}")
         try:  # 확률이 크게 움직인 날과 동시에 있었던 이벤트(원인 아님)
             from bokwatch import prob_events
-            up = [m for m in (read_json(SITE_DATA / "meta.json", {}) or {}).get("upcoming", []) if m > today.isoformat()]
+            up = [m for m in (read_json(SITE_DATA / "meta.json", {}) or {}).get("upcoming", []) if m >= today.isoformat()]
             nm = up[0] if up else None
             if nm and series:
                 ev_all = (read_json(SITE_DATA / "events.json", {}) or {}).get("all", [])

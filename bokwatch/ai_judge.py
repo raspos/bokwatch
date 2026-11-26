@@ -777,7 +777,7 @@ def main(argv=None, client=None) -> int:
             synthesis = synthesize(client, cfg_ai, articles, tags, since, groups)
         except Exception as e:
             errors.append(f"종합: {type(e).__name__}: {e}")
-        nxt = next((m for m in (read_json(SITE_DATA / "meta.json", {}) or {}).get("upcoming", []) if m > now.date().isoformat()), None)
+        nxt = next((m for m in (read_json(SITE_DATA / "meta.json", {}) or {}).get("upcoming", []) if m >= now.date().isoformat()), None)
         if nxt:
             try:
                 probs = qual_probs(client, cfg_ai, articles, tags, since, groups, nxt)

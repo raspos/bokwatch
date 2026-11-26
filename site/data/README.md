@@ -7,6 +7,7 @@
 | `awm_series.json` | **종합 예측(m5)**, 합성 OIS 단독(ois), 통안채 91일 단독(msb91) | 회의·기준일별. `kind`가 stored면 당시 저장 값, retro면 사후 재계산 |
 | `snapshots/*.json`, `history.csv` | **합성 KOFR OIS 단독**(`method: kofr_ois`) | 종합 예측으로 바꾸기 전 구조라 이 파일의 `p_hike`는 대표 확률이 아님 |
 | `prob_log.json` | **합성 KOFR OIS 단독**(날짜별 기록) | `p_basis`에 기준을 적었다. 같은 날 종합 예측은 `awm_series.json` |
+| `prob_log_rep.csv` | **종합 예측**(대표 확률)과 구성 모형(합성 OIS 단독·통안채 단독) | 회의·금리 기준일별. 구분 열이 '당시 저장'이면 `data/awm_log.csv`의 당시 값, '사후 재계산'이면 다시 계산한 값 |
 | `kofr_ois.json` | 합성 KOFR OIS 계산 과정 | 구성 요소 |
 
 - 합성 KOFR OIS는 거래된 OIS 금리가 아니라 CD 시가평가수익률에서 과거 스프레드를 뺀 추정치입니다.

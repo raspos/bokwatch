@@ -106,3 +106,9 @@ def all_meetings(cfg: dict) -> list[date]:
     for y, ds in (cfg.get("meetings") or {}).items():
         out += [d(x) for x in (ds or [])]
     return sorted(out)
+
+
+def upcoming_meetings(cfg: dict, today: date) -> list[date]:
+    """아직 결과가 입력되지 않은 회의. 회의 당일에는 결정이 config의 past_decisions에 들어가기 전까지 그 회의가 '다음 회의'다."""
+    decided = {str(x["date"]) for x in (cfg.get("past_decisions") or [])}
+    return [m for m in all_meetings(cfg) if m >= today and m.isoformat() not in decided]

@@ -78,12 +78,17 @@ def _stored(log_path: Path) -> dict[tuple[str, str], dict]:
     return out
 
 
+REP_FIRST = date(2026, 10, 22)   # 종합 예측을 대표 확률로 쓰기 시작한 뒤의 첫 회의. 이후 끝난 회의의 예측 시계열은 지우지 않고 계속 둔다
+
+
 def target_meetings(inp: awm_data.Inputs, today: date) -> list[date]:
-    """대표모형을 쓰는 회의: 마지막으로 끝난 회의와 다음 회의."""
+    """대표모형을 쓰는 회의: REP_FIRST 이후 결정이 끝난 모든 회의와 다음 회의."""
     dec = sorted(d(x["date"]) for x in inp.cfg.get("past_decisions", []))
-    last = max((x for x in dec if x <= today), default=None)
-    nxt = next((m for m in inp.meetings_all if m > today), None)
-    return [m for m in (last, nxt) if m]
+    decided = set(dec)
+    # 회의 당일에는 결정이 입력되기 전까지 그 회의가 다음 회의다(오늘 이후 첫 회의로 넘기지 않는다)
+    nxt = next((m for m in sorted(inp.meetings_all) if m >= today and m not in decided), None)
+    done = [m for m in dec if REP_FIRST <= m <= today]
+    return sorted(set(done + ([nxt] if nxt else [])))
 
 
 def build_series(site_data: Path, log_path: Path, today: date, inp: awm_data.Inputs | None = None) -> dict:
@@ -116,3 +121,22 @@ def write_series(site_data: Path, log_path: Path, today: date, representative: s
     s["representative"] = representative            # "m5" | "ois"
     (site_data / "awm_series.json").write_text(json.dumps(s, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     return s
+
+
+def export_rep_log(site_data: Path, series: dict) -> int:
+    """대표 확률(종합 예측) 기록표: 회의·금리 기준일별 종합 예측과 구성 모형 값. awm_series.json에서 만든 파생 파일이며
+    kind가 stored면 당시 저장 값(data/awm_log.csv), retro면 사후 재계산이다. 기존 기록 파일은 고치지 않는다."""
+    lines = ["회의,금리기준일,종합예측_인상,종합예측_동결,종합예측_인하,합성OIS단독_인상,통안채91일단독_인상,구분"]
+    n = 0
+    for mt, days in sorted((series.get("meetings") or {}).items()):
+        for ds, e in sorted(days.items()):
+            if not e.get("m5"):
+                continue
+            o = (e.get("ois") or {}).get("hike")
+            m = (e.get("msb91") or {}).get("hike")
+            lines.append(",".join([mt, ds, f"{e['m5']['hike']:.4f}", f"{e['m5']['hold']:.4f}", f"{e['m5']['cut']:.4f}",
+                                   "" if o is None else f"{o:.4f}", "" if m is None else f"{m:.4f}",
+                                   "당시 저장" if e.get("kind") == "stored" else "사후 재계산"]))
+            n += 1
+    (site_data / "prob_log_rep.csv").write_text(chr(10).join(lines) + chr(10), encoding="utf-8")
+    return n

@@ -739,7 +739,12 @@
     const last = all.reduce((a, r) => (key(r.date) > a ? key(r.date) : a), "");
     const meet = [...new Set(all.filter((r) => key(r.meeting) > last).map((r) => key(r.meeting)))].sort()[0];
     if (!meet) { el.replaceChildren(h("div", { class: "empty" }, "다가오는 회의의 확률 변화 데이터 없음")); return; }
-    const rows = all.filter((r) => key(r.meeting) === meet).map((r) => ({ d: key(r.date), hike: +r.p_hike, hold: +r.p_hold, cut: +r.p_cut }))
+    const rows = all.filter((r) => key(r.meeting) === meet).map((r) => {
+        const e = REP.mode === "m5" ? repEntry(meet, key(r.date)) : null;   // 대표 확률은 종합 예측. 계산 자료가 없는 날만 합성 OIS 단독(history.csv)으로 둔다
+        if (!e) return { d: key(r.date), hike: +r.p_hike, hold: +r.p_hold, cut: +r.p_cut };
+        const o = e.ois ? e.ois.hike : null, m = e.msb91 ? e.msb91.hike : null, both = o != null && m != null;
+        return { d: key(r.date), hike: e.m5.hike, hold: e.m5.hold, cut: e.m5.cut, ois: o, msb: m, lo: both ? Math.min(o, m) : null, hi: both ? Math.max(o, m) : null };
+      })
       .sort((a, b) => a.d.localeCompare(b.d));
     const dayMs = (d) => Date.parse(d + "T00:00:00");
     const lastRow = rows[rows.length - 1];
@@ -790,6 +795,8 @@
     // 선: 강조는 인상(주황), 동결은 회색(맥락). 선 2px, 인상 아래에만 옅은 면
     const lineOf = (k) => d3.line().curve(d3.curveMonotoneX).x((r) => tx(r.d)).y((r) => y(r[k]))(vis);
     svg.append("path").attr("d", d3.area().curve(d3.curveMonotoneX).x((r) => tx(r.d)).y0(plotB).y1((r) => y(r.hike))(vis)).attr("fill", "var(--hike)").attr("opacity", 0.1);
+    const band = vis.filter((r) => r.lo != null);
+    if (band.length > 1) svg.append("path").attr("d", d3.area().curve(d3.curveMonotoneX).x((r) => tx(r.d)).y0((r) => y(r.lo)).y1((r) => y(r.hi))(band)).attr("fill", "var(--ink-3)").attr("opacity", 0.22);
     svg.append("path").attr("d", lineOf("hold")).attr("fill", "none").attr("stroke", "var(--hold)").attr("stroke-width", 2).attr("stroke-linecap", "round").attr("stroke-linejoin", "round");
     if (showCut) svg.append("path").attr("d", lineOf("cut")).attr("fill", "none").attr("stroke", "var(--cut)").attr("stroke-width", 2).attr("stroke-linecap", "round");
     svg.append("path").attr("d", lineOf("hike")).attr("fill", "none").attr("stroke", "var(--hike)").attr("stroke-width", 2).attr("stroke-linecap", "round").attr("stroke-linejoin", "round");
@@ -843,7 +850,7 @@
       hov.style("display", null); hov.select("line").attr("x1", cx).attr("x2", cx); hdot.attr("cx", cx).attr("cy", y(r.hike));
       const key2 = (c, name, v, strong) => h("div", { class: "pcrow2" }, h("i", { style: `background:${c}` }), h("span", {}, name), h("b", { class: strong ? "" : "m" }, pct(v)));
       const evs = evByDate[r.d] || [];
-      tip.replaceChildren(h("div", { class: "pcdate" }, ymd(r.d)), key2("var(--hike)", "인상", r.hike, true), key2("var(--hold)", "동결", r.hold, false), showCut ? key2("var(--cut)", "인하", r.cut, false) : "",
+      tip.replaceChildren(h("div", { class: "pcdate" }, ymd(r.d)), key2("var(--hike)", "인상", r.hike, true), key2("var(--hold)", "동결", r.hold, false), r.ois != null ? h("div", { class: "pcsub" }, `합성 OIS ${pct(r.ois)} · 통안채 ${pct(r.msb)} (인상)`) : "", showCut ? key2("var(--cut)", "인하", r.cut, false) : "",
         evs.length ? h("ul", { class: "pcev" }, ...evs.map((e) => h("li", {}, h("span", { class: `pctag t-${e.type}` }, TAG[e.type]), e.text))) : "");
       tip.hidden = false;
       const tw = tip.offsetWidth || 220, left = Math.max(2, Math.min(W - tw - 2, (px != null ? px : cx) + 12));
@@ -870,7 +877,8 @@
       h("div", { class: "pcchg" }, `인상 ${pct(lastRow.hike)} · 전일 ${fmt(chg(1))} · 7일 ${fmt(chg(7))} · 30일 ${fmt(chg(30))}`),
       h("div", { class: "chart pcwrap" }, svg.node(), tip),
       h("div", { class: "pclegend" }, h("span", {}, h("i", { class: "pckey", style: "background:var(--hike)" }), "인상"), h("span", {}, h("i", { class: "pckey", style: "background:var(--hold)" }), "동결"),
-        showCut ? h("span", {}, h("i", { class: "pckey", style: "background:var(--cut)" }), "인하") : ""),
+        showCut ? h("span", {}, h("i", { class: "pckey", style: "background:var(--cut)" }), "인하") : "",
+        vis.some((r) => r.lo != null) ? h("span", {}, h("i", { class: "pckey pcband" }), "구성 모형 범위(합성 OIS·통안채 인상확률)") : ""),
       bigs.length ? h("div", { class: "pcturn" }, h("h4", {}, "전환점 ", h("small", {}, `전일 대비 ${Math.round(((D.probEv && D.probEv.threshold) || 0.05) * 100)}%p 이상 움직인 날`)),
         h("div", { class: "tbl-wrap" }, h("table", { class: "grid pcgrid" },
           h("thead", {}, h("tr", {}, h("th", {}, "날짜"), h("th", {}, "변화"), h("th", { class: "l" }, "그날 있었던 일"))),
@@ -1007,7 +1015,7 @@
       const fg = m.forward_guidance;
       add("포워드 가이던스", fg ? `3개월 내 인상 열어둔 위원 ${fg.hike ?? "–"} · 동결 ${fg.hold ?? "–"} · 인하 ${fg.cut ?? "–"}` : "미입력");
       if (m.press_quotes.length) add("간담회", ...m.press_quotes.map((q) => h("div", {}, `${q.speaker}: “${q.text}”`)));
-      if (m.outlook) add("전망", `성장률 2026년 ${m.outlook.gdp_2026}% · 2027년 ${m.outlook.gdp_2027}%`);
+      if (m.outlook) add("전망", `성장률 2026년 ${m.outlook.gdp_2026}% · 2027년 ${m.outlook.gdp_2027}%${m.outlook.gdp_2028 != null ? ` · 2028년 ${m.outlook.gdp_2028}%` : ""}` + (m.outlook.cpi_2026 != null ? ` / 소비자물가 2026년 ${m.outlook.cpi_2026}% · 2027년 ${m.outlook.cpi_2027}% · 2028년 ${m.outlook.cpi_2028}%` : ""));
       if (m.statement_provisional) add("통방문", h("div", { class: "note" }, "보도 인용 문구만 담은 임시본 — 원문 대조 필요"));
       else if (!m.has_statement) add("통방문", "원문 미입력 (data/statements/)");
       const L = m.links || {};
