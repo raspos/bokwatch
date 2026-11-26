@@ -291,14 +291,16 @@ def main(argv=None):
             lines.insert(2, f"- 산출 중단: {stalled}.")
             memo["text"] = "\n".join(lines)
         write_json(SITE_DATA / "memo.json", memo)
-        plog = update_prob_log(cur, today, stalled, a.log)
+        # 날짜별 기록은 금통위 전날까지 쌓는다. 회의 당일에는 기록을 새로 남기지 않는다(2026-11-26 사용자 지시)
+        log_today = bool(a.log) and today not in set(all_meetings(cfg))
+        plog = update_prob_log(cur, today, stalled, log_today)
         for _r in plog:   # 기록 파일의 p_hike는 합성 KOFR OIS 단독 값이다. 화면 대표 확률(종합 예측)과 혼동되지 않게 기준을 적는다
             if _r.get("status") == "산출" and str(_r.get("instrument", "")).startswith("KOFR OIS"):
                 _r["p_basis"] = "합성 KOFR OIS 단독(대표 확률인 종합 예측은 awm_series.json)"
         write_json(SITE_DATA / "prob_log.json", plog)
         try:  # AWM 실험값(통계적 결합). 실패해도 기본 확률·화면에는 영향 없음
             from bokwatch.awm_live import build_outputs
-            build_outputs(today, SITE_DATA, write_log=a.log)
+            build_outputs(today, SITE_DATA, write_log=log_today)
         except Exception as e:  # noqa: BLE001
             print(f"AWM 실험값 생성 실패: {e}")
         series = None
