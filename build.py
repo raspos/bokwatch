@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import csv
 import json
 from datetime import timedelta
@@ -28,7 +29,8 @@ def build_market(cfg, today):
     fut = by_date(load_futures())
     curve = load_curve()
     ois = kofr_ois.OIS(curve, market.series(rows, "cd91"), market.series(rows, "kofr")) if curve else None
-    dates = [x for x in market.data_dates(rows, cfg, fut) if x <= today]
+    cap = os.environ.get("BOKWATCH_ASOF_CAP")   # 지정하면 그 날짜까지의 금리 기준일만 화면에 반영(되돌리기용)
+    dates = [x for x in market.data_dates(rows, cfg, fut) if x <= today and (not cap or x.isoformat() <= cap)]
     SNAP.mkdir(parents=True, exist_ok=True)
     hist, index, last_cs, last_ko = [], [], None, None
     for day in dates:
@@ -323,6 +325,9 @@ def main(argv=None):
             from bokwatch import prob_events
             up = [m for m in (read_json(SITE_DATA / "meta.json", {}) or {}).get("upcoming", []) if m >= today.isoformat()]
             nm = up[0] if up else None
+            lat = (read_json(SITE_DATA / "meta.json", {}) or {}).get("latest") or today.isoformat()
+            sm = sorted(k for k in ((series or {}).get("meetings") or {}) if k >= lat)
+            nm = sm[0] if sm else nm      # 화면 차트가 보여 주는 회의(결정 직후에도 그 회의 표 유지)
             if nm and series:
                 ev_all = (read_json(SITE_DATA / "events.json", {}) or {}).get("all", [])
                 sp_ev = (read_json(SITE_DATA / "speech_events.json", {}) or {}).get("events", [])
