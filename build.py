@@ -292,6 +292,9 @@ def main(argv=None):
             memo["text"] = "\n".join(lines)
         write_json(SITE_DATA / "memo.json", memo)
         plog = update_prob_log(cur, today, stalled, a.log)
+        for _r in plog:   # 기록 파일의 p_hike는 합성 KOFR OIS 단독 값이다. 화면 대표 확률(종합 예측)과 혼동되지 않게 기준을 적는다
+            if _r.get("status") == "산출" and str(_r.get("instrument", "")).startswith("KOFR OIS"):
+                _r["p_basis"] = "합성 KOFR OIS 단독(대표 확률인 종합 예측은 awm_series.json)"
         write_json(SITE_DATA / "prob_log.json", plog)
         try:  # AWM 실험값(통계적 결합). 실패해도 기본 확률·화면에는 영향 없음
             from bokwatch.awm_live import build_outputs
@@ -358,7 +361,7 @@ def main(argv=None):
             "levels": cfg["model"]["levels"],
             "banner": cfg["site"]["show_internal_banner"],
             "sources": [
-                {"name": "한국은행 ECOS Open API", "what": "기준금리(722Y001), 시장금리·CD 91일·KOFR(817Y002), 근원물가", "url": "https://ecos.bok.or.kr/"},
+                {"name": "한국은행 ECOS Open API", "what": "기준금리(722Y001), 시장금리·CD 91일·통안증권 91일(종합 예측 입력)·KOFR(817Y002), 근원물가", "url": "https://ecos.bok.or.kr/"},
                 {"name": "금융투자협회 채권정보센터", "what": "CD 시가평가수익률(AAA 5사 평균, 7일·15일·1개월·3개월) — 자체 합성 KOFR OIS 입력", "url": "https://www.kofiabond.or.kr/"},
                 {"name": "한국거래소 Open API", "what": "3개월무위험금리(KOFR) 선물 정산가격·거래량(실험값)", "url": "https://openapi.krx.co.kr/"},
                 {"name": "한국은행 홈페이지", "what": "통화정책방향 결정문, 금통위 의사록, 기자간담회", "url": "https://www.bok.or.kr/"},
@@ -372,6 +375,9 @@ def main(argv=None):
         })
     meta["new_main_news"] = new_main
     meta["news_count"] = len(news)
+    meta["probability_basis"] = {"representative": "BOK WATCH 종합 예측(합성 KOFR OIS 50% + 통안증권 91일 50%, 2026-10-29~)",
+                                 "components": "합성 KOFR OIS 단독, 통안증권 91일 단독(awm_series.json)",
+                                 "note": "snapshots·history.csv·prob_log.json의 p_hike는 합성 KOFR OIS 단독 값이다. 설명은 data/README.md"}
     meta["built"] = now.isoformat(timespec="minutes")
     write_json(SITE_DATA / "meta.json", meta)
     # 기사 목록은 jsonl 그대로 두고 화면용 json도 만든다
