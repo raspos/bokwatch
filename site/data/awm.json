@@ -9,8 +9,12 @@
   "n_train_meetings": 47,
   "models": {
    "M2 합성 OIS 단독": {
-    "ok": false,
-    "why": "필요한 입력 없음(합성 OIS 또는 통안채 91일)"
+    "ok": true,
+    "p": {
+     "hike": 0.0,
+     "hold": 0.8908,
+     "cut": 0.1092
+    }
    },
    "M3 통안채 91일 단독": {
     "ok": true,
@@ -21,20 +25,40 @@
     }
    },
    "M5 OIS+통안채 50:50": {
-    "ok": false,
-    "why": "필요한 입력 없음(합성 OIS 또는 통안채 91일)"
+    "ok": true,
+    "p": {
+     "hike": 0.2676,
+     "hold": 0.6778,
+     "cut": 0.0546
+    },
+    "w_ois": 0.5
    },
    "M6c 기간 연속형 가중치": {
-    "ok": false,
-    "why": "필요한 입력 없음(합성 OIS 또는 통안채 91일)"
+    "ok": true,
+    "p": {
+     "hike": 0.2716,
+     "hold": 0.6746,
+     "cut": 0.0538
+    },
+    "w_ois": 0.4925
    },
    "M7 최근 오차 반영(EWA)": {
-    "ok": false,
-    "why": "필요한 입력 없음(합성 OIS 또는 통안채 91일)"
+    "ok": true,
+    "p": {
+     "hike": 0.275,
+     "hold": 0.6719,
+     "cut": 0.0531
+    },
+    "w_ois": 0.4861
    },
    "M8 기간+전환 신호 가중치": {
-    "ok": false,
-    "why": "필요한 입력 없음(합성 OIS 또는 통안채 91일)"
+    "ok": true,
+    "p": {
+     "hike": 0.2689,
+     "hold": 0.6768,
+     "cut": 0.0543
+    },
+    "w_ois": 0.4976
    }
   },
   "inputs": {
@@ -61,11 +85,18 @@
     "spread_how": "당시까지 자료"
    },
    "ois": {
-    "ok": false,
-    "why": "1개월물 회의 뒤 구간 부족·3개월 식으로도 풀리지 않음"
+    "source_type": "ois_3m",
+    "input_date": "2026-11-26",
+    "p": {
+     "hike": 0,
+     "hold": 0.8908,
+     "cut": 0.1092
+    },
+    "solve": null,
+    "spread_how": null
    }
   },
-  "ois_source": null
+  "ois_source": "ois_3m"
  },
  "label": "통계적 결합 실험값. 시장가격이 아니며 기본 확률(KOFR OIS)을 대체하지 않는다.",
  "backtest_file": "awm_backtest.json"
