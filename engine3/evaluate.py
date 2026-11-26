@@ -94,8 +94,12 @@ def calibration(df, model_name):
 def main():
     yd, base, meet = wf.load()
     rows = wf.rows_for_market(yd, base)
-    models = [wf.Hold(), wf.Frequency(), wf.Msb91(rows, [m.date() for m in meet] + [m.date() for m in pd.to_datetime(["2026-11-26", "2027-01-14"])]),
-              wf.DnsVar(yd), wf.AcmVar(yd, base)]
+    freq = wf.Frequency()
+    msb = wf.Msb91(rows, [m.date() for m in meet] + [m.date() for m in pd.to_datetime(["2026-11-26", "2027-01-14"])])
+    dns = wf.DnsVar(yd)
+    ois = wf.OisProd()
+    models = [wf.Hold(), freq, msb, dns, wf.AcmVar(yd, base), ois, wf.Blend50(ois, msb),
+              wf.Shrink(msb, freq, "M4a 통안채+빈도 시계별 축소"), wf.Shrink(dns, freq, "M4b DNS+빈도 시계별 축소")]
     df = wf.build_cells(models, yd, base, meet, progress=True)
     df = prep(df)
     df.to_csv(OUT / "cells.csv", index=False, encoding="utf-8")
@@ -116,6 +120,21 @@ def main():
             cmp[f"{per}|{m} − M0 항상 동결"] = boot_diff(ev, m, "M0 항상 동결", mask)
             cmp[f"{per}|{m} − M2 통안채 91일 단독"] = boot_diff(ev, m, "M2 통안채 91일 단독", mask)
     res["paired_bootstrap"] = cmp
+    # OIS가 계산되는 공통 격자(2023-02~): 모든 비교 모형이 같은 칸에서 평가된다
+    need = ["M1 합성 OIS 단독", "M2 통안채 91일 단독", "M3 운영 50:50(OIS+통안채)", BASE]
+    cnt = ev[ev["model"].isin(need)].groupby(["meeting", "D"])["model"].nunique()
+    keys = set(cnt[cnt == len(need)].index)
+    evc = ev[[(m, d) in keys for m, d in zip(ev["meeting"], ev["D"])]]
+    res["common_ois_grid"] = {"meetings": int(evc["meeting"].nunique()), "cells": int(len(evc) / max(evc["model"].nunique(), 1)),
+                              "by_model": summarize(evc, ["model"]).to_dict("records"),
+                              "by_horizon": summarize(evc, ["model", "D"]).to_dict("records"),
+                              "change_meetings": summarize(evc[evc["changed"]], ["model"]).to_dict("records")}
+    pairs = [("M3 운영 50:50(OIS+통안채)", "M1 합성 OIS 단독"), ("M3 운영 50:50(OIS+통안채)", "M2 통안채 91일 단독"), ("M3 운영 50:50(OIS+통안채)", BASE),
+             ("M1 합성 OIS 단독", BASE), ("M2 통안채 91일 단독", BASE), ("M4a 통안채+빈도 시계별 축소", "M3 운영 50:50(OIS+통안채)"),
+             ("M4a 통안채+빈도 시계별 축소", BASE), ("M4b DNS+빈도 시계별 축소", BASE)]
+    allm = ev.copy()
+    res["common_bootstrap"] = {f"{a} − {b}": boot_diff(evc if (a in need and b in need) else ev[ev["period"] == "최종(2023~)"], a, b,
+                                                       pd.Series(True, index=(evc if (a in need and b in need) else ev[ev["period"] == "최종(2023~)"]).index)) for a, b in pairs}
     (OUT / "results.json").write_text(json.dumps(res, ensure_ascii=False, indent=1, default=lambda o: None if (isinstance(o, float) and np.isnan(o)) else o), encoding="utf-8")
     print("done", len(df), "fails", wf.FAILS, wf.FAIL_EX)
 

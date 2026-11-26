@@ -190,6 +190,82 @@ class AcmVar:
         return probs_from_delta(d), float(d)
 
 
+class OisProd:
+    """합성 KOFR OIS 단독(운영 코드 awm_data.ois_model 그대로). 2023-02 이후 회의만."""
+    name = "M1 합성 OIS 단독"
+
+    def __init__(self):
+        from bokwatch import awm_data
+        self.ad = awm_data
+        self.inp = awm_data.Inputs()
+
+    def predict(self, ctx):
+        if ctx["meeting"] < pd.Timestamp("2023-02-01"):
+            return None
+        obs, mt = ctx["obs"].date(), ctx["meeting"].date()
+        r0 = self.inp.base(obs)
+        if r0 is None:
+            return None
+        o = self.ad.ois_model(self.inp, obs, r0, mt, self.inp.ois_policy)
+        if not o.get("ok"):
+            return None
+        p = o["p"]
+        return {"hike": p["hike"], "hold": p["hold"], "cut": p["cut"]}, float(o.get("expected", r0) - r0)
+
+
+class Blend50:
+    """운영 50:50: 합성 OIS와 통안채 91일의 세 범주 확률을 단순 평균한다."""
+    name = "M3 운영 50:50(OIS+통안채)"
+
+    def __init__(self, a, b):
+        self.a, self.b = a, b
+
+    def predict(self, ctx):
+        x, y = self.a.predict(ctx), self.b.predict(ctx)
+        if x is None or y is None:
+            return None
+        p = {k: 0.5 * x[0][k] + 0.5 * y[0][k] for k in CL}
+        return p, 0.5 * (x[1] + y[1])
+
+
+class Shrink:
+    """모형 확률을 과거 빈도 쪽으로 시계별로 축소한다. 가중치 w_D는 이전 회의의 Brier를 최소화하는 값(0.1 격자)."""
+
+    def __init__(self, base, freq, name, min_meetings=20):
+        self.base, self.freq, self.name, self.min_n = base, freq, name, min_meetings
+        self.hist = {}          # D → [(p_base, p_freq, actual)]
+        self.pending = {}       # (meeting) → [(D, p_base, p_freq)]
+
+    def weight(self, D):
+        h = self.hist.get(D, [])
+        if len(h) < self.min_n:
+            return 0.5
+        best, bw = 9e9, 0.5
+        for w in [i / 10 for i in range(11)]:
+            e = 0.0
+            for pb, pf, a in h:
+                for c in CL:
+                    q = w * pb[c] + (1 - w) * pf[c]
+                    e += (q - (1.0 if c == a else 0.0)) ** 2
+            if e < best - 1e-12:
+                best, bw = e, w
+        return bw
+
+    def predict(self, ctx):
+        r = self.base.predict(ctx)
+        if r is None:
+            return None
+        pf, ef = self.freq.predict(ctx)
+        w = self.weight(ctx.get("D"))
+        p = {k: w * r[0][k] + (1 - w) * pf[k] for k in CL}
+        self.pending.setdefault(ctx["meeting"], []).append((ctx.get("D"), r[0], pf))
+        return p, w * r[1] + (1 - w) * ef
+
+    def update(self, meeting, actual):
+        for D, pb, pf in self.pending.pop(meeting, []):
+            self.hist.setdefault(D, []).append((pb, pf, actual))
+
+
 # ------------------------------------------------------------------ 칸 생성
 def build_cells(models, yd, base, meet, progress=False):
     idx = yd.index
@@ -211,7 +287,7 @@ def build_cells(models, yd, base, meet, progress=False):
             if obs >= m:
                 continue
             r0 = float(base.loc[:obs].iloc[-1])
-            ctx = {"meeting": m, "obs": obs, "r0": r0, "yields": yd.iloc[j].to_dict(), "past_actuals": past}
+            ctx = {"meeting": m, "obs": obs, "r0": r0, "yields": yd.iloc[j].to_dict(), "past_actuals": past, "D": D}
             for mdl in models:
                 try:
                     res = mdl.predict(ctx)
@@ -226,6 +302,9 @@ def build_cells(models, yd, base, meet, progress=False):
                               "p_hike": p["hike"], "p_hold": p["hold"], "p_cut": p["cut"], "exp_delta": ed,
                               "prior12": float(base.loc[:obs].iloc[-1] - base.loc[:obs - pd.Timedelta(days=365)].iloc[-1])
                               if obs - pd.Timedelta(days=365) >= base.index[0] else np.nan})
+        for mdl in models:
+            if hasattr(mdl, "update"):
+                mdl.update(m, act)
         actuals.append(act)
         if progress and k % 20 == 0:
             print("meeting", m.date(), len(cells), flush=True)
