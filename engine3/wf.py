@@ -266,6 +266,106 @@ class Shrink:
             self.hist.setdefault(D, []).append((pb, pf, actual))
 
 
+class MaxEntMeetings:
+    """M8: 통안채 91일 금리 한 식으로 만기 안의 모든 회의를 날짜·적용 일수로 직접 풀이한다.
+    식 L = Σ a_k·Δ_k (L = T·(y − s − r0), a_k = 회의 k부터 만기까지 일수)는 회의가 둘 이상이면 해가 유일하지 않다.
+    회의마다 독립인 과거 빈도 사전분포에서 출발해 제약을 만족하며 KL이 가장 작은 분포(지수 기울임)를 쓴다."""
+    name = "M8 회의일 기반 풀이(최대 엔트로피)"
+    STEPS = (-0.25, 0.0, 0.25)
+
+    def __init__(self, rows, meetings_all, freq):
+        self.rows, self.meetings_all, self.freq = rows, meetings_all, freq
+
+    def predict(self, ctx):
+        obs, r0, mt = ctx["obs"].date(), ctx["r0"], ctx["meeting"].date()
+        v = ctx["yields"].get("msb91")
+        if v is None or np.isnan(v):
+            return None
+        sp = market.pit_spread(self.rows, "msb91", obs)
+        sp = 0.0 if sp is None else sp
+        T = 91
+        start = model.settlement_start(obs)
+        ms = sorted(m for m in self.meetings_all if start <= m < start + timedelta(days=T))
+        if mt not in ms:
+            return None
+        a = np.array(model.exposure_days(start, T, ms), float)
+        L = T * (float(v) - sp - r0)
+        pf, _ = self.freq.predict(ctx)
+        prior = np.array([pf["cut"], pf["hold"], pf["hike"]])
+        st = np.array(self.STEPS)
+
+        def dist(lam):
+            out = []
+            for ak in a:
+                w = prior * np.exp(np.clip(lam * ak * st, -50, 50))
+                out.append(w / w.sum())
+            return out
+
+        def g(lam):
+            return float(sum(ak * (d * st).sum() for ak, d in zip(a, dist(lam)))) - L
+
+        lo, hi = -400.0, 400.0
+        if g(lo) > 0:
+            lam = lo
+        elif g(hi) < 0:
+            lam = hi
+        else:
+            for _ in range(80):
+                mid = (lo + hi) / 2
+                if g(mid) > 0:
+                    hi = mid
+                else:
+                    lo = mid
+            lam = (lo + hi) / 2
+        d = dist(lam)[ms.index(mt)]
+        p = {"cut": float(d[0]), "hold": float(d[1]), "hike": float(d[2])}
+        return p, float((d * st).sum())
+
+
+class Ensemble:
+    """M11: 구성원 확률을 시계별 과거 평균 Brier로 가중(가중치 ∝ exp(−η·평균 Brier)). 이전 회의가 10개 미만이면 균등."""
+
+    def __init__(self, members, name, eta=10.0, min_n=10):
+        self.members, self.name, self.eta, self.min_n = members, name, eta, min_n
+        self.hist = {}          # (D, member name) → [brier]
+        self.pending = {}
+
+    def weights(self, D, names):
+        sc = {}
+        for n in names:
+            h = self.hist.get((D, n), [])
+            sc[n] = float(np.mean(h)) if len(h) >= self.min_n else None
+        if any(v is None for v in sc.values()):
+            return {n: 1.0 / len(names) for n in names}
+        w = {n: np.exp(-self.eta * v) for n, v in sc.items()}
+        z = sum(w.values())
+        return {n: x / z for n, x in w.items()}
+
+    def predict(self, ctx):
+        preds = {}
+        for m in self.members:
+            try:
+                r = m.predict(ctx)
+            except Exception:  # noqa: BLE001
+                r = None
+            if r is not None:
+                preds[m.name] = r
+        if len(preds) < len(self.members):
+            return None
+        D = ctx.get("D")
+        w = self.weights(D, list(preds))
+        p = {k: sum(w[n] * preds[n][0][k] for n in preds) for k in CL}
+        ed = sum(w[n] * preds[n][1] for n in preds)
+        self.pending.setdefault(ctx["meeting"], []).append((D, {n: preds[n][0] for n in preds}))
+        return p, ed
+
+    def update(self, meeting, actual):
+        for D, pm in self.pending.pop(meeting, []):
+            for n, p in pm.items():
+                b = sum((p[c] - (1.0 if c == actual else 0.0)) ** 2 for c in CL)
+                self.hist.setdefault((D, n), []).append(b)
+
+
 # ------------------------------------------------------------------ 칸 생성
 def build_cells(models, yd, base, meet, progress=False):
     idx = yd.index

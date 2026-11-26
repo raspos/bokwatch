@@ -98,8 +98,11 @@ def main():
     msb = wf.Msb91(rows, [m.date() for m in meet] + [m.date() for m in pd.to_datetime(["2026-11-26", "2027-01-14"])])
     dns = wf.DnsVar(yd)
     ois = wf.OisProd()
+    allm = [m.date() for m in meet] + [m.date() for m in pd.to_datetime(["2026-11-26", "2027-01-14"])]
+    m8 = wf.MaxEntMeetings(rows, allm, freq)
+    ens = wf.Ensemble([freq, msb, dns, m8], "M11 동적 앙상블(빈도·통안채·DNS·M8)")
     models = [wf.Hold(), freq, msb, dns, wf.AcmVar(yd, base), ois, wf.Blend50(ois, msb),
-              wf.Shrink(msb, freq, "M4a 통안채+빈도 시계별 축소"), wf.Shrink(dns, freq, "M4b DNS+빈도 시계별 축소")]
+              wf.Shrink(msb, freq, "M4a 통안채+빈도 시계별 축소"), wf.Shrink(dns, freq, "M4b DNS+빈도 시계별 축소"), m8, ens]
     df = wf.build_cells(models, yd, base, meet, progress=True)
     df = prep(df)
     df.to_csv(OUT / "cells.csv", index=False, encoding="utf-8")
@@ -131,7 +134,9 @@ def main():
                               "change_meetings": summarize(evc[evc["changed"]], ["model"]).to_dict("records")}
     pairs = [("M3 운영 50:50(OIS+통안채)", "M1 합성 OIS 단독"), ("M3 운영 50:50(OIS+통안채)", "M2 통안채 91일 단독"), ("M3 운영 50:50(OIS+통안채)", BASE),
              ("M1 합성 OIS 단독", BASE), ("M2 통안채 91일 단독", BASE), ("M4a 통안채+빈도 시계별 축소", "M3 운영 50:50(OIS+통안채)"),
-             ("M4a 통안채+빈도 시계별 축소", BASE), ("M4b DNS+빈도 시계별 축소", BASE)]
+             ("M4a 통안채+빈도 시계별 축소", BASE), ("M4b DNS+빈도 시계별 축소", BASE),
+             ("M8 회의일 기반 풀이(최대 엔트로피)", "M2 통안채 91일 단독"), ("M8 회의일 기반 풀이(최대 엔트로피)", BASE), ("M8 회의일 기반 풀이(최대 엔트로피)", "M3 운영 50:50(OIS+통안채)"),
+             ("M11 동적 앙상블(빈도·통안채·DNS·M8)", BASE), ("M11 동적 앙상블(빈도·통안채·DNS·M8)", "M3 운영 50:50(OIS+통안채)")]
     allm = ev.copy()
     res["common_bootstrap"] = {f"{a} − {b}": boot_diff(evc if (a in need and b in need) else ev[ev["period"] == "최종(2023~)"], a, b,
                                                        pd.Series(True, index=(evc if (a in need and b in need) else ev[ev["period"] == "최종(2023~)"]).index)) for a, b in pairs}
