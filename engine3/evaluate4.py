@@ -270,7 +270,7 @@ def main():
     res["afns_params"] = par
     (RES / "results4.json").write_text(json.dumps(res, ensure_ascii=False, indent=1, default=lambda o: None if (isinstance(o, float) and np.isnan(o)) else (float(o) if isinstance(o, (np.floating, np.integer)) else str(o))), encoding="utf-8")
     df.to_csv(RES / "cells_all.csv", index=False, encoding="utf-8")
-    print("done", len(models), "models;", "pareto", pareto)
+    print("done", len(models), "models;", "pareto", res["pareto"])
 
 
 if __name__ == "__main__":
