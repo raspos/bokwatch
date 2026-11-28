@@ -187,18 +187,32 @@ def main():
         row["c4"] = ok4 if have else None
         row["c5"] = "해당 없음(인위 조정 없음)" if "교정" not in m else "교정 모수 a만 학습 구간에서 선택"
         flags = [row.get("c1"), row.get("c2"), row.get("c3"), row.get("c4")]
-        row["eligible"] = None if any(f is None for f in flags) else bool(all(flags))
+        if any(f is False for f in flags):
+            row["eligible"] = False
+        elif any(f is None for f in flags):
+            row["eligible"] = "판정 불가(개발·검증 구간 칸 없음 등)"
+        else:
+            row["eligible"] = True
         elig[m] = row
     res["eligibility"] = elig
     res["ois_ref_extreme_M3"] = float(ref_ex)
 
-    # 파레토(자격 있는 모형, 전체 Brier·변경 회의 Brier)
-    allm = {r["model"]: r for r in res["all_eval"]}
-    chm = {r["model"]: r for r in res["all_eval_change_meetings"]}
-    pts = {m: (allm[m]["brier"], chm[m]["brier"]) for m in elig if elig[m]["eligible"] and m in allm and m in chm}
-    pareto = [m for m, (a, b) in pts.items() if not any((a2 <= a and b2 <= b and (a2 < a or b2 < b)) for m2, (a2, b2) in pts.items() if m2 != m)]
-    res["pareto"] = pareto
-    res["pareto_points"] = pts
+    # 파레토: 자격 있는 모형만, 비교 대상 모형이 모두 예측한 공통 격자(G3)에서 전체 Brier·변경 회의 Brier로 판정(§B)
+    cand = [m for m in elig if elig[m]["eligible"] is True]
+    res["eligible"] = cand
+    res["undecidable"] = [m for m in elig if isinstance(elig[m]["eligible"], str)]
+    if cand:
+        g3 = common(cand)
+        g3 = g3[g3["model"].isin(cand)]
+        a3 = g3.groupby("model")["brier"].mean()
+        c3 = g3[g3["changed"]].groupby("model")["brier"].mean()
+        pts = {m: (float(a3[m]), float(c3[m])) for m in cand if m in a3 and m in c3}
+        res["pareto_grid"] = {"meetings": int(g3["meeting"].nunique()), "cells": int(len(g3) / max(g3["model"].nunique(), 1)), "models": cand}
+        res["pareto_points"] = pts
+        res["pareto"] = [m for m, (a, b) in pts.items() if not any((a2 <= a and b2 <= b and (a2 < a or b2 < b)) for m2, (a2, b2) in pts.items() if m2 != m)]
+    else:
+        res["pareto"] = []
+        res["pareto_points"] = {}
 
     # 교정 전후·보정표
     cal = {}
@@ -210,6 +224,9 @@ def main():
             a0 = evd[(evd["model"] == base_m) & (evd["period"] == per)]
             a1 = evd[(evd["model"] == cm) & (evd["period"] == per)]
             both = a0.merge(a1[["meeting", "D", "brier", "logloss"]], on=["meeting", "D"], suffixes=("", "_c"))
+            if lab in ("M3",):
+                cal[f"{lab}|{per}"] = {"note": "표본 부족으로 교정 불가(학습 칸 200개 미만, a=1 고정)", "cells": int(len(both))}
+                continue
             cal[f"{lab}|{per}"] = {"cells": int(len(both)), "brier_before": float(both["brier"].mean()), "brier_after": float(both["brier_c"].mean()),
                                   "ll_before": float(both["logloss"].mean()), "ll_after": float(both["logloss_c"].mean())}
     res["calibration_effect"] = cal
