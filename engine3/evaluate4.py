@@ -21,13 +21,19 @@ BASE = ev.BASE
 M3 = "M3 운영 50:50(OIS+통안채)"
 HZ = list(wf.HORIZONS)
 PERS = ["개발·검증(2012~2022)", "최종(2023~)"]
+import os  # noqa: E402
+V5 = os.environ.get("EVAL_V") == "5"
+SUF = "5" if V5 else "4"
 
 
 def load():
     a = pd.read_csv(RES / "cells.csv")
     b = pd.read_csv(RES / "cells4.csv")
     c = pd.read_csv(RES / "cells4_combo.csv")
-    d = pd.concat([a, b, c], ignore_index=True)
+    parts = [a, b, c]
+    if V5 and (RES / "cells5.csv").exists():
+        parts.append(pd.read_csv(RES / "cells5.csv"))
+    d = pd.concat(parts, ignore_index=True)
     dmap = a.drop_duplicates("meeting").set_index("meeting")["delta"].to_dict()
     d["delta"] = d["meeting"].map(dmap)
     return d
@@ -268,8 +274,8 @@ def main():
         if p.exists():
             par[f] = json.load(open(p, encoding="utf-8"))
     res["afns_params"] = par
-    (RES / "results4.json").write_text(json.dumps(res, ensure_ascii=False, indent=1, default=lambda o: None if (isinstance(o, float) and np.isnan(o)) else (float(o) if isinstance(o, (np.floating, np.integer)) else str(o))), encoding="utf-8")
-    df.to_csv(RES / "cells_all.csv", index=False, encoding="utf-8")
+    (RES / f"results{SUF}.json").write_text(json.dumps(res, ensure_ascii=False, indent=1, default=lambda o: None if (isinstance(o, float) and np.isnan(o)) else (float(o) if isinstance(o, (np.floating, np.integer)) else str(o))), encoding="utf-8")
+    df.to_csv(RES / f"cells_all{SUF}.csv", index=False, encoding="utf-8")
     print("done", len(models), "models;", "pareto", res["pareto"])
 
 
